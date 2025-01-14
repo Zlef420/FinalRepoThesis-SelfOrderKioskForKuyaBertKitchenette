@@ -2,149 +2,150 @@ import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-function CashierScreen() {
-  const [orders, setOrders] = useState([
-    { id: 1, name: "Sisig", price: 99, quantity: 1 },
-    { id: 2, name: "Carbonara", price: 99, quantity: 1 },
-    { id: 3, name: "Halo-halo", price: 99, quantity: 1 },
-    { id: 4, name: "Lemon Juice", price: 99, quantity: 1 },
-    // Add more orders if needed
+const CashierScreen = () => {
+  const [transactions] = useState([
+    {
+      ORN: "420",
+      TAmount: 396,
+      RefNum: "A7B9D2P",
+      PaymentStat: "Pending",
+      items: [
+        { name: "Sisig", price: 99, quantity: 1, total: 99 },
+        { name: "Carbonara", price: 99, quantity: 1, total: 99 },
+        { name: "Halo-halo", price: 99, quantity: 1, total: 99 },
+        { name: "Lemon Juice", price: 99, quantity: 1, total: 99 },
+      ],
+    },
+    {
+      ORN: "419",
+      TAmount: 123,
+      RefNum: "B7B9D2P",
+      PaymentStat: "Paid",
+      items: [{ name: "Sisig", price: 123, quantity: 1, total: 123 }],
+    },
   ]);
 
-  const transactions = [
-    { ORN: 420, TAmount: 396, RefNum: "A7B9D2P", PaymentStatus: "Pending" },
-    { ORN: 419, TAmount: 123, RefNum: "B7B9D2P", PaymentStatus: "Paid" },
-    { ORN: 418, TAmount: 321, RefNum: "C7B9D2P", PaymentStatus: "Paid" },
-    { ORN: 417, TAmount: 231, RefNum: "D7B9D2P", PaymentStatus: "Paid" },
-    { ORN: 416, TAmount: 400, RefNum: "E7B9D2P", PaymentStatus: "Paid" },
-    // Add more transactions if needed
-  ];
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [cashAmount, setCashAmount] = useState("500");
 
-  const subtotal = orders.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
-  const [cash, setCash] = useState(0);
+  const handleTransactionClick = (transaction) => {
+    setSelectedTransaction(transaction);
+  };
 
-  const handleCashChange = (e) => {
-    setCash(Number(e.target.value));
+  const calculateChange = () => {
+    if (!selectedTransaction || !cashAmount) return 0;
+    return Number(cashAmount) - selectedTransaction.TAmount;
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Header */}
+    <div className="min-h-screen flex flex-col">
       <Header />
 
-      {/* Main Content */}
-      <div className="flex-1 flex">
-        {/* Left Section: Orders */}
-        <div className="w-1/2 p-4 border-r">
-          <h2 className="text-lg font-bold mb-4">Order Details</h2>
-          <div className="overflow-auto max-h-[300px] border border-gray-300">
-            <table className="table-auto w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border border-gray-300 px-4 py-2">Name</th>
-                  <th className="border border-gray-300 px-4 py-2">Price</th>
-                  <th className="border border-gray-300 px-4 py-2">Quantity</th>
-                  <th className="border border-gray-300 px-4 py-2">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((item) => (
-                  <tr key={item.id} className="text-center">
-                    <td className="border border-gray-300 px-4 py-2">
-                      {item.name}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      ₱{item.price}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {item.quantity}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      ₱{item.price * item.quantity}
-                    </td>
+      <div className="flex-1 flex flex-col p-4 gap-4 bg-gray-100">
+        <div className="flex gap-4 flex-1">
+          {/* Left Side - Order Details */}
+          <div className="w-1/2 flex flex-col gap-4">
+            <div className="bg-white rounded-lg shadow p-4 flex-1">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2">Name</th>
+                    <th className="text-left p-2">Price</th>
+                    <th className="text-left p-2">Quantity</th>
+                    <th className="text-left p-2">Total Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {selectedTransaction?.items.map((item, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="p-2">{item.name}</td>
+                      <td className="p-2">{item.price}</td>
+                      <td className="p-2">{item.quantity}</td>
+                      <td className="p-2">{item.total}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Payment Section */}
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="space-y-4">
+                <div className="text-xl font-bold">
+                  Total: ₱{selectedTransaction?.TAmount || 0}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">💵 Cash</span>
+                    <input
+                      type="number"
+                      value={cashAmount}
+                      onChange={(e) => setCashAmount(e.target.value)}
+                      className="border p-2 w-24 rounded"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🔄 Change</span>
+                  <span className="text-xl">₱{calculateChange()}</span>
+                </div>
+
+                <button className="w-full bg-gray-200 p-2 rounded">
+                  Print
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="mt-4">
-            <p className="text-lg font-bold">Total: ₱{subtotal}</p>
-            <div className="flex items-center mt-2">
-              <label className="mr-2">Cash:</label>
+
+          {/* Right Side - Transactions List */}
+          <div className="w-1/2 bg-white rounded-lg shadow p-4">
+            <div className="mb-4">
               <input
-                type="number"
-                className="border border-gray-300 px-2 py-1"
-                value={cash}
-                onChange={handleCashChange}
+                type="text"
+                placeholder="Search"
+                className="w-full p-2 border rounded bg-gray-100"
               />
             </div>
-            <p className="mt-2">
-              Change: ₱{cash - subtotal > 0 ? cash - subtotal : 0}
-            </p>
-            <button className="bg-gray-300 px-4 py-2 mt-4 rounded">
-              Print
-            </button>
-          </div>
-        </div>
 
-        {/* Right Section: Transactions */}
-        <div className="w-1/2 p-4">
-          <h2 className="text-lg font-bold mb-4">Transactions</h2>
-          <div className="mb-4">
-            <input
-              type="text"
-              placeholder="Search"
-              className="border border-gray-300 px-4 py-2 w-full"
-            />
-          </div>
-          <div className="overflow-auto max-h-[300px] border border-gray-300">
-            <table className="table-auto w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border border-gray-300 px-4 py-2">ORN</th>
-                  <th className="border border-gray-300 px-4 py-2">TAmount</th>
-                  <th className="border border-gray-300 px-4 py-2">RefNum</th>
-                  <th className="border border-gray-300 px-4 py-2">
-                    PaymentStatus
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((txn) => (
-                  <tr key={txn.ORN} className="text-center">
-                    <td className="border border-gray-300 px-4 py-2">
-                      {txn.ORN}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      ₱{txn.TAmount}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {txn.RefNum}
-                    </td>
-                    <td
-                      className={`border border-gray-300 px-4 py-2 ${
-                        txn.PaymentStatus === "Pending"
-                          ? "text-red-500"
-                          : "text-green-500"
+            <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
+              <table className="w-full">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-2 text-left">ORN</th>
+                    <th className="p-2 text-left">TAmount</th>
+                    <th className="p-2 text-left">RefNum</th>
+                    <th className="p-2 text-left">PaymentStat</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map((transaction) => (
+                    <tr
+                      key={transaction.ORN}
+                      onClick={() => handleTransactionClick(transaction)}
+                      className={`cursor-pointer hover:bg-gray-50 border-b ${
+                        selectedTransaction?.ORN === transaction.ORN
+                          ? "bg-gray-100"
+                          : ""
                       }`}
                     >
-                      {txn.PaymentStatus}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <td className="p-2">{transaction.ORN}</td>
+                      <td className="p-2">{transaction.TAmount}</td>
+                      <td className="p-2">{transaction.RefNum}</td>
+                      <td className="p-2">{transaction.PaymentStat}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
       <Footer />
     </div>
   );
-}
+};
 
 export default CashierScreen;
