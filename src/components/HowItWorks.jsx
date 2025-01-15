@@ -215,7 +215,7 @@ const HowItWorks = ({ isVisible, onClose }) => {
                 Previous
               </button>
               <button
-                onClick={nextStep}
+                onClick={currentStep === steps.length - 1 ? onClose : nextStep}
                 className={`px-6 py-2 rounded-lg transition-all duration-300 ${
                   currentStep === steps.length - 1
                     ? "bg-green-500 text-white hover:bg-green-600"

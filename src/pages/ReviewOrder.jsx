@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { useNavigate } from "react-router-dom";
 
 const OrderReview = () => {
+  const navigate = useNavigate();
   const [items, setItems] = useState(() => {
     const savedItems = localStorage.getItem("orderItems");
     return savedItems
@@ -142,171 +144,179 @@ const OrderReview = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-[url('../../public/images/photos/bgblack.jpg')] bg-cover bg-center">
       <Header />
 
       <main className="flex-1 container mx-auto p-4">
-        <div className="flex justify-between gap-8">
+        <div className="flex justify-between gap-8 h-[calc(100vh-140px)]">
           {/* Left side - Order Items */}
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-1">Order #420</h2>
-            <p className="text-xl mb-4">Review your Order</p>
-            <div className="text-right mb-4">
-              {items.length} Items in your cart
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="mb-4 text-white">
+              <h2 className="text-2xl font-bold mb-1">Order #420</h2>
+              <p className="text-xl mb-4">Review your Order</p>
+              <div className="text-right">
+                {items.length} Items in your cart
+              </div>
             </div>
 
-            <div className="space-y-4">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-gray-100 rounded-lg shadow-md cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => toggleExpand(item.id)}
-                >
-                  {/* Header Section */}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center gap-4">
-                          <span className="font-semibold text-lg">
-                            {item.name}
-                          </span>
-                          <span className="text-gray-600">₱{item.price}</span>
-                        </div>
-
-                        {/* Display saved information */}
-                        {item.isSaved && (
-                          <div className="text-sm text-gray-600 space-y-1">
-                            {item.description && (
-                              <div>
-                                <span className="font-medium">
-                                  Instructions:{" "}
-                                </span>
-                                {item.description}
-                              </div>
-                            )}
-                            {item.addons.length > 0 && (
-                              <div>
-                                <span className="font-medium">Add-ons: </span>
-                                {item.addons.map((addon, idx) => (
-                                  <span key={addon.id}>
-                                    {addon.name} (₱{addon.price})
-                                    {idx < item.addons.length - 1 ? ", " : ""}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
+            {/* Scrollable container for orders */}
+            <div className="flex-1 overflow-y-auto pr-2">
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-gray-100 rounded-lg shadow-md cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleExpand(item.id)}
+                  >
+                    {/* Header Section */}
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-4">
+                            <span className="font-semibold text-lg">
+                              {item.name}
+                            </span>
+                            <span className="text-gray-600">₱{item.price}</span>
                           </div>
-                        )}
-                      </div>
 
-                      <div className="flex items-center gap-4">
-                        <div className="bg-white rounded-full flex items-center px-4 py-1">
-                          <button
-                            onClick={(e) => updateQuantity(e, item.id, -1)}
-                            className="text-xl px-2"
-                          >
-                            -
-                          </button>
-                          <span className="mx-3">{item.quantity}</span>
-                          <button
-                            onClick={(e) => updateQuantity(e, item.id, 1)}
-                            className="text-xl px-2"
-                          >
-                            +
-                          </button>
+                          {/* Display saved information */}
+                          {item.isSaved && (
+                            <div className="text-sm text-gray-600 space-y-1">
+                              {item.description && (
+                                <div>
+                                  <span className="font-medium">
+                                    Instructions:{" "}
+                                  </span>
+                                  {item.description}
+                                </div>
+                              )}
+                              {item.addons.length > 0 && (
+                                <div>
+                                  <span className="font-medium">Add-ons: </span>
+                                  {item.addons.map((addon, idx) => (
+                                    <span key={addon.id}>
+                                      {addon.name} (₱{addon.price})
+                                      {idx < item.addons.length - 1 ? ", " : ""}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <button
-                          className="text-red-500 hover:text-red-700"
-                          onClick={(e) => deleteItem(e, item.id)}
-                        >
-                          🗑
-                        </button>
-                      </div>
-                    </div>
 
-                    {/* Display total with add-ons */}
-                    <div className="mt-2 text-right text-gray-600">
-                      Total: ₱{calculateItemTotal(item)}
-                    </div>
-                  </div>
-
-                  {/* Expandable Section */}
-                  {item.isExpanded && (
-                    <div
-                      className="border-t border-gray-200 p-4 space-y-4 bg-white"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {/* Add-ons Section */}
-                      <div className="space-y-2">
-                        <h3 className="font-semibold">Add-ons</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {availableAddons.map((addon) => (
-                            <label
-                              key={addon.id}
-                              className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                        <div className="flex items-center gap-4">
+                          <div className="bg-white rounded-full flex items-center px-4 py-1">
+                            <button
+                              onClick={(e) => updateQuantity(e, item.id, -1)}
+                              className="text-xl px-2"
                             >
-                              <div className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  checked={item.addons.some(
-                                    (a) => a.id === addon.id
-                                  )}
-                                  onChange={() => toggleAddon(item.id, addon)}
-                                  className="rounded"
-                                />
-                                <span>{addon.name}</span>
-                              </div>
-                              <span className="text-gray-600">
-                                ₱{addon.price}
-                              </span>
-                            </label>
-                          ))}
+                              -
+                            </button>
+                            <span className="mx-3">{item.quantity}</span>
+                            <button
+                              onClick={(e) => updateQuantity(e, item.id, 1)}
+                              className="text-xl px-2"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <button
+                            className="text-red-500 hover:text-red-700"
+                            onClick={(e) => deleteItem(e, item.id)}
+                          >
+                            🗑
+                          </button>
                         </div>
                       </div>
 
-                      {/* Description Section */}
-                      <div>
-                        <h3 className="font-semibold mb-2">
-                          Special Instructions
-                        </h3>
-                        <textarea
-                          value={item.description}
-                          onChange={(e) =>
-                            updateDescription(item.id, e.target.value)
-                          }
-                          placeholder="Add any special instructions..."
-                          className="w-full p-2 border rounded-md h-24"
-                        />
-                      </div>
-
-                      {/* Save Button */}
-                      <div className="flex justify-end pt-2">
-                        <button
-                          onClick={(e) => saveChanges(e, item.id)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                        >
-                          Save Changes
-                        </button>
+                      {/* Display total with add-ons */}
+                      <div className="mt-2 text-right text-gray-600">
+                        Total: ₱{calculateItemTotal(item)}
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Expandable Section */}
+                    {item.isExpanded && (
+                      <div
+                        className="border-t border-gray-200 p-4 space-y-4 bg-white"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Add-ons Section */}
+                        <div className="space-y-2">
+                          <h3 className="font-semibold">Add-ons</h3>
+                          <div className="grid grid-cols-2 gap-2">
+                            {availableAddons.map((addon) => (
+                              <label
+                                key={addon.id}
+                                className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={item.addons.some(
+                                      (a) => a.id === addon.id
+                                    )}
+                                    onChange={() => toggleAddon(item.id, addon)}
+                                    className="rounded"
+                                  />
+                                  <span>{addon.name}</span>
+                                </div>
+                                <span className="text-gray-600">
+                                  ₱{addon.price}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Description Section */}
+                        <div>
+                          <h3 className="font-semibold mb-2">
+                            Special Instructions
+                          </h3>
+                          <textarea
+                            value={item.description}
+                            onChange={(e) =>
+                              updateDescription(item.id, e.target.value)
+                            }
+                            placeholder="Add any special instructions..."
+                            className="w-full p-2 border rounded-md h-24"
+                          />
+                        </div>
+
+                        {/* Save Button */}
+                        <div className="flex justify-end pt-2">
+                          <button
+                            onClick={(e) => saveChanges(e, item.id)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                          >
+                            Save Changes
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="mt-4">
-              <button className="bg-gray-800 text-white px-6 py-2 rounded">
+            <div className="mt-4 pt-4 border-t">
+              <button
+                onClick={() => navigate("/home")}
+                className="bg-gray-800 text-white px-6 py-2 rounded"
+              >
                 Return
               </button>
             </div>
           </div>
 
           {/* Right side - Total and Payment */}
-          <div className="w-80">
-            <h2 className="text-2xl font-bold mb-6">Total Cost</h2>
-            <div className="space-y-4 mb-6">
+          <div className="w-80 bg-white rounded-lg h-fit p-4 sticky top-4">
+            <h2 className="text-2xl font-bold mb-5">Total Cost</h2>
+            <div className="space-y-3 mb-5">
               {items.map((item) => (
-                <div key={item.id} className="flex justify-between">
+                <div key={item.id} className="flex justify-between text-base">
                   <div>
                     <span className="mr-4">{item.name}</span>
                     <span>{item.quantity}x</span>
@@ -316,33 +326,33 @@ const OrderReview = () => {
               ))}
             </div>
 
-            <div className="border-t border-b py-4 mb-6">
+            <div className="border-t border-b py-3 mb-5">
               <div className="flex justify-between font-bold">
                 <span>Total Amount:</span>
                 <span>₱{calculateTotal()}</span>
               </div>
             </div>
 
-            <div className="mb-6">
-              <div className="flex justify-between mb-4">
+            <div className="mb-5">
+              <div className="flex justify-between mb-3">
                 <span>Dining choice</span>
                 <span>Dine-In</span>
               </div>
 
-              <div className="font-bold mb-4">Select Payment Method:</div>
-              <div className="grid grid-cols-2 gap-4">
-                <button className="border p-4 rounded flex flex-col items-center">
-                  <span className="text-2xl mb-2">💵</span>
+              <div className="font-bold mb-3">Select Payment Method:</div>
+              <div className="grid grid-cols-2 gap-3">
+                <button className="border p-3 rounded flex flex-col items-center">
+                  <span className="text-xl mb-2">💵</span>
                   <span>Cash</span>
                 </button>
-                <button className="border p-4 rounded flex flex-col items-center">
-                  <span className="text-2xl mb-2">📱</span>
+                <button className="border p-3 rounded flex flex-col items-center">
+                  <span className="text-xl mb-2">📱</span>
                   <span>E-wallet</span>
                 </button>
               </div>
             </div>
 
-            <button className="w-full bg-gray-200 py-4 rounded text-center font-bold">
+            <button className="w-full bg-gray-200 py-3 rounded text-center font-bold">
               Pay for Order
             </button>
           </div>
