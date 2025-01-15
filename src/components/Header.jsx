@@ -48,17 +48,17 @@ function Header() {
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              fill="none"
               viewBox="0 0 24 24"
-              strokeWidth="1.5"
+              fill="none"
               stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               className="w-6 h-6 mr-1"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6.75h2.25M6 6.75h2.25m-4.5 4.5h15m-9 3.75h5.25m-8.25-9v13.5m3.75-6.75h9.75m-6 6.75h1.5"
-              />
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+              <polyline points="10 17 15 12 10 7" />
+              <line x1="15" y1="12" x2="3" y2="12" />
             </svg>
             Login
           </button>
