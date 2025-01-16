@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 
 const Settings = () => {
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [uploadedImages, setUploadedImages] = useState([
+    { id: 1, image: null },
+    { id: 2, image: null },
+    { id: 3, image: null },
+  ]);
+
   const [accountForm, setAccountForm] = useState({
     username: "",
     email: "",
@@ -11,7 +15,6 @@ const Settings = () => {
     confirmPassword: "",
   });
 
-  // Sample accounts data
   const [accounts, setAccounts] = useState([
     {
       id: 1,
@@ -26,6 +29,27 @@ const Settings = () => {
       role: "staff",
     },
   ]);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+
+  const handleImageChange = (e, id) => {
+    const file = e.target.files[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setUploadedImages((prevImages) =>
+        prevImages.map((img) =>
+          img.id === id ? { ...img, image: imageUrl } : img
+        )
+      );
+    }
+  };
+
+  const removeImage = (id) => {
+    setUploadedImages((prevImages) =>
+      prevImages.map((img) => (img.id === id ? { ...img, image: null } : img))
+    );
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -63,12 +87,11 @@ const Settings = () => {
   };
 
   return (
-    <div className="p-4 h-[calc(100vh-160px)] overflow-y-auto">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+    <div className="h-screen grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+      {/* Left Column - Account Management */}
+      <div className="space-y-4">
+        <div className="bg-white p-6 rounded-lg shadow-sm h-full">
           <h2 className="text-xl font-semibold mb-4">Account Management</h2>
-
-          {/* Add Account Form */}
           <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block mb-1 text-sm font-medium">
@@ -150,8 +173,7 @@ const Settings = () => {
             </div>
           </form>
 
-          {/* Account List */}
-          <div className="mt-8">
+          <div className="mt-4">
             <h3 className="text-lg font-semibold mb-4">Existing Accounts</h3>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
@@ -190,33 +212,52 @@ const Settings = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Security Settings */}
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Security Settings</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded">
-              <div>
-                <h3 className="font-medium">Two-Factor Authentication</h3>
-                <p className="text-sm text-gray-600">
-                  Add an extra layer of security to your account
-                </p>
+      {/* Right Column - Advertisement Images */}
+      <div className="space-y-4">
+        <div className="bg-white p-6 rounded-lg shadow-sm h-full">
+          <h2 className="text-xl font-semibold mb-4">Advertisement Images</h2>
+          <p className="mb-4 text-gray-600">
+            Upload up to 3 images for your intro page.
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            {uploadedImages.map((img) => (
+              <div
+                key={img.id}
+                className="relative flex flex-col items-center border-2 border-dashed border-gray-300 rounded-lg p-4"
+              >
+                {!img.image ? (
+                  <label className="cursor-pointer flex flex-col items-center">
+                    <span className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                      Choose Image
+                    </span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => handleImageChange(e, img.id)}
+                    />
+                  </label>
+                ) : (
+                  <>
+                    <div className="w-full aspect-video">
+                      <img
+                        src={img.image}
+                        alt="Advertisement preview"
+                        className="rounded-lg object-cover w-full h-full"
+                      />
+                    </div>
+                    <button
+                      className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                      onClick={() => removeImage(img.id)}
+                    >
+                      Remove
+                    </button>
+                  </>
+                )}
               </div>
-              <button className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                Enable
-              </button>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded">
-              <div>
-                <h3 className="font-medium">Session Management</h3>
-                <p className="text-sm text-gray-600">
-                  Manage your active sessions
-                </p>
-              </div>
-              <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                View Sessions
-              </button>
-            </div>
+            ))}
           </div>
         </div>
       </div>
