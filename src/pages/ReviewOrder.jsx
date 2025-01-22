@@ -5,52 +5,12 @@ import { useNavigate } from "react-router-dom";
 
 const OrderReview = () => {
   const navigate = useNavigate();
+  const [selectedOption, setSelectedOption] = useState(() => {
+    return localStorage.getItem("diningOption") || "Dine In";
+  });
   const [items, setItems] = useState(() => {
-    const savedItems = localStorage.getItem("orderItems");
-    return savedItems
-      ? JSON.parse(savedItems)
-      : [
-          {
-            id: 1,
-            name: "Pasta",
-            price: 99,
-            quantity: 1,
-            description: "",
-            addons: [],
-            isExpanded: false,
-            isSaved: false,
-          },
-          {
-            id: 2,
-            name: "Sizzling",
-            price: 99,
-            quantity: 1,
-            description: "",
-            addons: [],
-            isExpanded: false,
-            isSaved: false,
-          },
-          {
-            id: 3,
-            name: "Dessert",
-            price: 99,
-            quantity: 1,
-            description: "",
-            addons: [],
-            isExpanded: false,
-            isSaved: false,
-          },
-          {
-            id: 4,
-            name: "Drinks",
-            price: 99,
-            quantity: 1,
-            description: "",
-            addons: [],
-            isExpanded: false,
-            isSaved: false,
-          },
-        ];
+    const savedItems = localStorage.getItem("cartItems");
+    return savedItems ? JSON.parse(savedItems) : [];
   });
 
   const availableAddons = [
@@ -61,11 +21,13 @@ const OrderReview = () => {
   ];
 
   useEffect(() => {
-    localStorage.setItem("orderItems", JSON.stringify(items));
-  }, [items]);
+    // Save both cart items and dining option to localStorage
+    localStorage.setItem("cartItems", JSON.stringify(items));
+    localStorage.setItem("diningOption", selectedOption);
+  }, [items, selectedOption]);
 
   const updateQuantity = (e, id, increment) => {
-    e.stopPropagation(); // Prevent box from expanding when clicking quantity buttons
+    e.stopPropagation();
     setItems(
       items.map((item) => {
         if (item.id === id) {
@@ -92,7 +54,7 @@ const OrderReview = () => {
     setItems(
       items.map((item) => {
         if (item.id === id) {
-          return { ...item, description, isSaved: false };
+          return { ...item, details: description, isSaved: false };
         }
         return item;
       })
@@ -115,7 +77,7 @@ const OrderReview = () => {
   };
 
   const saveChanges = (e, id) => {
-    e.stopPropagation(); // Prevent box from expanding when clicking save
+    e.stopPropagation();
     setItems(
       items.map((item) => {
         if (item.id === id) {
@@ -127,7 +89,7 @@ const OrderReview = () => {
   };
 
   const calculateItemTotal = (item) => {
-    const addonsTotal = item.addons.reduce(
+    const addonsTotal = (item.addons || []).reduce(
       (sum, addon) => sum + addon.price,
       0
     );
@@ -139,8 +101,12 @@ const OrderReview = () => {
   };
 
   const deleteItem = (e, id) => {
-    e.stopPropagation(); // Prevent box from expanding when clicking delete
+    e.stopPropagation();
     setItems(items.filter((item) => item.id !== id));
+  };
+
+  const deleteAllItems = () => {
+    setItems([]);
   };
 
   return (
@@ -154,8 +120,9 @@ const OrderReview = () => {
             <div className="mb-4 text-white">
               <h2 className="text-2xl font-bold mb-1">Order #420</h2>
               <p className="text-xl mb-4">Review your Order</p>
-              <div className="text-right">
-                {items.length} Items in your cart
+              <div className="flex justify-between items-center">
+                <div className="font-medium">{selectedOption}</div>
+                <div>{items.length} Items in your cart</div>
               </div>
             </div>
 
@@ -182,15 +149,15 @@ const OrderReview = () => {
                           {/* Display saved information */}
                           {item.isSaved && (
                             <div className="text-sm text-gray-600 space-y-1">
-                              {item.description && (
+                              {item.details && (
                                 <div>
                                   <span className="font-medium">
                                     Instructions:{" "}
                                   </span>
-                                  {item.description}
+                                  {item.details}
                                 </div>
                               )}
-                              {item.addons.length > 0 && (
+                              {(item.addons || []).length > 0 && (
                                 <div>
                                   <span className="font-medium">Add-ons: </span>
                                   {item.addons.map((addon, idx) => (
@@ -254,7 +221,7 @@ const OrderReview = () => {
                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="checkbox"
-                                    checked={item.addons.some(
+                                    checked={(item.addons || []).some(
                                       (a) => a.id === addon.id
                                     )}
                                     onChange={() => toggleAddon(item.id, addon)}
@@ -276,7 +243,7 @@ const OrderReview = () => {
                             Special Instructions
                           </h3>
                           <textarea
-                            value={item.description}
+                            value={item.details || ""}
                             onChange={(e) =>
                               updateDescription(item.id, e.target.value)
                             }
@@ -301,13 +268,35 @@ const OrderReview = () => {
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t">
+            <div className="mt-4 flex justify-between items-center pt-4 border-t border-gray-700">
               <button
                 onClick={() => navigate("/home")}
                 className="bg-gray-800 text-white px-6 py-2 rounded"
               >
                 Return
               </button>
+              {items.length > 0 && (
+                <button
+                  onClick={deleteAllItems}
+                  className="text-red-500 hover:text-red-400 flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="size-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                    />
+                  </svg>
+                  Remove all items
+                </button>
+              )}
             </div>
           </div>
 
@@ -336,23 +325,23 @@ const OrderReview = () => {
             <div className="mb-5">
               <div className="flex justify-between mb-3">
                 <span>Dining choice</span>
-                <span>Dine-In</span>
+                <span>{selectedOption}</span>
               </div>
 
               <div className="font-bold mb-3">Select Payment Method:</div>
               <div className="grid grid-cols-2 gap-3">
-                <button className="border p-3 rounded flex flex-col items-center">
+                <button className="border p-3 rounded flex flex-col items-center hover:bg-gray-200">
                   <span className="text-xl mb-2">💵</span>
                   <span>Cash</span>
                 </button>
-                <button className="border p-3 rounded flex flex-col items-center">
+                <button className="border p-3 rounded flex flex-col items-center hover:bg-gray-200">
                   <span className="text-xl mb-2">📱</span>
                   <span>E-wallet</span>
                 </button>
               </div>
             </div>
 
-            <button className="w-full bg-gray-200 py-3 rounded text-center font-bold">
+            <button className="w-full py-3 bg-red-500 text-white rounded hover:bg-red-600 text-center font-bold">
               Pay for Order
             </button>
           </div>
