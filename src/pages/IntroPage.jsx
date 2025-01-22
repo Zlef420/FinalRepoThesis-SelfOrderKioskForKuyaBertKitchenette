@@ -2,14 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate from react-router-dom
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-
-const foodItems = [
-  { id: 1, image: "/images/photos/sisig.png" },
-  { id: 2, image: "/images/photos/sinigang.png" },
-  { id: 3, image: "/images/photos/kare-kare.png" },
-];
+import { useSharedState } from "../context/SharedStateContext"; // Import shared state
 
 function IntroPage() {
+  const { uploadedImages } = useSharedState(); // Access uploaded images dynamically
   const [currentIndex, setCurrentIndex] = useState(0);
   const [resetTimer, setResetTimer] = useState(0);
   const navigate = useNavigate(); // Initialize the useNavigate hook
@@ -23,12 +19,14 @@ function IntroPage() {
   }, [resetTimer]);
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % foodItems.length);
+    setCurrentIndex((prev) => (prev + 1) % uploadedImages.length);
     setResetTimer((prev) => prev + 1);
   };
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? foodItems.length - 1 : prev - 1));
+    setCurrentIndex((prev) =>
+      prev === 0 ? uploadedImages.length - 1 : prev - 1
+    );
     setResetTimer((prev) => prev + 1);
   };
 
@@ -43,7 +41,7 @@ function IntroPage() {
               transform: `translateX(-${currentIndex * 100}%)`,
             }}
           >
-            {foodItems.map((item) => (
+            {uploadedImages.map((item) => (
               <img
                 key={item.id}
                 src={item.image}

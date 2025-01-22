@@ -1,11 +1,8 @@
 import React, { useState } from "react";
+import { useSharedState } from "../context/SharedStateContext";
 
 const Settings = () => {
-  const [uploadedImages, setUploadedImages] = useState([
-    { id: 1, image: null },
-    { id: 2, image: null },
-    { id: 3, image: null },
-  ]);
+  const { uploadedImages, setUploadedImages } = useSharedState();
 
   const [accountForm, setAccountForm] = useState({
     username: "",
