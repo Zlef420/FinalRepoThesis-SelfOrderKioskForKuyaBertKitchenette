@@ -113,16 +113,17 @@ const OrderReview = () => {
     <div className="min-h-screen flex flex-col bg-[url('../../public/images/photos/bgblack.jpg')] bg-cover bg-center">
       <Header />
 
-      <main className="flex-1 container mx-auto p-4">
-        <div className="flex justify-between gap-8 h-[calc(100vh-140px)]">
+      <main className="flex-1 container mx-auto p-3">
+        <div className="flex justify-between gap-8 h-[calc(100vh-115px)]">
           {/* Left side - Order Items */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="mb-4 text-white">
-              <h2 className="text-2xl font-bold mb-1">Order #420</h2>
-              <p className="text-xl mb-4">Review your Order</p>
-              <div className="flex justify-between items-center">
-                <div className="font-medium">{selectedOption}</div>
-                <div>{items.length} Items in your cart</div>
+            <div className="mb-2 text-white">
+              <h2 className="text-2xl font-bold mb-1 -mt-2">Order #420</h2>
+              <div className="flex justify-between -mb-3">
+                <p className="text-lg mb-2">Review your Order</p>
+                <div className="flex justify-end">
+                  {items.length} Items in your cart
+                </div>
               </div>
             </div>
 
@@ -271,14 +272,14 @@ const OrderReview = () => {
             <div className="mt-4 flex justify-between items-center pt-4 border-t border-gray-700">
               <button
                 onClick={() => navigate("/home")}
-                className="bg-gray-800 text-white px-6 py-2 rounded"
+                className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-2 rounded"
               >
                 Return
               </button>
               {items.length > 0 && (
                 <button
                   onClick={deleteAllItems}
-                  className="text-red-500 hover:text-red-400 flex items-center gap-2"
+                  className="py-2 px-2 text-sm text-red-500 hover:text-red-400 flex items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-500/10 transition"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

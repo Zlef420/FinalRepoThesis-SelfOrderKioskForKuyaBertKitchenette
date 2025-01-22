@@ -64,7 +64,7 @@ const OrderItem = ({ item, onDeleteClick }) => (
 const DiningOption = ({ option, selected, onClick }) => (
   <button
     className={`px-6 py-2 rounded text-white transition ${
-      selected ? "bg-red-500" : "bg-gray-700"
+      selected ? "bg-red-500" : "bg-gray-700 hover:bg-gray-600"
     }`}
     onClick={() => onClick(option)}
   >

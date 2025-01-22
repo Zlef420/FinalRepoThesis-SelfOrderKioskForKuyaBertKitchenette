@@ -2,11 +2,18 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HowItWorks from "./HowItWorks";
 import LoginForm from "./LoginForm";
+import clickSound from "../assets/notifsound.mp3";
 
 function Header() {
   const navigate = useNavigate();
   const [isHowItWorksVisible, setIsHowItWorksVisible] = useState(false);
   const [isLoginFormVisible, setIsLoginFormVisible] = useState(false);
+
+  // Function to play sound
+  const playSound = () => {
+    const audio = new Audio(clickSound);
+    audio.play();
+  };
 
   return (
     <>
@@ -44,7 +51,10 @@ function Header() {
           {/* Login Button */}
           <button
             className="hover:text-gray-300 flex items-center"
-            onClick={() => setIsLoginFormVisible(true)}
+            onClick={() => {
+              playSound(); // Play sound on click
+              setIsLoginFormVisible(true); // Show login form
+            }}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
