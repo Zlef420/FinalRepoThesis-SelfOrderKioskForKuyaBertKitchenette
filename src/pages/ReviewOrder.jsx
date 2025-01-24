@@ -12,6 +12,7 @@ const OrderReview = () => {
     const savedItems = localStorage.getItem("cartItems");
     return savedItems ? JSON.parse(savedItems) : [];
   });
+  const [selectedPayment, setSelectedPayment] = useState(null);
 
   const availableAddons = [
     { id: 1, name: "Gravy", price: 20 },
@@ -21,7 +22,6 @@ const OrderReview = () => {
   ];
 
   useEffect(() => {
-    // Save both cart items and dining option to localStorage
     localStorage.setItem("cartItems", JSON.stringify(items));
     localStorage.setItem("diningOption", selectedOption);
   }, [items, selectedOption]);
@@ -29,35 +29,32 @@ const OrderReview = () => {
   const updateQuantity = (e, id, increment) => {
     e.stopPropagation();
     setItems(
-      items.map((item) => {
-        if (item.id === id) {
-          const newQuantity = Math.max(1, item.quantity + increment);
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      })
+      items.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: Math.max(1, item.quantity + increment),
+            }
+          : item
+      )
     );
   };
 
   const toggleExpand = (id) => {
     setItems(
-      items.map((item) => {
-        if (item.id === id) {
-          return { ...item, isExpanded: !item.isExpanded };
-        }
-        return item;
-      })
+      items.map((item) =>
+        item.id === id ? { ...item, isExpanded: !item.isExpanded } : item
+      )
     );
   };
 
   const updateDescription = (id, description) => {
     setItems(
-      items.map((item) => {
-        if (item.id === id) {
-          return { ...item, details: description, isSaved: false };
-        }
-        return item;
-      })
+      items.map((item) =>
+        item.id === id
+          ? { ...item, details: description, isSaved: false }
+          : item
+      )
     );
   };
 
@@ -65,10 +62,10 @@ const OrderReview = () => {
     setItems(
       items.map((item) => {
         if (item.id === itemId) {
-          const hasAddon = item.addons.find((a) => a.id === addon.id);
+          const hasAddon = item.addons?.some((a) => a.id === addon.id);
           const newAddons = hasAddon
             ? item.addons.filter((a) => a.id !== addon.id)
-            : [...item.addons, addon];
+            : [...(item.addons || []), addon];
           return { ...item, addons: newAddons, isSaved: false };
         }
         return item;
@@ -79,12 +76,9 @@ const OrderReview = () => {
   const saveChanges = (e, id) => {
     e.stopPropagation();
     setItems(
-      items.map((item) => {
-        if (item.id === id) {
-          return { ...item, isExpanded: false, isSaved: true };
-        }
-        return item;
-      })
+      items.map((item) =>
+        item.id === id ? { ...item, isExpanded: false, isSaved: true } : item
+      )
     );
   };
 
@@ -109,6 +103,13 @@ const OrderReview = () => {
     setItems([]);
   };
 
+  const paymentButtonStyle = (isSelected) =>
+    `border-2 p-3 rounded flex flex-col items-center transition-colors ${
+      isSelected
+        ? "bg-blue-100 border-blue-500"
+        : "border-gray-300 hover:bg-gray-200"
+    }`;
+
   return (
     <div className="min-h-screen flex flex-col bg-[url('../../public/images/photos/bgblack.jpg')] bg-cover bg-center">
       <Header />
@@ -127,8 +128,7 @@ const OrderReview = () => {
               </div>
             </div>
 
-            {/* Scrollable container for orders */}
-            <div className="flex-1 overflow-y-auto pr-2">
+            <div className="flex-1 overflow-y-auto pr-2 max-h-[calc(100vh-200px)]">
               <div className="space-y-4">
                 {items.map((item) => (
                   <div
@@ -136,7 +136,6 @@ const OrderReview = () => {
                     className="bg-gray-100 rounded-lg shadow-md cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => toggleExpand(item.id)}
                   >
-                    {/* Header Section */}
                     <div className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="space-y-2 flex-1">
@@ -147,7 +146,6 @@ const OrderReview = () => {
                             <span className="text-gray-600">₱{item.price}</span>
                           </div>
 
-                          {/* Display saved information */}
                           {item.isSaved && (
                             <div className="text-sm text-gray-600 space-y-1">
                               {item.details && (
@@ -198,19 +196,16 @@ const OrderReview = () => {
                         </div>
                       </div>
 
-                      {/* Display total with add-ons */}
                       <div className="mt-2 text-right text-gray-600">
                         Total: ₱{calculateItemTotal(item)}
                       </div>
                     </div>
 
-                    {/* Expandable Section */}
                     {item.isExpanded && (
                       <div
                         className="border-t border-gray-200 p-4 space-y-4 bg-white"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {/* Add-ons Section */}
                         <div className="space-y-2">
                           <h3 className="font-semibold">Add-ons</h3>
                           <div className="grid grid-cols-2 gap-2">
@@ -238,7 +233,6 @@ const OrderReview = () => {
                           </div>
                         </div>
 
-                        {/* Description Section */}
                         <div>
                           <h3 className="font-semibold mb-2">
                             Special Instructions
@@ -253,7 +247,6 @@ const OrderReview = () => {
                           />
                         </div>
 
-                        {/* Save Button */}
                         <div className="flex justify-end pt-2">
                           <button
                             onClick={(e) => saveChanges(e, item.id)}
@@ -302,18 +295,21 @@ const OrderReview = () => {
           </div>
 
           {/* Right side - Total and Payment */}
-          <div className="w-80 bg-white rounded-lg h-fit p-4 sticky top-4">
+          <div className="w-80 bg-white rounded-lg h-fit p-4 sticky top-4 -mt-1.5">
             <h2 className="text-2xl font-bold mb-5">Total Cost</h2>
-            <div className="space-y-3 mb-5">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-base">
-                  <div>
-                    <span className="mr-4">{item.name}</span>
-                    <span>{item.quantity}x</span>
+
+            <div className="overflow-y-auto max-h-[100px] mb-5 pr-2">
+              <div className="space-y-3">
+                {items.map((item) => (
+                  <div key={item.id} className="flex justify-between text-base">
+                    <div>
+                      <span className="mr-4">{item.name}</span>
+                      <span>{item.quantity}x</span>
+                    </div>
+                    <div>₱{calculateItemTotal(item)}</div>
                   </div>
-                  <div>₱{calculateItemTotal(item)}</div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             <div className="border-t border-b py-3 mb-5">
@@ -331,19 +327,32 @@ const OrderReview = () => {
 
               <div className="font-bold mb-3">Select Payment Method:</div>
               <div className="grid grid-cols-2 gap-3">
-                <button className="border p-3 rounded flex flex-col items-center hover:bg-gray-200">
+                <button
+                  onClick={() => setSelectedPayment("cash")}
+                  className={paymentButtonStyle(selectedPayment === "cash")}
+                >
                   <span className="text-xl mb-2">💵</span>
                   <span>Cash</span>
                 </button>
-                <button className="border p-3 rounded flex flex-col items-center hover:bg-gray-200">
+                <button
+                  onClick={() => setSelectedPayment("ewallet")}
+                  className={paymentButtonStyle(selectedPayment === "ewallet")}
+                >
                   <span className="text-xl mb-2">📱</span>
                   <span>E-wallet</span>
                 </button>
               </div>
             </div>
 
-            <button className="w-full py-3 bg-red-500 text-white rounded hover:bg-red-600 text-center font-bold">
-              Pay for Order
+            <button
+              className={`w-full py-3 text-white rounded text-center font-bold ${
+                selectedPayment
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+              disabled={!selectedPayment}
+            >
+              {selectedPayment ? "Pay for Order" : "Select Payment Method"}
             </button>
           </div>
         </div>

@@ -113,7 +113,7 @@ function OrderSummary({ cartItems, orderNumber, onDeleteItem }) {
   return (
     <div className="w-1/5 bg-gray-900 text-white px-4 flex flex-col h-full">
       {/* Order Header */}
-      <div className="mb-4">
+      <div className="">
         <h2 className="text-lg font-bold text-center">Order #{orderNumber}</h2>
         <div className="flex justify-center space-x-2 mt-2">
           <DiningOption
@@ -145,7 +145,7 @@ function OrderSummary({ cartItems, orderNumber, onDeleteItem }) {
 
       {/* Remove All Button */}
       {cartItems.length > 0 && (
-        <div className="mt-4 mb-2">
+        <div className="mt-1">
           <button
             onClick={() => setShowRemoveAllModal(true)}
             className="w-full py-2 text-sm text-red-500 hover:text-red-400 flex items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-500/10 transition"
