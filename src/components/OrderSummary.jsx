@@ -63,9 +63,24 @@ const OrderItem = ({ item, onDeleteClick }) => (
 
 const DiningOption = ({ option, selected, onClick }) => (
   <button
-    className={`px-6 py-2 rounded text-white transition ${
-      selected ? "bg-red-500" : "bg-gray-700 hover:bg-gray-600"
-    }`}
+    className={`
+         w-full 
+        px-3 
+        sm:px-3 
+        md:px-4 
+        py-1.5 
+        sm:py-2.5 
+        rounded 
+      text-white 
+        transition 
+        text-[0.6rem] 
+        xs:text-xs 
+        sm:text-sm 
+        leading-none 
+        flex 
+        items-center 
+        justify-center
+          ${selected ? "bg-red-500" : "bg-gray-700 hover:bg-gray-600"}`}
     onClick={() => onClick(option)}
   >
     {option}
@@ -115,7 +130,7 @@ function OrderSummary({ cartItems, orderNumber, onDeleteItem }) {
       {/* Order Header */}
       <div className="">
         <h2 className="text-lg font-bold text-center">Order #{orderNumber}</h2>
-        <div className="flex justify-center space-x-2 mt-2">
+        <div className="flex justify-center space-x-2 mt-2 overflow-auto">
           <DiningOption
             option="Dine In"
             selected={selectedOption === "Dine In"}
@@ -131,7 +146,7 @@ function OrderSummary({ cartItems, orderNumber, onDeleteItem }) {
       </div>
 
       {/* Order List */}
-      <div className="overflow-y-auto flex-grow">
+      <div className="overflow-y-auto flex-grow -mt-2">
         <ul>
           {cartItems.map((item) => (
             <OrderItem
@@ -145,7 +160,7 @@ function OrderSummary({ cartItems, orderNumber, onDeleteItem }) {
 
       {/* Remove All Button */}
       {cartItems.length > 0 && (
-        <div className="mt-1">
+        <div className="mt-1 -mb-2">
           <button
             onClick={() => setShowRemoveAllModal(true)}
             className="w-full py-2 text-sm text-red-500 hover:text-red-400 flex items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-500/10 transition"

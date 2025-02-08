@@ -114,21 +114,19 @@ const OrderReview = () => {
     <div className="min-h-screen flex flex-col bg-[url('../../public/images/photos/bgblack.jpg')] bg-cover bg-center">
       <Header />
 
-      <main className="flex-1 container mx-auto p-3">
-        <div className="flex justify-between gap-8 h-[calc(100vh-115px)]">
+      <main className="flex-1 container mx-auto px-4 py-6 max-w-[1600px]">
+        <div className="flex flex-col lg:flex-row justify-between gap-6 h-[calc(100vh-115px)]">
           {/* Left side - Order Items */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="mb-2 text-white">
-              <h2 className="text-2xl font-bold mb-1 -mt-2">Order #420</h2>
-              <div className="flex justify-between -mb-3">
-                <p className="text-lg mb-2">Review your Order</p>
-                <div className="flex justify-end">
-                  {items.length} Items in your cart
-                </div>
+          <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+            <div className="mb-4 text-white">
+              <h2 className="text-2xl font-bold mb-2">Order #420</h2>
+              <div className="flex justify-between items-center">
+                <p className="text-lg">Review your Order</p>
+                <div>{items.length} Items in your cart</div>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-2 max-h-[calc(100vh-200px)]">
+            <div className="flex-1 overflow-y-auto pr-2 -mr-2 max-h-[calc(100vh-220px)]">
               <div className="space-y-4">
                 {items.map((item) => (
                   <div
@@ -138,18 +136,20 @@ const OrderReview = () => {
                   >
                     <div className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="space-y-2 flex-1">
+                        <div className="space-y-2 flex-1 min-w-0">
                           <div className="flex items-center gap-4">
-                            <span className="font-semibold text-lg">
+                            <span className="font-semibold text-lg truncate">
                               {item.name}
                             </span>
-                            <span className="text-gray-600">₱{item.price}</span>
+                            <span className="text-gray-600 whitespace-nowrap">
+                              ₱{item.price}
+                            </span>
                           </div>
 
                           {item.isSaved && (
                             <div className="text-sm text-gray-600 space-y-1">
                               {item.details && (
-                                <div>
+                                <div className="break-words">
                                   <span className="font-medium">
                                     Instructions:{" "}
                                   </span>
@@ -157,7 +157,7 @@ const OrderReview = () => {
                                 </div>
                               )}
                               {(item.addons || []).length > 0 && (
-                                <div>
+                                <div className="break-words">
                                   <span className="font-medium">Add-ons: </span>
                                   {item.addons.map((addon, idx) => (
                                     <span key={addon.id}>
@@ -171,7 +171,7 @@ const OrderReview = () => {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 ml-4">
                           <div className="bg-white rounded-full flex items-center px-4 py-1">
                             <button
                               onClick={(e) => updateQuantity(e, item.id, -1)}
@@ -295,7 +295,7 @@ const OrderReview = () => {
           </div>
 
           {/* Right side - Total and Payment */}
-          <div className="w-80 bg-white rounded-lg h-fit p-4 sticky top-4 -mt-1.5">
+          <div className="w-full lg:w-80 bg-white rounded-lg p-4 lg:sticky lg:top-6">
             <h2 className="text-2xl font-bold mb-5">Total Cost</h2>
 
             <div className="overflow-y-auto max-h-[100px] mb-5 pr-2">
