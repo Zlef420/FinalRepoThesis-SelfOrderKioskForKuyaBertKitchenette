@@ -7,6 +7,7 @@ import ReviewOrder from "./pages/ReviewOrder";
 import CashierScreen from "./pages/CashierScreen";
 import AdminPage from "./pages/AdminPage";
 import HomePage from "./pages/Home";
+import OrderConfirmation from "./pages/OrderConfirmation";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="/cashier-screen" element={<CashierScreen />} />
             <Route path="/admin-page" element={<AdminPage />} />
             <Route path="/home" element={<HomePage />} />
+            <Route path="/order-conf" element={<OrderConfirmation />} />
           </Routes>
         </div>
       </Router>

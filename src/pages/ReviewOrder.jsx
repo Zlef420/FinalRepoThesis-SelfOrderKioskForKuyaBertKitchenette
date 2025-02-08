@@ -351,6 +351,11 @@ const OrderReview = () => {
                   : "bg-gray-400 cursor-not-allowed"
               }`}
               disabled={!selectedPayment}
+              onClick={() => {
+                navigate("/order-conf", {
+                  state: { paymentMethod: selectedPayment },
+                });
+              }}
             >
               {selectedPayment ? "Pay for Order" : "Select Payment Method"}
             </button>

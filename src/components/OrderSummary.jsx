@@ -125,6 +125,10 @@ function OrderSummary({ cartItems, orderNumber, onDeleteItem }) {
     navigate("/review-order");
   };
 
+  const clearCart = () => {
+    cartItems.forEach((item) => onDeleteItem(item.id));
+  };
+
   return (
     <div className="w-1/5 bg-gray-900 text-white px-4 flex flex-col h-full">
       {/* Order Header */}
