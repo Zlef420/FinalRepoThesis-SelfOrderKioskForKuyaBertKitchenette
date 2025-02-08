@@ -8,6 +8,7 @@ import CashierScreen from "./pages/CashierScreen";
 import AdminPage from "./pages/AdminPage";
 import HomePage from "./pages/Home";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import EWallet from "./pages/EWalletPayment";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/admin-page" element={<AdminPage />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/order-conf" element={<OrderConfirmation />} />
+            <Route path="/ewallet-payment" element={<EWallet />} />
           </Routes>
         </div>
       </Router>

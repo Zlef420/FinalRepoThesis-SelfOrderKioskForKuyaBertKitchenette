@@ -1,41 +1,5 @@
 import React, { useState } from "react";
-
-// SVG Icons as components
-const AdminIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="8" r="5" />
-    <path d="M20 21a8 8 0 1 0-16 0" />
-  </svg>
-);
-
-const CashierIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-  </svg>
-);
+import { UserCog, Users } from "lucide-react";
 
 const LoginForm = ({ onClose }) => {
   const [role, setRole] = useState("");
@@ -65,7 +29,7 @@ const LoginForm = ({ onClose }) => {
                   : "border-gray-200 text-gray-500 hover:border-gray-300"
               }`}
             >
-              <AdminIcon />
+              <UserCog className="size-6" />
               <span>Admin</span>
             </button>
 
@@ -78,7 +42,7 @@ const LoginForm = ({ onClose }) => {
                   : "border-gray-200 text-gray-500 hover:border-gray-300"
               }`}
             >
-              <CashierIcon />
+              <Users className="size-6" />
               <span>Cashier</span>
             </button>
           </div>

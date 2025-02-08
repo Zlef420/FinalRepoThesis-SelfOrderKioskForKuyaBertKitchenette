@@ -110,6 +110,18 @@ const OrderReview = () => {
         : "border-gray-300 hover:bg-gray-200"
     }`;
 
+  const handlePayment = () => {
+    if (selectedPayment === "ewallet") {
+      navigate("/ewallet-payment", {
+        state: { paymentMethod: selectedPayment },
+      });
+    } else {
+      navigate("/order-conf", {
+        state: { paymentMethod: selectedPayment },
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[url('../../public/images/photos/bgblack.jpg')] bg-cover bg-center">
       <Header />
@@ -351,13 +363,9 @@ const OrderReview = () => {
                   : "bg-gray-400 cursor-not-allowed"
               }`}
               disabled={!selectedPayment}
-              onClick={() => {
-                navigate("/order-conf", {
-                  state: { paymentMethod: selectedPayment },
-                });
-              }}
+              onClick={handlePayment}
             >
-              {selectedPayment ? "Pay for Order" : "Select Payment Method"}
+              {selectedPayment ? "Proceed to Payment" : "Select Payment Method"}
             </button>
           </div>
         </div>

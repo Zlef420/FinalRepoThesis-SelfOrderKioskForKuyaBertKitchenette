@@ -5,7 +5,12 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 // Separate styles for printing
-const PrintableReceipt = ({ orderItems, diningOption, printRef }) => {
+const PrintableReceipt = ({
+  orderItems,
+  diningOption,
+  printRef,
+  paymentMethod,
+}) => {
   const calculateItemTotal = (item) => {
     const addonsTotal = (item.addons || []).reduce(
       (sum, addon) => sum + addon.price,
@@ -73,6 +78,7 @@ const PrintableReceipt = ({ orderItems, diningOption, printRef }) => {
         <div className="text-sm mb-2">
           <p>Order Number: {orderNumber}</p>
           <p>Reference Number: {orderNumber}</p>
+          <p>Payment Method: {paymentMethod.toUpperCase()}</p>
           <p>
             Date: {currentDate.toLocaleDateString()} Time:{" "}
             {currentDate.toLocaleTimeString([], {
@@ -130,6 +136,7 @@ const OrderConfirmation = () => {
   const printRef = useRef();
 
   const paymentMethod = location.state?.paymentMethod || "cash";
+  const paymentStatus = location.state?.paymentStatus;
   const orderItems = JSON.parse(localStorage.getItem("cartItems") || "[]");
   const diningOption = localStorage.getItem("diningOption") || "Dine In";
 
@@ -137,7 +144,6 @@ const OrderConfirmation = () => {
     window.print();
   };
 
-  // Clear cart data function
   const clearCartData = () => {
     try {
       localStorage.removeItem("cartItems");
@@ -149,23 +155,23 @@ const OrderConfirmation = () => {
     }
   };
 
-  // Handle navigation with cart clearing
   const handleNavigation = (path) => {
     clearCartData();
     window.location.href = path;
   };
 
-  // Initial effect for cash payment processing
   useEffect(() => {
-    if (paymentMethod === "cash") {
+    if (
+      paymentMethod === "cash" ||
+      (paymentMethod === "ewallet" && paymentStatus === "completed")
+    ) {
       const timer = setTimeout(() => {
         setOrderState("complete");
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [paymentMethod]);
+  }, [paymentMethod, paymentStatus]);
 
-  // Effect for order completion and navigation
   useEffect(() => {
     if (orderState === "complete") {
       const timer = setInterval(() => {
@@ -181,14 +187,12 @@ const OrderConfirmation = () => {
     }
   }, [orderState]);
 
-  // Reset function for manual navigation
   const handleScreenClick = () => {
     if (orderState === "complete") {
       handleNavigation("/home");
     }
   };
 
-  // Cleanup effect when component unmounts
   useEffect(() => {
     return () => {
       if (orderState === "complete") {
@@ -197,66 +201,47 @@ const OrderConfirmation = () => {
     };
   }, [orderState]);
 
-  const renderQRCode = () => (
-    <div className="bg-white p-6 rounded-lg shadow-lg text-center max-w-md w-full">
-      <h2 className="text-xl font-bold mb-4">Scan to Pay</h2>
-      <div className="bg-gray-200 w-48 h-48 mx-auto mb-4 flex items-center justify-center">
-        <span className="text-gray-600">QR Code Placeholder</span>
-      </div>
-      <p className="text-gray-600 text-lg">Amount: ₱{calculateSubtotal()}</p>
-      <button
-        onClick={() => setOrderState("complete")}
-        className="mt-4 bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-      >
-        Confirm Payment
-      </button>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen flex flex-col bg-[url('../../public/images/photos/bgblack.jpg')] bg-cover bg-center print:bg-none">
+    <div className="h-screen flex flex-col bg-[url('../../public/images/photos/bgblack.jpg')] bg-cover bg-center bg-fixed print:bg-none overflow-hidden">
       <Header />
 
       <main
-        className="flex-1 container mx-auto px-4 py-6 flex items-center justify-center"
+        className="flex-1 container mx-auto px-4 py-6 flex items-center justify-center overflow-y-auto"
         onClick={handleScreenClick}
       >
-        <div className="text-center">
-          {paymentMethod === "ewallet" && orderState === "processing" ? (
-            renderQRCode()
-          ) : (
-            <div className="space-y-6">
-              {orderState === "processing" ? (
-                <>
-                  <Loader2 className="w-12 h-12 animate-spin mx-auto text-white no-print" />
-                  <h1 className="text-2xl font-bold text-white mb-6 no-print">
-                    Processing your order
-                  </h1>
-                  <PrintableReceipt
-                    orderItems={orderItems}
-                    diningOption={diningOption}
-                    printRef={printRef}
-                  />
-                  <button
-                    onClick={handlePrint}
-                    className="mt-4 bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 flex items-center justify-center mx-auto no-print"
-                  >
-                    <Printer className="w-4 h-4 mr-2" />
-                    Print Receipt
-                  </button>
-                </>
-              ) : (
-                <div className="space-y-4 text-white">
-                  <h1 className="text-3xl font-bold">Order Complete!</h1>
-                  <p className="text-xl">Thank you for ordering</p>
-                  <p>Click anywhere to return to menu</p>
-                  <p className="text-sm text-gray-300">
-                    Auto-redirecting in {countdown} seconds...
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+        <div className="w-full max-w-4xl">
+          <div className="space-y-6">
+            {orderState === "processing" ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="w-12 h-12 animate-spin text-white no-print" />
+                <h1 className="text-2xl font-bold text-white mb-6 no-print">
+                  Processing your order
+                </h1>
+                <PrintableReceipt
+                  orderItems={orderItems}
+                  diningOption={diningOption}
+                  printRef={printRef}
+                  paymentMethod={paymentMethod}
+                />
+                <button
+                  onClick={handlePrint}
+                  className="mt-4 bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 flex items-center justify-center mx-auto no-print"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print Receipt
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4 text-white text-center">
+                <h1 className="text-3xl font-bold">Order Complete!</h1>
+                <p className="text-xl">Thank you for ordering</p>
+                <p>Click anywhere to return to menu</p>
+                <p className="text-sm text-gray-300">
+                  Auto-redirecting in {countdown} seconds...
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
