@@ -94,7 +94,7 @@ function IntroPage() {
       <div className="flex justify-center -mt-3">
         <button
           onClick={() => navigate("/home")}
-          className="bg-[#EF5C28] text-white w-[65%] px-10 sm:px-20 md:px-40 lg:px-60 py-3 rounded-lg text-lg font-bold hover:bg-[#d94e1e] transition -mb-3 z-50"
+          className="bg-[#EF5C28] text-white w-[65%] px-10 sm:px-20 md:px-40 lg:px-60 py-3 rounded-lg text-lg font-bold hover:bg-[#d94e1e] transition -mb-3 z-40"
         >
           Tap to Order
         </button>

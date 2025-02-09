@@ -1,15 +1,55 @@
 import React, { useState } from "react";
 import { UserCog, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { toast } from "react-hot-toast";
 
 const LoginForm = ({ onClose }) => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [focusedField, setFocusedField] = useState("");
 
+  // Hardcoded credentials for example
+  const MOCK_CREDENTIALS = {
+    admin: {
+      email: "admin@example.com",
+      password: "admin123",
+    },
+    cashier: {
+      email: "cashier@example.com",
+      password: "cashier123",
+    },
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(`Role: ${role}, Email: ${email}`);
+
+    // Basic validation
+    if (!role) {
+      toast.error("Please select a role");
+      return;
+    }
+
+    const credentials = MOCK_CREDENTIALS[role];
+
+    if (email === credentials.email && password === credentials.password) {
+      login(role);
+      toast.success("Login successful!");
+
+      // Navigate based on role
+      if (role === "admin") {
+        navigate("/admin-page");
+      } else {
+        navigate("/cashier-screen");
+      }
+
+      onClose();
+    } else {
+      toast.error("Invalid credentials");
+    }
   };
 
   return (
