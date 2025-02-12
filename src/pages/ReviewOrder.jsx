@@ -125,16 +125,19 @@ const OrderReview = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[url('../../public/images/photos/bgblack.jpg')] bg-cover bg-center">
+    <div className="min-h-screen flex flex-col bg-customBlack bg-cover bg-center">
       <Header />
 
-      <main className="flex-1 container mx-auto px-4 py-6 max-w-[1600px]">
+      <main className="flex-1 container mx-auto px-4 py-3 max-w-[1600px]">
         <div className="flex flex-col lg:flex-row justify-between gap-6 h-[calc(100vh-115px)]">
           {/* Left side - Order Items */}
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
             <div className="mb-4 text-white">
-              <h2 className="text-2xl font-bold mb-2">Order #420</h2>
-              <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold -mb-1 -mt-2">
+                <span>Order</span>
+                <span className="ml-2">#420</span>
+              </h2>
+              <div className="flex justify-between items-center border-b border-gray-600 pb-2">
                 <p className="text-lg">Review your Order</p>
                 <div>{items.length} Items in your cart</div>
               </div>
@@ -145,7 +148,7 @@ const OrderReview = () => {
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-gray-100 rounded-lg shadow-md cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="bg-gray-100 rounded-lg shadow-md cursor-pointer hover:bg-gray-200 transition-colors"
                     onClick={() => toggleExpand(item.id)}
                   >
                     <div className="p-4">
@@ -186,17 +189,17 @@ const OrderReview = () => {
                         </div>
 
                         <div className="flex items-center gap-4 ml-4">
-                          <div className="bg-white rounded-full flex items-center px-4 py-1">
+                          <div className="bg-gray-300 rounded-full flex items-center px-4 py-1">
                             <button
                               onClick={(e) => updateQuantity(e, item.id, -1)}
-                              className="text-xl px-2"
+                              className="text-xl px-2 hover:bg-gray-400 rounded-full w-8"
                             >
                               -
                             </button>
                             <span className="mx-3">{item.quantity}</span>
                             <button
                               onClick={(e) => updateQuantity(e, item.id, 1)}
-                              className="text-xl px-2"
+                              className="text-xl px-2 hover:bg-gray-400 rounded-full w-8"
                             >
                               +
                             </button>
@@ -217,7 +220,7 @@ const OrderReview = () => {
 
                     {item.isExpanded && (
                       <div
-                        className="border-t border-gray-200 p-4 space-y-4 bg-white"
+                        className="border-t border-gray-200 p-4 space-y-2 bg-white"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="space-y-2">
@@ -235,7 +238,7 @@ const OrderReview = () => {
                                       (a) => a.id === addon.id
                                     )}
                                     onChange={() => toggleAddon(item.id, addon)}
-                                    className="rounded"
+                                    className="rounded cursor-pointer"
                                   />
                                   <span>{addon.name}</span>
                                 </div>
@@ -279,14 +282,15 @@ const OrderReview = () => {
             <div className="mt-4 flex justify-between items-center pt-4 border-t border-gray-700">
               <button
                 onClick={() => navigate("/home")}
-                className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-2 rounded"
+                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded"
               >
                 Return
               </button>
               {items.length > 0 && (
                 <button
                   onClick={deleteAllItems}
-                  className="py-2 px-2 text-sm text-red-500 hover:text-red-400 flex items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-500/10 transition"
+                  className="py-2 px-2 text-sm text-red-500 hover:text-white
+                   flex items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-600 transition"
                 >
                   <Trash2 className="size-4" />
                   Remove all items

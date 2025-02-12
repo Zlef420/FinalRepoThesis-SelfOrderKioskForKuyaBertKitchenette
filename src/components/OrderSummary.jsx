@@ -167,7 +167,8 @@ function OrderSummary({ cartItems, orderNumber, onDeleteItem }) {
         <div className="mt-1 -mb-2">
           <button
             onClick={() => setShowRemoveAllModal(true)}
-            className="w-full py-2 text-sm text-red-500 hover:text-red-400 flex items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-500/10 transition"
+            className="w-full py-2 text-sm text-red-500 hover:text-red-600 flex 
+            items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-500/10 transition"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
