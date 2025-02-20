@@ -5,6 +5,12 @@ import MenuList from "../components/MenuList";
 import TransactionList from "../components/TransactionList";
 import PaymentHistory from "../components/PaymentHistory";
 import Settings from "../components/Settings";
+import {
+  SquareMenu,
+  Archive,
+  BadgeDollarSign,
+  Settings as SettingsIcon,
+} from "lucide-react";
 
 const AdminDashboard = () => {
   const [activeView, setActiveView] = useState("menu");
@@ -45,38 +51,46 @@ const AdminDashboard = () => {
 
       <div className="flex flex-1">
         {/* Sidebar */}
-        <div className="w-48 bg-gray-800 text-white">
+        <div className="w-48 bg-gray-800 text-white pt-10">
           <div
-            className={`p-4 cursor-pointer ${
-              activeView === "menu" ? "bg-gray-700" : ""
+            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded border-white flex items-center gap-2 ${
+              activeView === "menu" ? "bg-red-600" : ""
             }`}
             onClick={() => setActiveView("menu")}
           >
-            Menu List
+            <SquareMenu color="white" size={20} />
+            <span>Menu List</span>
           </div>
+
           <div
-            className={`p-4 cursor-pointer ${
-              activeView === "transaction" ? "bg-gray-700" : ""
-            }`}
+            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded
+               border-white flex items-center gap-2 text-sm py-5 ${
+                 activeView === "transaction" ? "bg-red-600" : ""
+               }`}
             onClick={() => setActiveView("transaction")}
           >
-            Transaction Record
+            <Archive color="white" size={20} />
+            <span>Transaction Record</span>
           </div>
+
           <div
-            className={`p-4 cursor-pointer ${
-              activeView === "payment" ? "bg-gray-700" : ""
+            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded border-white flex items-center gap-2 ${
+              activeView === "payment" ? "bg-red-600" : ""
             }`}
             onClick={() => setActiveView("payment")}
           >
-            Payment History
+            <BadgeDollarSign color="white" size={20} />
+            <span>Payment History</span>
           </div>
+
           <div
-            className={`p-4 cursor-pointer ${
-              activeView === "settings" ? "bg-gray-700" : ""
+            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded border-white flex items-center gap-2 ${
+              activeView === "settings" ? "bg-red-600" : ""
             }`}
             onClick={() => setActiveView("settings")}
           >
-            Settings
+            <SettingsIcon color="white" size={20} />
+            <span>Settings</span>
           </div>
         </div>
 
