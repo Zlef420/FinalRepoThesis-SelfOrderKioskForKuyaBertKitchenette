@@ -53,7 +53,7 @@ const AdminDashboard = () => {
         {/* Sidebar */}
         <div className="w-48 bg-gray-800 text-white pt-10">
           <div
-            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded border-white flex items-center gap-2 ${
+            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded border-gray-400 flex items-center gap-2 ${
               activeView === "menu" ? "bg-red-600" : ""
             }`}
             onClick={() => setActiveView("menu")}
@@ -63,10 +63,10 @@ const AdminDashboard = () => {
           </div>
 
           <div
-            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded
-               border-white flex items-center gap-2 text-sm py-5 ${
-                 activeView === "transaction" ? "bg-red-600" : ""
-               }`}
+            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border border-gray-400 rounded
+                flex items-center gap-2 text-sm py-5 ${
+                  activeView === "transaction" ? "bg-red-600" : ""
+                }`}
             onClick={() => setActiveView("transaction")}
           >
             <Archive color="white" size={20} />
@@ -74,7 +74,7 @@ const AdminDashboard = () => {
           </div>
 
           <div
-            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded border-white flex items-center gap-2 ${
+            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded border-gray-400 flex items-center gap-2 ${
               activeView === "payment" ? "bg-red-600" : ""
             }`}
             onClick={() => setActiveView("payment")}
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
           </div>
 
           <div
-            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded border-white flex items-center gap-2 ${
+            className={`p-4 cursor-pointer hover:bg-red-500 mb-5 border rounded border-gray-400 flex items-center gap-2 ${
               activeView === "settings" ? "bg-red-600" : ""
             }`}
             onClick={() => setActiveView("settings")}

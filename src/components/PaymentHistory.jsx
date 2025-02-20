@@ -51,7 +51,41 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
       </div>
 
       <div className="flex gap-4 h-full">
-        {/* Left side - Payment details */}
+        {/* Left side - Payment list (moved from right) */}
+        <div className="w-1/2 overflow-y-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="border p-2 text-left">ID</th>
+                <th className="border p-2 text-left">Customer</th>
+                <th className="border p-2 text-left">Amount</th>
+                <th className="border p-2 text-left">Method</th>
+                <th className="border p-2 text-left">Status</th>
+                <th className="border p-2 text-left">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPayments.map((payment) => (
+                <tr
+                  key={payment.id}
+                  className={`cursor-pointer hover:bg-gray-100 ${
+                    selectedPayment?.id === payment.id ? "bg-blue-100" : ""
+                  }`}
+                  onClick={() => setSelectedPayment(payment)}
+                >
+                  <td className="border p-2">{payment.id}</td>
+                  <td className="border p-2">{payment.customer}</td>
+                  <td className="border p-2">₱{payment.amount}</td>
+                  <td className="border p-2">{payment.method}</td>
+                  <td className="border p-2">{payment.status}</td>
+                  <td className="border p-2">{payment.date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Right side - Payment details (moved from left) */}
         <div className="w-1/2 overflow-y-auto">
           {selectedPayment ? (
             <div className="bg-white p-4 rounded-lg shadow">
@@ -102,40 +136,6 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
               Select a payment to view details
             </div>
           )}
-        </div>
-
-        {/* Right side - Payment list */}
-        <div className="w-1/2 overflow-y-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="border p-2 text-left">ID</th>
-                <th className="border p-2 text-left">Customer</th>
-                <th className="border p-2 text-left">Amount</th>
-                <th className="border p-2 text-left">Method</th>
-                <th className="border p-2 text-left">Status</th>
-                <th className="border p-2 text-left">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPayments.map((payment) => (
-                <tr
-                  key={payment.id}
-                  className={`cursor-pointer hover:bg-gray-100 ${
-                    selectedPayment?.id === payment.id ? "bg-blue-100" : ""
-                  }`}
-                  onClick={() => setSelectedPayment(payment)}
-                >
-                  <td className="border p-2">{payment.id}</td>
-                  <td className="border p-2">{payment.customer}</td>
-                  <td className="border p-2">₱{payment.amount}</td>
-                  <td className="border p-2">{payment.method}</td>
-                  <td className="border p-2">{payment.status}</td>
-                  <td className="border p-2">{payment.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>

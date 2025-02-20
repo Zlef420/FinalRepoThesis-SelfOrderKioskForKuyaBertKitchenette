@@ -23,7 +23,7 @@ function Navigation() {
           <li
             key={item}
             onClick={() => setSelectedItem(item)} // Update selected item on click
-            className={`p-4 text-left cursor-pointer border border-white rounded ${
+            className={`p-4 text-left cursor-pointer border border-gray-400 rounded ${
               selectedItem === item
                 ? "bg-red-600 text-white" // Active item background red
                 : "hover:bg-red-500 text-white" // Hover dark red

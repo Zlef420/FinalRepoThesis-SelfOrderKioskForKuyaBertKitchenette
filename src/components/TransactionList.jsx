@@ -53,39 +53,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
       </div>
 
       <div className="flex gap-4 h-full">
-        {/* Left side - Transaction details */}
-        <div className="w-1/2 overflow-y-auto">
-          {selectedTransaction ? (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="border p-2 text-left">Name</th>
-                  <th className="border p-2 text-left">Price</th>
-                  <th className="border p-2 text-left">Qntty</th>
-                  <th className="border p-2 text-left">PStat</th>
-                  <th className="border p-2 text-left">PMthd</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedTransaction.items.map((item, index) => (
-                  <tr key={index}>
-                    <td className="border p-2">{item.name}</td>
-                    <td className="border p-2">{item.price}</td>
-                    <td className="border p-2">{item.quantity}</td>
-                    <td className="border p-2">{item.PStat}</td>
-                    <td className="border p-2">{item.PMthd}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="text-center text-gray-500 mt-4">
-              Select a transaction to view details
-            </div>
-          )}
-        </div>
-
-        {/* Right side - Transaction list */}
+        {/* Left side - Transaction list (moved from right) */}
         <div className="w-1/2 overflow-y-auto">
           <table className="w-full border-collapse">
             <thead>
@@ -115,6 +83,38 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Right side - Transaction details (moved from left) */}
+        <div className="w-1/2 overflow-y-auto">
+          {selectedTransaction ? (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="border p-2 text-left">Name</th>
+                  <th className="border p-2 text-left">Price</th>
+                  <th className="border p-2 text-left">Qntty</th>
+                  <th className="border p-2 text-left">PStat</th>
+                  <th className="border p-2 text-left">PMthd</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedTransaction.items.map((item, index) => (
+                  <tr key={index}>
+                    <td className="border p-2">{item.name}</td>
+                    <td className="border p-2">{item.price}</td>
+                    <td className="border p-2">{item.quantity}</td>
+                    <td className="border p-2">{item.PStat}</td>
+                    <td className="border p-2">{item.PMthd}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center text-gray-500 mt-4">
+              Select a transaction to view details
+            </div>
+          )}
         </div>
       </div>
     </div>
