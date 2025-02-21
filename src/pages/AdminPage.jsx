@@ -20,7 +20,7 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { logout, currentEmail } = useAuth();
   const navigate = useNavigate();
-  const [showLogoutModal, setShowLogoutModal] = useState(false); // New state for modal
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Logout function
   const handleLogout = () => {
@@ -114,7 +114,7 @@ const AdminDashboard = () => {
           <div className="mt-auto pb-4">
             <div
               className="p-4 cursor-pointer border rounded border-red-500 text-red-500 hover:bg-red-500 hover:text-white hover:border-white flex items-center gap-2 group"
-              onClick={() => setShowLogoutModal(true)} // Show modal instead of logging out directly
+              onClick={() => setShowLogoutModal(true)}
             >
               <LogOut
                 className="text-red-500 group-hover:text-white"
@@ -140,13 +140,13 @@ const AdminDashboard = () => {
             <p className="mb-6">Are you sure you want to log out?</p>
             <div className="flex justify-end gap-4">
               <button
-                onClick={() => setShowLogoutModal(false)} // Close modal, stay logged in
+                onClick={() => setShowLogoutModal(false)}
                 className="px-4 py-2 border rounded hover:bg-gray-100"
               >
                 Cancel
               </button>
               <button
-                onClick={handleLogout} // Log out and go to /
+                onClick={handleLogout}
                 className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
               >
                 Logout
