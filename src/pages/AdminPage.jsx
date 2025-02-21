@@ -12,10 +12,24 @@ import {
   Settings as SettingsIcon,
   LogOut,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext"; // For logout and currentEmail
+import { useNavigate } from "react-router-dom"; // For navigation
 
 const AdminDashboard = () => {
   const [activeView, setActiveView] = useState("menu");
   const [searchTerm, setSearchTerm] = useState("");
+  const { logout, currentEmail } = useAuth();
+  const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false); // New state for modal
+
+  // Logout function
+  const handleLogout = () => {
+    if (currentEmail) {
+      logout(currentEmail); // Erase user from tab’s diary
+      navigate("/"); // Go back to start page
+    }
+    setShowLogoutModal(false); // Close the modal
+  };
 
   const renderActiveView = () => {
     switch (activeView) {
@@ -98,11 +112,9 @@ const AdminDashboard = () => {
 
           {/* Log-Out pushed to bottom with slight space */}
           <div className="mt-auto pb-4">
-            {" "}
-            {/* Added pb-4 for bottom padding */}
             <div
-              className="p-4 cursor-pointer border rounded border-red-500 text-red-500 hover:bg-red-500 
-                        hover:text-white hover:border-white flex items-center gap-2 group"
+              className="p-4 cursor-pointer border rounded border-red-500 text-red-500 hover:bg-red-500 hover:text-white hover:border-white flex items-center gap-2 group"
+              onClick={() => setShowLogoutModal(true)} // Show modal instead of logging out directly
             >
               <LogOut
                 className="text-red-500 group-hover:text-white"
@@ -119,6 +131,30 @@ const AdminDashboard = () => {
       </div>
 
       <Footer />
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-80">
+            <h3 className="text-lg font-medium mb-4">Confirm Logout</h3>
+            <p className="mb-6">Are you sure you want to log out?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowLogoutModal(false)} // Close modal, stay logged in
+                className="px-4 py-2 border rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout} // Log out and go to /
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

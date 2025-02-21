@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext"; // Import useAuth
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const CashierScreen = () => {
   const [transactions] = useState([
@@ -29,6 +31,9 @@ const CashierScreen = () => {
   const [cashAmount, setCashAmount] = useState("500");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  const { logout, currentEmail } = useAuth(); // Get logout and currentEmail
+  const navigate = useNavigate(); // Get navigation tool
+
   const handleTransactionClick = (transaction) => {
     setSelectedTransaction(transaction);
   };
@@ -39,10 +44,11 @@ const CashierScreen = () => {
   };
 
   const handleLogout = () => {
-    // Implement actual logout logic here
-    console.log("Logging out...");
-    setShowLogoutModal(false);
-    // Redirect to login page or perform other logout actions
+    if (currentEmail) {
+      logout(currentEmail); // Erase this user from the tab’s diary
+      navigate("/"); // Go back to the start page
+    }
+    setShowLogoutModal(false); // Close the modal
   };
 
   return (
@@ -177,7 +183,7 @@ const CashierScreen = () => {
                 Cancel
               </button>
               <button
-                onClick={handleLogout}
+                onClick={handleLogout} // Already connected to logout logic
                 className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
               >
                 Logout

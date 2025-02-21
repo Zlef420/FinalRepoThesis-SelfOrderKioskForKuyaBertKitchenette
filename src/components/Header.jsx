@@ -1,14 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { HelpCircle, LogIn, LogOut } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { HelpCircle, LogIn } from "lucide-react";
 import HowItWorks from "./HowItWorks";
 import LoginForm from "./LoginForm";
 import clickSound from "../assets/notifsound.mp3";
 
 function Header() {
   const navigate = useNavigate();
-  const { isAuthenticated, userRole, logout } = useAuth();
   const [isHowItWorksVisible, setIsHowItWorksVisible] = useState(false);
   const [isLoginFormVisible, setIsLoginFormVisible] = useState(false);
 
@@ -17,10 +15,9 @@ function Header() {
     audio.play();
   };
 
-  const handleLogout = () => {
+  const handleLoginClick = () => {
     playSound();
-    logout();
-    navigate("/");
+    setIsLoginFormVisible(true);
   };
 
   return (
@@ -41,27 +38,13 @@ function Header() {
             How it works
           </button>
 
-          {isAuthenticated ? (
-            <button
-              className="hover:text-gray-300 flex items-center"
-              onClick={handleLogout}
-              title={`Logged in as ${userRole}`}
-            >
-              <LogOut className="size-6 mr-1" />
-              Logout ({userRole})
-            </button>
-          ) : (
-            <button
-              className="hover:text-gray-300 flex items-center"
-              onClick={() => {
-                playSound();
-                setIsLoginFormVisible(true);
-              }}
-            >
-              <LogIn className="size-6 mr-1" />
-              Login
-            </button>
-          )}
+          <button
+            className="hover:text-gray-300 flex items-center"
+            onClick={handleLoginClick}
+          >
+            <LogIn className="size-6 mr-1" />
+            Login
+          </button>
         </div>
       </header>
 
