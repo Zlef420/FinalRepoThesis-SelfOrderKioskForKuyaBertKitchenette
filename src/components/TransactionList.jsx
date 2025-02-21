@@ -68,7 +68,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
               {filteredTransactions.map((transaction) => (
                 <tr
                   key={transaction.ORN}
-                  className={`cursor-pointer hover:bg-gray-100 ${
+                  className={`cursor-pointer hover:bg-gray-200 ${
                     selectedTransaction?.ORN === transaction.ORN
                       ? "bg-blue-100"
                       : ""

@@ -68,7 +68,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
               {filteredPayments.map((payment) => (
                 <tr
                   key={payment.id}
-                  className={`cursor-pointer hover:bg-gray-100 ${
+                  className={`cursor-pointer hover:bg-gray-200 ${
                     selectedPayment?.id === payment.id ? "bg-blue-100" : ""
                   }`}
                   onClick={() => setSelectedPayment(payment)}

@@ -84,12 +84,12 @@ const Settings = () => {
   };
 
   return (
-    <div className="h-screen grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-      {/* Left Column - Account Management */}
-      <div className="space-y-4">
-        <div className="bg-white p-6 rounded-lg shadow-sm h-full">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-6 p-4 pt-0">
+        {/* Left Column - Account Management Form */}
+        <div className="bg-white p-6 rounded-lg shadow-sm h-fit">
           <h2 className="text-xl font-semibold mb-4">Account Management</h2>
-          <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 mb-6">
+          <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
             <div>
               <label className="block mb-1 text-sm font-medium">
                 Username:
@@ -160,7 +160,7 @@ const Settings = () => {
                 required
               />
             </div>
-            <div className="col-span-2">
+            <div className="col-span-2 mt-4">
               <button
                 type="submit"
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -169,12 +169,16 @@ const Settings = () => {
               </button>
             </div>
           </form>
+        </div>
 
-          <div className="mt-4">
+        {/* Right Column - Two Sections */}
+        <div className="flex flex-col space-y-6">
+          {/* Existing Accounts Section */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold mb-4">Existing Accounts</h3>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-48">
               <table className="w-full border-collapse">
-                <thead>
+                <thead className="sticky top-0 bg-white">
                   <tr>
                     <th className="border p-2 text-left">Username</th>
                     <th className="border p-2 text-left">Email</th>
@@ -208,60 +212,58 @@ const Settings = () => {
               </table>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Right Column - Advertisement Images */}
-      <div className="space-y-4">
-        <div className="bg-white p-6 rounded-lg shadow-sm h-full">
-          <h2 className="text-xl font-semibold mb-4">Advertisement Images</h2>
-          <p className="mb-4 text-gray-600">
-            Upload up to 3 images for your intro page.
-          </p>
-          <div className="grid grid-cols-3 gap-4">
-            {uploadedImages.map((img) => (
-              <div
-                key={img.id}
-                className="relative flex flex-col items-center border-2 border-dashed border-gray-300 rounded-lg p-4"
-              >
-                {!img.image ? (
-                  <label className="cursor-pointer flex flex-col items-center">
-                    <span className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                      Choose Image
-                    </span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => handleImageChange(e, img.id)}
-                    />
-                  </label>
-                ) : (
-                  <>
-                    <div className="w-full aspect-video">
-                      <img
-                        src={img.image}
-                        alt="Advertisement preview"
-                        className="rounded-lg object-cover w-full h-full"
+          {/* Advertisement Images Section */}
+          <div className="bg-white p-6 rounded-lg shadow-sm py-0">
+            <h2 className="text-xl font-semibold mb-4">Advertisement Images</h2>
+            <p className="mb-4 text-gray-600">
+              Upload up to 3 images for your intro page.
+            </p>
+            <div className="grid grid-cols-3 gap-4">
+              {uploadedImages.map((img) => (
+                <div
+                  key={img.id}
+                  className="relative flex flex-col items-center border-2 border-dashed border-gray-300 rounded-lg p-4"
+                >
+                  {!img.image ? (
+                    <label className="cursor-pointer flex flex-col items-center">
+                      <span className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Choose Image
+                      </span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => handleImageChange(e, img.id)}
                       />
-                    </div>
-                    <button
-                      className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                      onClick={() => removeImage(img.id)}
-                    >
-                      Remove
-                    </button>
-                  </>
-                )}
-              </div>
-            ))}
+                    </label>
+                  ) : (
+                    <>
+                      <div className="w-full aspect-video">
+                        <img
+                          src={img.image}
+                          alt="Advertisement preview"
+                          className="rounded-lg object-cover w-full h-full"
+                        />
+                      </div>
+                      <button
+                        className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                        onClick={() => removeImage(img.id)}
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-4 rounded-lg w-80">
             <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
             <p className="mb-4">
