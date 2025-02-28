@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { useAuth } from "../context/AuthContext"; // Import useAuth
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Search, DollarSign, ArrowLeftRight, Printer } from "lucide-react";
 
 const CashierScreen = () => {
   const [transactions] = useState([
@@ -31,8 +32,8 @@ const CashierScreen = () => {
   const [cashAmount, setCashAmount] = useState("500");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const { logout, currentEmail } = useAuth(); // Get logout and currentEmail
-  const navigate = useNavigate(); // Get navigation tool
+  const { logout, currentEmail } = useAuth();
+  const navigate = useNavigate();
 
   const handleTransactionClick = (transaction) => {
     setSelectedTransaction(transaction);
@@ -45,10 +46,10 @@ const CashierScreen = () => {
 
   const handleLogout = () => {
     if (currentEmail) {
-      logout(currentEmail); // Erase this user from the tab’s diary
-      navigate("/"); // Go back to the start page
+      logout(currentEmail);
+      navigate("/");
     }
-    setShowLogoutModal(false); // Close the modal
+    setShowLogoutModal(false);
   };
 
   return (
@@ -60,12 +61,15 @@ const CashierScreen = () => {
           {/* Left Side - Transactions List */}
           <div className="w-1/2 flex flex-col">
             <div className="bg-white rounded-lg shadow p-4 flex-1 mb-16">
-              <div className="mb-4">
+              <div className="mb-4 relative">
                 <input
                   type="text"
                   placeholder="Search"
-                  className="w-full p-2 border rounded bg-gray-100"
+                  className="w-full p-2 pl-2 pr-10 border rounded bg-gray-100"
                 />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <Search size={18} className="text-gray-400" />
+                </div>
               </div>
 
               <div className="overflow-y-auto max-h-[calc(100vh-350px)]">
@@ -143,7 +147,7 @@ const CashierScreen = () => {
 
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">💵 Cash</span>
+                    <span className="flex items-center text-lg">₱ Cash</span>
                     <input
                       type="number"
                       value={cashAmount}
@@ -154,12 +158,14 @@ const CashierScreen = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🔄 Change</span>
+                  <span className="flex items-center text-lg">
+                    <ArrowLeftRight size={18} className="mr-1" /> Change
+                  </span>
                   <span className="text-xl">₱{calculateChange()}</span>
                 </div>
 
-                <button className="w-full bg-customOrange hover:bg-orange-600 p-2 rounded">
-                  Print
+                <button className="w-full bg-customOrange hover:bg-orange-600 p-2 rounded flex items-center justify-center">
+                  <Printer size={16} className="mr-1" /> Print
                 </button>
               </div>
             </div>
@@ -183,7 +189,7 @@ const CashierScreen = () => {
                 Cancel
               </button>
               <button
-                onClick={handleLogout} // Already connected to logout logic
+                onClick={handleLogout}
                 className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
               >
                 Logout

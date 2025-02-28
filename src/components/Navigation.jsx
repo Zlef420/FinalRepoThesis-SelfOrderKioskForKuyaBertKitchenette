@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { X } from "lucide-react";
 
-function Navigation() {
+function Navigation({ onItemClick }) {
   // State to track the selected menu item
   const [selectedItem, setSelectedItem] = useState("All Menu"); // "All Menu" active by default
+  const navRef = useRef(null);
 
   // Menu items
   const menuItems = [
@@ -16,23 +18,45 @@ function Navigation() {
     "Group Meals",
   ];
 
+  // Handle item selection
+  const handleItemClick = (item) => {
+    setSelectedItem(item);
+    if (onItemClick) onItemClick();
+  };
+
   return (
-    <nav className="w-1/6 bg-gray-800 text-white pt-1.5">
-      <ul className="space-y-1.5 p-0">
-        {menuItems.map((item) => (
-          <li
-            key={item}
-            onClick={() => setSelectedItem(item)} // Update selected item on click
-            className={`p-4 text-left cursor-pointer border border-gray-400 rounded ${
-              selectedItem === item
-                ? "bg-red-600 text-white" // Active item background red
-                : "hover:bg-red-500 text-white" // Hover dark red
-            }`}
-          >
-            {item}
-          </li>
-        ))}
-      </ul>
+    <nav className="w-full h-full bg-gray-800 text-white flex flex-col">
+      {/* Close button - mobile only */}
+      <div className="md:hidden flex justify-end p-2">
+        <button className="p-1 text-white" onClick={onItemClick}>
+          <X size={24} />
+        </button>
+      </div>
+      {/* Menu items */}
+      <div
+        ref={navRef}
+        className="flex-1 overflow-y-auto p-2"
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "#4B5563 #1F2937",
+        }}
+      >
+        <ul className="max-w-sm sm:max-w-md md:max-w-lg w-full mx-auto space-y-2">
+          {menuItems.map((item) => (
+            <li
+              key={item}
+              onClick={() => handleItemClick(item)}
+              className={`p-3 text-left cursor-pointer border border-gray-400 rounded text-sm sm:text-base transition ${
+                selectedItem === item
+                  ? "bg-red-600 text-white"
+                  : "hover:bg-red-500 text-white"
+              }`}
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
     </nav>
   );
 }

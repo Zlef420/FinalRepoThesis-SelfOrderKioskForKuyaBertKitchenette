@@ -18,6 +18,20 @@ const LoginForm = ({ onClose }) => {
     cashier: { email: "cashier@example.com", password: "cashier123" },
   };
 
+  // Handle Escape key press to close the form
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Login attempt:", { role, email });

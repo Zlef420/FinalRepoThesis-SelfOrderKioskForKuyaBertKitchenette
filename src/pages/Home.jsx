@@ -5,6 +5,7 @@ import Navigation from "../components/Navigation";
 import OrderSummary from "../components/OrderSummary";
 import MenuCard from "../components/MenuCard";
 import { CartContext } from "../context/CartContext";
+import { Menu, ShoppingCart } from "lucide-react";
 
 const menuItems = [
   { id: 1, name: "Sisig", price: 99 },
@@ -18,21 +19,70 @@ const menuItems = [
 function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const { cartItems, addToCart, deleteItem } = useContext(CartContext);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Filter menu items based on search input
   const filteredItems = menuItems.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Calculate total items in cart for the badge
+  const totalCartItems = cartItems.reduce(
+    (total, item) => total + (item.quantity || 1),
+    0
+  );
+
+  // Toggle functions for mobile view
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+    if (isCartOpen) setIsCartOpen(false);
+  };
+
+  const toggleCart = () => {
+    setIsCartOpen(!isCartOpen);
+    if (isSidebarOpen) setIsSidebarOpen(false);
+  };
+
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
       <Header />
 
+      {/* Mobile Navigation Controls */}
+      <div className="md:hidden flex justify-between items-center px-4 py-2 bg-gray-900 shadow-md">
+        <button
+          onClick={toggleSidebar}
+          className="p-2 rounded-md text-gray-100 hover:text-gray-300"
+        >
+          <Menu size={24} />
+        </button>
+        <button
+          onClick={toggleCart}
+          className="p-2 rounded-md text-gray-100 hover:text-gray-300 relative"
+        >
+          <ShoppingCart size={24} />
+          {totalCartItems > 0 && (
+            <span className="absolute -top-1 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+              {totalCartItems}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Navigation */}
-        <Navigation />
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Navigation - Hidden on mobile, toggled with burger menu */}
+        <div
+          className={`absolute md:relative md:block z-30 w-64 md:w-auto md:flex-shrink-0
+             h-full transition-transform duration-300 transform ${
+               isSidebarOpen
+                 ? "translate-x-0"
+                 : "-translate-x-full md:translate-x-0"
+             }`}
+        >
+          <Navigation onItemClick={() => setIsSidebarOpen(false)} />
+        </div>
 
         {/* Main Section */}
         <div className="flex-1 overflow-y-scroll pb-4 bg-gray-100">
@@ -70,8 +120,34 @@ function Home() {
             )}
           </div>
         </div>
-        {/* Order Summary */}
-        <OrderSummary cartItems={cartItems} onDeleteItem={deleteItem} />
+
+        {/* Order Summary - Hidden on mobile, toggled with cart icon */}
+        <div
+          className={`absolute md:relative md:block right-0 top-0 z-30 w-3/4 sm:w-2/3 md:w-auto md:flex-shrink-0 h-full transition-transform duration-300 transform ${
+            isCartOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
+          }`}
+        >
+          <OrderSummary
+            cartItems={cartItems}
+            onDeleteItem={deleteItem}
+            onCloseCart={() => setIsCartOpen(false)}
+            // Pass the cart open state to OrderSummary
+            isCartOpen={isCartOpen}
+            // Don't let OrderSummary control its own visibility
+            controlledByParent={true}
+          />
+        </div>
+
+        {/* Overlay for mobile when sidebar or cart is open */}
+        {(isSidebarOpen || isCartOpen) && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+            onClick={() => {
+              setIsSidebarOpen(false);
+              setIsCartOpen(false);
+            }}
+          />
+        )}
       </div>
 
       {/* Footer */}
