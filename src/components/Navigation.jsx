@@ -6,7 +6,7 @@ function Navigation({ onItemClick }) {
   const [selectedItem, setSelectedItem] = useState("All Menu"); // "All Menu" active by default
   const navRef = useRef(null);
 
-  // Menu items
+  // Menu items (keeping original names, no icons)
   const menuItems = [
     "All Menu",
     "Affordameals",
@@ -25,7 +25,12 @@ function Navigation({ onItemClick }) {
   };
 
   return (
-    <nav className="w-full h-full bg-gray-800 text-white flex flex-col">
+    <nav
+      className="w-48 h-full bg-gray-800 text-white flex flex-col border-r border-gray-700"
+      style={{
+        backgroundColor: "#1F2937", // Navy blue background
+      }}
+    >
       {/* Close button - mobile only */}
       <div className="md:hidden flex justify-end p-2">
         <button className="p-1 text-white" onClick={onItemClick}>
@@ -41,7 +46,7 @@ function Navigation({ onItemClick }) {
           scrollbarColor: "#4B5563 #1F2937",
         }}
       >
-        <ul className="max-w-sm sm:max-w-md md:max-w-lg w-full mx-auto space-y-2">
+        <ul className="space-y-2">
           {menuItems.map((item) => (
             <li
               key={item}

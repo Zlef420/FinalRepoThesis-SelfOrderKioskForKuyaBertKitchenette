@@ -1,105 +1,43 @@
 import React, { useState } from "react";
+import {
+  ClipboardList,
+  Settings,
+  ShoppingCart,
+  CreditCard,
+  CheckSquare,
+  X,
+} from "lucide-react";
 
 const steps = [
   {
     title: "Select Your Items",
     description:
       "Browse our digital menu and tap on items you'd like to order. You can customize your selections and choose quantities easily.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-        />
-      </svg>
-    ),
+    icon: <ClipboardList className="w-6 h-6" />,
   },
   {
     title: "Customize Your Order",
     description:
       "Add special instructions, modify ingredients, or choose size options. Make your order exactly how you like it!",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-        />
-      </svg>
-    ),
+    icon: <Settings className="w-6 h-6" />,
   },
   {
     title: "Review Your Cart",
     description:
       "Check your selected items, quantities, and total price. You can easily add or remove items before proceeding to payment.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-        />
-      </svg>
-    ),
+    icon: <ShoppingCart className="w-6 h-6" />,
   },
   {
     title: "Make Payment",
     description:
       "Choose your preferred payment method - credit card, debit card, or mobile payment. Follow the on-screen instructions to complete your purchase securely.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-        />
-      </svg>
-    ),
+    icon: <CreditCard className="w-6 h-6" />,
   },
   {
     title: "Get Your Order Number",
     description:
       "Once payment is complete, you'll receive an order number. Keep an eye on the display screen to know when your order is ready for pickup.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-        />
-      </svg>
-    ),
+    icon: <CheckSquare className="w-6 h-6" />,
   },
 ];
 
@@ -128,19 +66,7 @@ const HowItWorks = ({ isVisible, onClose }) => {
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
         >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <X className="w-6 h-6" />
         </button>
 
         {/* Header */}

@@ -1,12 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, ArrowLeftRight, Printer } from "lucide-react";
+import {
+  Search,
+  RefreshCw,
+  DollarSign,
+  ArrowLeftRight,
+  Printer,
+} from "lucide-react";
 
 const CashierScreen = () => {
-  const [transactions] = useState([
+  const [allTransactions] = useState([
     {
       ORN: "420",
       TAmount: 396,
@@ -28,12 +34,35 @@ const CashierScreen = () => {
     },
   ]);
 
+  const [transactions, setTransactions] = useState(allTransactions);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [cashAmount, setCashAmount] = useState("500");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const printRef = useRef();
 
   const { logout, currentEmail } = useAuth();
   const navigate = useNavigate();
+
+  // Handle live search
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setTransactions(allTransactions);
+    } else {
+      const filteredTransactions = allTransactions.filter(
+        (transaction) =>
+          transaction.ORN.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          transaction.RefNum.toLowerCase().includes(
+            searchQuery.toLowerCase()
+          ) ||
+          transaction.PaymentStat.toLowerCase().includes(
+            searchQuery.toLowerCase()
+          ) ||
+          transaction.TAmount.toString().includes(searchQuery)
+      );
+      setTransactions(filteredTransactions);
+    }
+  }, [searchQuery, allTransactions]);
 
   const handleTransactionClick = (transaction) => {
     setSelectedTransaction(transaction);
@@ -52,19 +81,76 @@ const CashierScreen = () => {
     setShowLogoutModal(false);
   };
 
+  const handleRefresh = () => {
+    setSearchQuery("");
+    setTransactions(allTransactions);
+    setSelectedTransaction(null);
+    setCashAmount("500");
+  };
+
+  const handlePrint = () => {
+    if (!selectedTransaction) return;
+
+    const receipt = `
+      ===== KUYA BERT RECEIPT =====
+      Order #: ${selectedTransaction.ORN}
+      Reference: ${selectedTransaction.RefNum}
+      Status: ${selectedTransaction.PaymentStat}
+      
+      ITEMS:
+      ${selectedTransaction.items
+        .map(
+          (item) =>
+            `${item.name.padEnd(15)} ${item.quantity}x ₱${item.price} = ₱${
+              item.total
+            }`
+        )
+        .join("\n")}
+      
+      TOTAL: ₱${selectedTransaction.TAmount}
+      CASH: ₱${cashAmount}
+      CHANGE: ₱${calculateChange()}
+      
+      Thank you for your order!
+      ${new Date().toLocaleString()}
+    `;
+
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Receipt #${selectedTransaction.ORN}</title>
+          <style>
+            body { font-family: monospace; margin: 30px; }
+            pre { white-space: pre-wrap; }
+          </style>
+        </head>
+        <body>
+          <pre>${receipt}</pre>
+          <script>
+            window.onload = function() { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="h-screen flex flex-col relative overflow-hidden">
       <Header />
 
       <div className="flex-1 flex flex-col p-4 gap-4 bg-gray-100">
-        <div className="flex gap-4 flex-1">
+        <div className="flex gap-4 flex-1 overflow-hidden">
           {/* Left Side - Transactions List */}
-          <div className="w-1/2 flex flex-col">
-            <div className="bg-white rounded-lg shadow p-4 flex-1 mb-16">
+          <div className="w-2/5 flex flex-col">
+            <div className="bg-white rounded-lg shadow p-4 flex-1 overflow-hidden flex flex-col">
               <div className="mb-4 relative">
                 <input
                   type="text"
                   placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full p-2 pl-2 pr-10 border rounded bg-gray-100"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -72,9 +158,9 @@ const CashierScreen = () => {
                 </div>
               </div>
 
-              <div className="overflow-y-auto max-h-[calc(100vh-350px)]">
+              <div className="overflow-y-auto flex-1">
                 <table className="w-full">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-gray-100 sticky top-0 z-10">
                     <tr>
                       <th className="p-2 text-left">ORN</th>
                       <th className="p-2 text-left">TAmount</th>
@@ -104,38 +190,58 @@ const CashierScreen = () => {
               </div>
             </div>
 
-            {/* Logout Button */}
-            <button
-              onClick={() => setShowLogoutModal(true)}
-              className="absolute bottom-16 left-4 bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded"
-            >
-              Log-out
-            </button>
+            {/* Logout and Refresh Buttons at the Bottom of the Container */}
+            <div className="mt-4 flex justify-between px-4">
+              <button
+                onClick={() => setShowLogoutModal(true)}
+                className="bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded"
+              >
+                Log-out
+              </button>
+              <button
+                onClick={handleRefresh}
+                className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded flex items-center"
+              >
+                <RefreshCw size={20} />
+                <span className="ml-2">Refresh</span>
+              </button>
+            </div>
           </div>
 
           {/* Right Side - Order Details and Payment Section */}
-          <div className="w-1/2 flex flex-col gap-4">
-            <div className="bg-white rounded-lg shadow p-4 flex-1">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Name</th>
-                    <th className="text-left p-2">Price</th>
-                    <th className="text-left p-2">Quantity</th>
-                    <th className="text-left p-2">Total Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedTransaction?.items.map((item, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="p-2">{item.name}</td>
-                      <td className="p-2">{item.price}</td>
-                      <td className="p-2">{item.quantity}</td>
-                      <td className="p-2">{item.total}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="w-3/5 flex flex-col gap-4">
+            <div className="bg-white rounded-lg shadow p-4 flex-1 overflow-hidden flex flex-col">
+              {selectedTransaction ? (
+                <div ref={printRef} className="overflow-y-auto flex-1">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2">Name</th>
+                        <th className="text-left p-2">Price</th>
+                        <th className="text-left p-2">Quantity</th>
+                        <th className="text-left p-2">Total Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedTransaction.items.map((item, index) => (
+                        <tr key={index} className="border-b">
+                          <td className="p-2">{item.name}</td>
+                          <td className="p-2">{item.price}</td>
+                          <td className="p-2">{item.quantity}</td>
+                          <td className="p-2">{item.total}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center text-gray-500">
+                    <p className="text-lg mb-2">No order selected</p>
+                    <p>Click on an order from the list to view details</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Payment Section */}
@@ -164,7 +270,15 @@ const CashierScreen = () => {
                   <span className="text-xl">₱{calculateChange()}</span>
                 </div>
 
-                <button className="w-full bg-customOrange hover:bg-orange-600 p-2 rounded flex items-center justify-center">
+                <button
+                  onClick={handlePrint}
+                  disabled={!selectedTransaction}
+                  className={`w-full p-2 rounded flex items-center justify-center ${
+                    selectedTransaction
+                      ? "bg-customOrange hover:bg-orange-600"
+                      : "bg-gray-300 cursor-not-allowed"
+                  }`}
+                >
                   <Printer size={16} className="mr-1" /> Print
                 </button>
               </div>

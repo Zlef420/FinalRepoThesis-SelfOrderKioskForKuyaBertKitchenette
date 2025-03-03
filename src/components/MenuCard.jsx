@@ -10,7 +10,7 @@ function MenuCard({ name, price, onAddToCart }) {
     // Reset the animation after it completes
     setTimeout(() => {
       setIsScaling(false);
-    }, 200); // Match this with the animation duration
+    }, 200);
   };
 
   return (

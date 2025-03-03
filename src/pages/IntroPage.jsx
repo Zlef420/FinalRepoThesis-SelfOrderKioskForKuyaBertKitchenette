@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate from react-router-dom
+import { CircleChevronLeft, CircleChevronRight } from "lucide-react"; // Import Lucide icons
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useSharedState } from "../context/SharedStateContext"; // Import shared state
@@ -56,39 +57,13 @@ function IntroPage() {
           onClick={goToPrevious}
           className="absolute left-4 sm:left-6 md:left-8 lg:left-10 bg-transparent border-black px-0 py-0 rounded-full hover:bg-[#d94e1e] transition"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="size-8 sm:size-10 md:size-12"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-            />
-          </svg>
+          <CircleChevronLeft className="size-8 sm:size-10 md:size-12" />
         </button>
         <button
           onClick={goToNext}
           className="absolute right-4 sm:right-6 md:right-8 lg:right-10 bg-transparent border-black rounded-full hover:bg-[#d94e1e] transition"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="size-8 sm:size-10 md:size-12"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-            />
-          </svg>
+          <CircleChevronRight className="size-8 sm:size-10 md:size-12" />
         </button>
       </div>
       <div className="flex justify-center -mt-3">
