@@ -91,10 +91,8 @@ function OrderSummary({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showRemoveAllModal, setShowRemoveAllModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-  // Only use internal state when not controlled by parent
   const [internalCartOpen, setInternalCartOpen] = useState(false);
 
-  // Use the appropriate cart open state
   const effectiveCartOpen = controlledByParent ? isCartOpen : internalCartOpen;
 
   const subtotal = cartItems.reduce(
@@ -107,7 +105,6 @@ function OrderSummary({
     0
   );
 
-  // Event Handlers
   const handleDeleteClick = (itemId) => {
     setItemToDelete(itemId);
     setShowDeleteModal(true);
@@ -127,7 +124,6 @@ function OrderSummary({
   };
 
   const handleGoToPayment = () => {
-    // Save current cart items and dining option before navigating
     localStorage.setItem("cartItems", JSON.stringify(cartItems));
     localStorage.setItem("diningOption", selectedOption);
     navigate("/review-order");
@@ -141,12 +137,10 @@ function OrderSummary({
     }
   };
 
-  // Only render the mobile cart button if not controlled by parent
   const renderMobileCartButton = !controlledByParent;
 
   return (
     <>
-      {/* Mobile Cart Button - Only show when NOT controlled by parent component */}
       {renderMobileCartButton && (
         <button
           className="fixed top-4 right-4 z-50 p-2 rounded-md bg-red-600 text-white md:hidden flex items-center justify-center"
@@ -161,7 +155,6 @@ function OrderSummary({
         </button>
       )}
 
-      {/* Order Summary Panel */}
       <div
         className={`fixed md:static top-0 right-0 z-40 w-3/4 sm:w-2/3 md:w-1/5 min-w-[250px] bg-gray-900 text-white px-2 sm:px-3 md:px-4 flex flex-col h-full transition-transform duration-300 transform ${
           effectiveCartOpen
@@ -169,7 +162,6 @@ function OrderSummary({
             : "translate-x-full md:translate-x-0"
         }`}
       >
-        {/* Close button for mobile */}
         <button
           className="absolute top-2 right-6 p-0 text-white md:hidden rounded bg-red-500 hover:bg-red-600"
           onClick={handleCloseCart}
@@ -177,7 +169,6 @@ function OrderSummary({
           <X size={20} />
         </button>
 
-        {/* Order Header */}
         <div className="pt-6 md:pt-0">
           <h2 className="text-base sm:text-lg font-bold text-center pt-2">
             Order #{orderNumber}
@@ -197,7 +188,6 @@ function OrderSummary({
           <hr className="border-gray-700 my-3 sm:my-4" />
         </div>
 
-        {/* Order List or Empty Cart Message */}
         <div className="overflow-y-auto flex-grow -mt-2">
           {cartItems.length > 0 ? (
             <ul>
@@ -220,7 +210,6 @@ function OrderSummary({
           )}
         </div>
 
-        {/* Remove All Button */}
         {cartItems.length > 0 && (
           <div className="mt-1 -mb-2">
             <button
@@ -234,7 +223,6 @@ function OrderSummary({
           </div>
         )}
 
-        {/* Footer */}
         <div className="mt-auto pb-2 sm:pb-3">
           <hr className="border-gray-700 my-3 sm:my-4" />
           <div className="flex justify-between font-bold text-base sm:text-lg">
@@ -255,7 +243,6 @@ function OrderSummary({
         </div>
       </div>
 
-      {/* Overlay for mobile - Only add when NOT controlled by parent */}
       {!controlledByParent && effectiveCartOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
@@ -263,7 +250,6 @@ function OrderSummary({
         />
       )}
 
-      {/* Modals */}
       {showDeleteModal && (
         <DeleteModal
           title="Confirm Delete"

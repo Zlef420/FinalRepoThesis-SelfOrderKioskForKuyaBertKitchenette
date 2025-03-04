@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react"; // ADDED: useContext
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
@@ -11,10 +11,14 @@ import {
   AlertCircle,
   X,
 } from "lucide-react";
+// ADDED: Import CartContext
+import { CartContext } from "../context/CartContext";
 
 // OrderReview component: displays and manages the user's order before payment
 const OrderReview = () => {
   const navigate = useNavigate();
+  // ADDED: Get CartContext data
+  const { cartItems, deleteItem, addToCart } = useContext(CartContext);
 
   // State for dining option (e.g., "Dine In" or "Take Out")
   const [selectedOption, setSelectedOption] = useState(() => {
@@ -49,6 +53,11 @@ const OrderReview = () => {
     localStorage.setItem("diningOption", selectedOption);
   }, [items, selectedOption]);
 
+  // ADDED: Sync local items with CartContext cartItems on mount and when cartItems changes
+  useEffect(() => {
+    setItems(cartItems);
+  }, [cartItems]);
+
   // Update item quantity
   const updateQuantity = (e, id, increment) => {
     e.stopPropagation();
@@ -59,6 +68,13 @@ const OrderReview = () => {
           : item
       )
     );
+    // ADDED: Sync with CartContext
+    if (increment > 0) {
+      const item = items.find((i) => i.id === id);
+      addToCart({ ...item, quantity: 1 });
+    } else {
+      deleteItem(id); // Remove one instance
+    }
   };
 
   // Toggle item details expansion
@@ -129,9 +145,11 @@ const OrderReview = () => {
   };
 
   // Delete a single item from the cart
-  const deleteItem = () => {
+  const deleteItemLocal = () => {
+    // Renamed to avoid conflict with CartContext deleteItem
     if (itemToDelete !== null) {
       setItems(items.filter((item) => item.id !== itemToDelete));
+      deleteItem(itemToDelete); // ADDED: Sync with CartContext
       setShowDeleteItemModal(false);
       setItemToDelete(null);
     }
@@ -145,6 +163,7 @@ const OrderReview = () => {
   // Delete all items from the cart
   const deleteAllItems = () => {
     setItems([]);
+    cartItems.forEach((item) => deleteItem(item.id)); // ADDED: Sync with CartContext
     setShowDeleteAllModal(false);
   };
 
@@ -511,7 +530,7 @@ const OrderReview = () => {
         show={showDeleteItemModal}
         title="Remove Item"
         message="Are you sure you want to remove this item from your cart?"
-        onConfirm={deleteItem}
+        onConfirm={deleteItemLocal} // Updated to use local function name
         onCancel={() => setShowDeleteItemModal(false)}
       />
 

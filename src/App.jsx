@@ -1,4 +1,3 @@
-// App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
@@ -6,7 +5,6 @@ import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./context/ProtectedRoute";
 
-// Pages
 import IntroPage from "./pages/IntroPage";
 import ReviewOrder from "./pages/ReviewOrder";
 import CashierScreen from "./pages/CashierScreen";
