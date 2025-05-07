@@ -9,6 +9,7 @@ import {
   DollarSign,
   ArrowLeftRight,
   Printer,
+  X,
 } from "lucide-react";
 
 // ----- Printable Receipt Component (Adapted from OrderConfirmation) -----
@@ -237,6 +238,7 @@ const CashierScreen = () => {
       TAmount: 436.0,
       RefNum: "A7B9D2P",
       PaymentStat: "Pending",
+      OrderStatus: "Waiting",
       items: [
         { name: "Sisig", price: 99, quantity: 1, total: 99.0 },
         { name: "Carbonara", price: 99, quantity: 1, total: 99.0 },
@@ -244,12 +246,13 @@ const CashierScreen = () => {
         { name: "Lemon Juice", price: 99, quantity: 1, total: 99.0 },
         { name: "Extra Rice", price: 20, quantity: 2, total: 40.0 },
       ],
-    }, // Adjusted total
+    },
     {
       ORN: "419",
       TAmount: 123.0,
       RefNum: "B7B9D2P",
       PaymentStat: "Paid",
+      OrderStatus: "Done",
       items: [{ name: "Sisig", price: 123, quantity: 1, total: 123.0 }],
     },
     {
@@ -257,6 +260,7 @@ const CashierScreen = () => {
       TAmount: 198.0,
       RefNum: "C8C0E3Q",
       PaymentStat: "Pending",
+      OrderStatus: "Waiting",
       items: [{ name: "Adobo", price: 99, quantity: 2, total: 198.0 }],
     },
     {
@@ -264,6 +268,7 @@ const CashierScreen = () => {
       TAmount: 250.5,
       RefNum: "D9D1F4R",
       PaymentStat: "Pending",
+      OrderStatus: "In Progress",
       items: [
         { name: "Burger Steak", price: 120, quantity: 1, total: 120.0 },
         { name: "Fries", price: 80.5, quantity: 1, total: 80.5 },
@@ -275,6 +280,7 @@ const CashierScreen = () => {
       TAmount: 99.0,
       RefNum: "E0E2G5S",
       PaymentStat: "Paid",
+      OrderStatus: "Done",
       items: [{ name: "Spaghetti", price: 99, quantity: 1, total: 99.0 }],
     },
     {
@@ -282,6 +288,7 @@ const CashierScreen = () => {
       TAmount: 150.0,
       RefNum: "F1F3H6T",
       PaymentStat: "Pending",
+      OrderStatus: "In Progress",
       items: [{ name: "Pancit Canton", price: 75, quantity: 2, total: 150.0 }],
     },
     {
@@ -289,6 +296,7 @@ const CashierScreen = () => {
       TAmount: 45.0,
       RefNum: "G2G4I7U",
       PaymentStat: "Paid",
+      OrderStatus: "Done",
       items: [{ name: "Coffee", price: 45, quantity: 1, total: 45.0 }],
     },
     {
@@ -296,6 +304,7 @@ const CashierScreen = () => {
       TAmount: 330.0,
       RefNum: "H3H5J8V",
       PaymentStat: "Pending",
+      OrderStatus: "Waiting",
       items: [{ name: "Chicken Curry", price: 110, quantity: 3, total: 330.0 }],
     },
     {
@@ -303,6 +312,7 @@ const CashierScreen = () => {
       TAmount: 180.0,
       RefNum: "I4I6K9W",
       PaymentStat: "Pending",
+      OrderStatus: "Waiting",
       items: [{ name: "Bicol Express", price: 90, quantity: 2, total: 180.0 }],
     },
     {
@@ -310,6 +320,7 @@ const CashierScreen = () => {
       TAmount: 500.0,
       RefNum: "J5J7L0X",
       PaymentStat: "Paid",
+      OrderStatus: "Done",
       items: [{ name: "Lechon Kawali", price: 250, quantity: 2, total: 500.0 }],
     },
     {
@@ -317,6 +328,7 @@ const CashierScreen = () => {
       TAmount: 75.0,
       RefNum: "K6K8M1Y",
       PaymentStat: "Pending",
+      OrderStatus: "Waiting",
       items: [{ name: "Siomai (4pcs)", price: 75, quantity: 1, total: 75.0 }],
     },
     {
@@ -324,14 +336,15 @@ const CashierScreen = () => {
       TAmount: 220.0,
       RefNum: "L7L9N2Z",
       PaymentStat: "Pending",
+      OrderStatus: "In Progress",
       items: [{ name: "Beef Pares", price: 110, quantity: 2, total: 220.0 }],
     },
-    // Add even more items to test scrolling robustly
     {
       ORN: "431",
       TAmount: 88.0,
       RefNum: "M8M0O3A",
       PaymentStat: "Pending",
+      OrderStatus: "Waiting",
       items: [{ name: "Lugaw w/ Egg", price: 88, quantity: 1, total: 88.0 }],
     },
     {
@@ -339,6 +352,7 @@ const CashierScreen = () => {
       TAmount: 165.0,
       RefNum: "N9N1P4B",
       PaymentStat: "Paid",
+      OrderStatus: "Done",
       items: [
         { name: "Pork BBQ (3pcs)", price: 55, quantity: 3, total: 165.0 },
       ],
@@ -348,6 +362,7 @@ const CashierScreen = () => {
       TAmount: 420.0,
       RefNum: "O0O2Q5C",
       PaymentStat: "Pending",
+      OrderStatus: "Waiting",
       items: [
         { name: "Bulalo Special", price: 420, quantity: 1, total: 420.0 },
       ],
@@ -357,6 +372,7 @@ const CashierScreen = () => {
       TAmount: 95.0,
       RefNum: "P1P3R6D",
       PaymentStat: "Pending",
+      OrderStatus: "In Progress",
       items: [{ name: "Tokwa't Baboy", price: 95, quantity: 1, total: 95.0 }],
     },
     {
@@ -364,6 +380,7 @@ const CashierScreen = () => {
       TAmount: 130.0,
       RefNum: "Q2Q4S7E",
       PaymentStat: "Paid",
+      OrderStatus: "Done",
       items: [{ name: "Silog Tapa", price: 130, quantity: 1, total: 130.0 }],
     },
   ]);
@@ -375,6 +392,8 @@ const CashierScreen = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const printRef = useRef(); // Ref for the printable component
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
 
   const { logout, currentEmail } = useAuth();
   const navigate = useNavigate();
@@ -390,15 +409,15 @@ const CashierScreen = () => {
           transaction.ORN.toLowerCase().includes(lowerCaseQuery) ||
           transaction.RefNum.toLowerCase().includes(lowerCaseQuery) ||
           transaction.PaymentStat.toLowerCase().includes(lowerCaseQuery) ||
-          transaction.TAmount.toFixed(2).includes(lowerCaseQuery) // Search formatted amount
+          transaction.OrderStatus.toLowerCase().includes(lowerCaseQuery) ||
+          transaction.TAmount.toFixed(2).includes(lowerCaseQuery)
       );
       setTransactions(filteredTransactions);
     }
-  }, [searchQuery, allTransactions]); // Re-run filter when allTransactions changes too
+  }, [searchQuery, allTransactions]);
 
   // Effect to update the displayed list and selected item when the master list changes
   useEffect(() => {
-    // Update displayed transactions based on allTransactions (needed after status change)
     const lowerCaseQuery = searchQuery.toLowerCase().trim();
     const currentTransactions =
       lowerCaseQuery === ""
@@ -408,23 +427,21 @@ const CashierScreen = () => {
               transaction.ORN.toLowerCase().includes(lowerCaseQuery) ||
               transaction.RefNum.toLowerCase().includes(lowerCaseQuery) ||
               transaction.PaymentStat.toLowerCase().includes(lowerCaseQuery) ||
+              transaction.OrderStatus.toLowerCase().includes(lowerCaseQuery) ||
               transaction.TAmount.toFixed(2).includes(lowerCaseQuery)
           );
     setTransactions(currentTransactions);
 
-    // Update selectedTransaction details if it's still selected after the update
     if (selectedTransaction) {
       const updatedSelected = allTransactions.find(
         (t) => t.ORN === selectedTransaction.ORN
       );
-      setSelectedTransaction(updatedSelected || null); // Deselect if it was somehow removed
+      setSelectedTransaction(updatedSelected || null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTransactions, searchQuery]); // Rerun when master list or search query changes
+  }, [allTransactions, searchQuery]);
 
   const handleTransactionClick = (transaction) => {
     setSelectedTransaction(transaction);
-    // Pre-fill cash amount with the exact total due
     setCashAmount(transaction.TAmount.toFixed(2));
   };
 
@@ -433,7 +450,6 @@ const CashierScreen = () => {
       return 0;
     const cash = Number(cashAmount);
     const total = selectedTransaction.TAmount;
-    // Ensure change isn't negative if cash entered is less than total
     return cash >= total ? cash - total : 0;
   };
 
@@ -447,47 +463,74 @@ const CashierScreen = () => {
 
   const handleRefresh = () => {
     setSearchQuery("");
-    // In a real app, you might re-fetch data here instead of just resetting state
-    // setAllTransactions(fetchData()); // Example if fetchData was defined
-    setTransactions(allTransactions); // Reset filter view to full list
+    setTransactions(allTransactions);
     setSelectedTransaction(null);
     setCashAmount("");
   };
 
-  // Updated Print Handler
   const handlePrint = () => {
     if (!selectedTransaction) return;
 
     const isPending = selectedTransaction.PaymentStat === "Pending";
 
-    // --- Trigger Print ---
-    // Consider adding a small delay if render updates don't reflect immediately before print dialog
-    // setTimeout(() => { window.print(); }, 100);
     window.print();
 
-    // --- Simulate Payment Completion (Update State) ---
-    // If the transaction was pending, update its status to 'Paid' in the master state list
     if (isPending) {
       setAllTransactions((prevAllTransactions) =>
         prevAllTransactions.map(
           (t) =>
             t.ORN === selectedTransaction.ORN
-              ? { ...t, PaymentStat: "Paid" } // Create new object with updated status
-              : t // Keep other transactions as they are
+              ? { ...t, PaymentStat: "Paid" }
+              : t
         )
       );
-      // The useEffect hook watching `allTransactions` will automatically update
-      // the `transactions` list shown on screen and the `selectedTransaction` details.
 
-      // Optional: Clear cash amount or selection after successful payment/print
-      // setCashAmount("");
-      // setSelectedTransaction(null);
+      setSelectedTransaction(null);
+      setCashAmount("");
     }
   };
 
-  // Calculate change once per render cycle for efficiency
+  const handleOrderStatusChange = (orn, newStatus) => {
+    setAllTransactions((prevTransactions) =>
+      prevTransactions.map((t) =>
+        t.ORN === orn ? { ...t, OrderStatus: newStatus } : t
+      )
+    );
+  };
+
+  const handleCancelOrder = (orn) => {
+    // Set the order to cancel and show the modal
+    const orderToCancel = allTransactions.find(t => t.ORN === orn);
+    setOrderToCancel(orderToCancel);
+    setShowCancelModal(true);
+  };
+
+  // Function to confirm the order cancellation
+  const confirmCancelOrder = () => {
+    if (orderToCancel) {
+      setAllTransactions((prevTransactions) =>
+        prevTransactions.filter((t) => t.ORN !== orderToCancel.ORN)
+      );
+      
+      // If the canceled order was selected, clear the selection
+      if (selectedTransaction && selectedTransaction.ORN === orderToCancel.ORN) {
+        setSelectedTransaction(null);
+        setCashAmount("");
+      }
+    }
+    
+    // Close the modal and reset the orderToCancel
+    setShowCancelModal(false);
+    setOrderToCancel(null);
+  };
+
+  // Function to close the cancel modal without canceling the order
+  const closeCancelModal = () => {
+    setShowCancelModal(false);
+    setOrderToCancel(null);
+  };
+
   const change = calculateChange();
-  // Determine if the print button should be enabled
   const canPrint =
     selectedTransaction &&
     cashAmount &&
@@ -495,12 +538,9 @@ const CashierScreen = () => {
     Number(cashAmount) >= selectedTransaction.TAmount;
 
   return (
-    // --- Main container: Full screen height, flex column, relative for modal positioning, prevent body scroll ---
     <div className="h-screen flex flex-col relative overflow-hidden">
       <Header />
 
-      {/* --- Render the hidden printable receipt component --- */}
-      {/* It's positioned off-screen but available for the print CSS */}
       <CashierPrintableReceipt
         transaction={selectedTransaction}
         cashAmount={cashAmount}
@@ -508,25 +548,11 @@ const CashierScreen = () => {
         printRef={printRef}
       />
 
-      {/* --- Content Area: Takes remaining space, flex column, prevents its own overflow --- */}
       <div className="flex-1 flex flex-col p-4 gap-4 bg-gray-100 print:hidden overflow-hidden">
-        {" "}
-        {/* Added overflow-hidden */}
-        {/* --- Horizontal Layout: Takes remaining space in content area, uses flex row, prevents overflow --- */}
         <div className="flex gap-4 flex-1 overflow-hidden">
-          {" "}
-          {/* Added flex-1 and overflow-hidden */}
-          {/* === Left Side - Transactions List === */}
-          {/* --- Flex column, takes its width percentage, gap between children --- */}
-          <div className="w-2/5 flex flex-col gap-4">
-            {/* --- White Box (Transaction List): Takes available space, flex column, hides overflow --- */}
+          <div className="w-1/2 flex flex-col gap-4">
             <div className="bg-white rounded-lg shadow p-4 flex-1 flex flex-col overflow-hidden">
-              {" "}
-              {/* Added flex-1, flex-col, overflow-hidden */}
-              {/* Search Bar (Fixed height) */}
               <div className="mb-4 relative shrink-0">
-                {" "}
-                {/* shrink-0 prevents shrinking */}
                 <input
                   type="text"
                   placeholder="Search ORN, RefNum, Status, Amount"
@@ -538,19 +564,16 @@ const CashierScreen = () => {
                   <Search size={18} className="text-gray-400" />
                 </div>
               </div>
-              {/* --- Scrollable Table Container: Takes remaining space, enables vertical scroll --- */}
               <div className="flex-1 overflow-y-auto">
-                {" "}
-                {/* Added flex-1 and overflow-y-auto */}
                 <table className="w-full text-sm">
                   <thead className="bg-gray-100 sticky top-0 z-10">
-                    {" "}
-                    {/* Sticky header */}
                     <tr>
                       <th className="p-2 text-left font-semibold">ORN</th>
                       <th className="p-2 text-left font-semibold">Total</th>
                       <th className="p-2 text-left font-semibold">RefNum</th>
-                      <th className="p-2 text-left font-semibold">Status</th>
+                      <th className="p-2 text-left font-semibold">Payment</th>
+                      <th className="p-2 text-left font-semibold">Order Status</th>
+                      <th className="p-2 text-center font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -561,7 +584,7 @@ const CashierScreen = () => {
                           onClick={() => handleTransactionClick(transaction)}
                           className={`cursor-pointer hover:bg-gray-200 border-b border-gray-200 ${
                             selectedTransaction?.ORN === transaction.ORN
-                              ? "bg-blue-100 font-medium" // Highlight selected row
+                              ? "bg-blue-100 font-medium"
                               : "hover:bg-gray-100"
                           }`}
                         >
@@ -576,17 +599,45 @@ const CashierScreen = () => {
                                 ? "text-green-600"
                                 : transaction.PaymentStat === "Pending"
                                 ? "text-orange-500"
-                                : "text-gray-500" // Fallback color
+                                : "text-gray-500"
                             }`}
                           >
                             {transaction.PaymentStat}
+                          </td>
+                          <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                            <select
+                              value={transaction.OrderStatus}
+                              onChange={(e) =>
+                                handleOrderStatusChange(transaction.ORN, e.target.value)
+                              }
+                              className={`w-full p-1 rounded border ${
+                                transaction.OrderStatus === "Waiting"
+                                  ? "text-yellow-600 border-yellow-300 bg-yellow-50"
+                                  : transaction.OrderStatus === "In Progress"
+                                  ? "text-blue-600 border-blue-300 bg-blue-50"
+                                  : "text-green-600 border-green-300 bg-green-50"
+                              }`}
+                            >
+                              <option value="Waiting">Waiting</option>
+                              <option value="In Progress">In Progress</option>
+                              <option value="Done">Done</option>
+                            </select>
+                          </td>
+                          <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => handleCancelOrder(transaction.ORN)}
+                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded"
+                              title="Cancel Order"
+                            >
+                              <X size={16} />
+                            </button>
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
                         <td
-                          colSpan="4"
+                          colSpan="6"
                           className="text-center text-gray-500 py-6"
                         >
                           No transactions found
@@ -600,10 +651,7 @@ const CashierScreen = () => {
               </div>
             </div>
 
-            {/* Logout and Refresh Buttons (Fixed height) */}
             <div className="flex justify-between px-1 shrink-0">
-              {" "}
-              {/* shrink-0 prevents shrinking */}
               <button
                 onClick={() => setShowLogoutModal(true)}
                 className="bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded text-sm transition-colors duration-150"
@@ -619,27 +667,16 @@ const CashierScreen = () => {
               </button>
             </div>
           </div>
-          {/* === End Left Side === */}
-          {/* === Right Side - Order Details and Payment === */}
-          {/* --- Flex column, takes its width percentage, defines gap between children --- */}
-          <div className="w-3/5 flex flex-col gap-4">
+          <div className="w-1/2 flex flex-col gap-4">
             {/* --- Order Details Box: Takes available space (flex-1), flex column, hides overflow --- */}
             <div className="bg-white rounded-lg shadow p-4 flex-1 flex flex-col overflow-hidden">
-              {" "}
-              {/* Added flex-1, flex-col, overflow-hidden */}
               <h3 className="text-lg font-semibold mb-2 border-b pb-2 shrink-0">
                 Order Details
-              </h3>{" "}
-              {/* shrink-0 prevents shrinking */}
+              </h3>
               {selectedTransaction ? (
-                // --- Scrollable Item List: Takes remaining space, enables vertical scroll ---
                 <div className="flex-1 overflow-y-auto">
-                  {" "}
-                  {/* Added flex-1 and overflow-y-auto */}
                   <table className="w-full text-sm">
                     <thead className="sticky top-0 bg-white z-10">
-                      {" "}
-                      {/* Sticky header */}
                       <tr className="border-b">
                         <th className="text-left p-2 font-semibold">Name</th>
                         <th className="text-right p-2 font-semibold">Price</th>
@@ -667,10 +704,7 @@ const CashierScreen = () => {
                   </table>
                 </div>
               ) : (
-                // --- Placeholder: Centers content vertically and horizontally ---
                 <div className="flex-1 flex items-center justify-center text-center text-gray-500">
-                  {" "}
-                  {/* Added flex-1 */}
                   <div>
                     <p className="text-base mb-1">No order selected</p>
                     <p className="text-sm">
@@ -684,27 +718,17 @@ const CashierScreen = () => {
 
             {/* --- Payment Section Box (Reduced padding/spacing, fixed height) --- */}
             <div className="bg-white rounded-lg shadow p-3 shrink-0">
-              {" "}
-              {/* p-3, shrink-0 prevents shrinking */}
-              {/* ***** PAYMENT HEADING REMOVED HERE ***** */}
-              {/* Payment content starts immediately */}
               <div className="space-y-2">
                 <div className="text-xl font-bold flex justify-between items-center">
                   <span>Total Due:</span>
                   <span>₱{(selectedTransaction?.TAmount || 0).toFixed(2)}</span>
                 </div>
-                {/* Cash Input Row */}
                 <div className="flex items-center gap-3">
                   <label
                     htmlFor="cashAmount"
                     className="flex items-center text-lg font-medium w-auto whitespace-nowrap shrink-0"
                   >
-                    {" "}
-                    {/* Label won't shrink */}
-                    <DollarSign
-                      size={20}
-                      className="mr-1 text-green-600"
-                    />{" "}
+                    <DollarSign size={20} className="mr-1 text-green-600" />{" "}
                     Cash:
                   </label>
                   <input
@@ -712,27 +736,20 @@ const CashierScreen = () => {
                     type="number"
                     value={cashAmount}
                     onChange={(e) => setCashAmount(e.target.value)}
-                    disabled={!selectedTransaction} // Disable if no order selected
+                    disabled={!selectedTransaction}
                     className={`border p-2 flex-grow rounded text-lg text-right ${
-                      // Text aligned right
                       !selectedTransaction
                         ? "bg-gray-100 cursor-not-allowed"
                         : "focus:outline-none focus:ring-1 focus:ring-customOrange"
                     }`}
-                    placeholder="0.00" // Placeholder
-                    step="0.01" // Allow cents
-                    min="0" // Minimum value
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
                   />
                 </div>
-                {/* Change Display Row */}
                 <div className="flex items-center gap-3 text-xl font-bold">
                   <span className="flex items-center w-auto whitespace-nowrap shrink-0">
-                    {" "}
-                    {/* Label won't shrink */}
-                    <ArrowLeftRight
-                      size={20}
-                      className="mr-1 text-blue-600"
-                    />{" "}
+                    <ArrowLeftRight size={20} className="mr-1 text-blue-600" />{" "}
                     Change:
                   </span>
                   <span
@@ -740,17 +757,13 @@ const CashierScreen = () => {
                       change > 0 ? "text-blue-700" : ""
                     }`}
                   >
-                    {" "}
-                    {/* Grow, align right, color change if positive */}₱
-                    {change.toFixed(2)}
+                    ₱{change.toFixed(2)}
                   </span>
                 </div>
-                {/* Pay & Print Button */}
                 <button
                   onClick={handlePrint}
-                  disabled={!canPrint} // Use the calculated canPrint flag
+                  disabled={!canPrint}
                   className={`w-full p-3 rounded flex items-center justify-center text-white font-semibold mt-2 transition-colors duration-150 ${
-                    // Added margin top
                     canPrint
                       ? "bg-customOrange hover:bg-orange-600 cursor-pointer"
                       : "bg-gray-400 cursor-not-allowed"
@@ -761,18 +774,14 @@ const CashierScreen = () => {
               </div>
             </div>
           </div>
-          {/* === End Right Side === */}
         </div>
       </div>
-      {/* --- End Content Area --- */}
 
       <Footer />
 
       {/* --- Logout Confirmation Modal --- */}
       {showLogoutModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 print:hidden">
-          {" "}
-          {/* Ensure modal is hidden on print */}
           <div className="bg-white rounded-lg p-6 w-80 shadow-xl">
             <h3 className="text-lg font-medium mb-4">Confirm Logout</h3>
             <p className="mb-6">Are you sure you want to log out?</p>
@@ -793,7 +802,38 @@ const CashierScreen = () => {
           </div>
         </div>
       )}
-    </div> // End Main container
+
+      {/* --- Cancel Order Confirmation Modal --- */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 print:hidden">
+          <div className="bg-white rounded-lg p-6 w-80 shadow-xl">
+            <h3 className="text-lg font-medium mb-4">Confirm Order Cancellation</h3>
+            <p className="mb-6">
+              Are you sure you want to cancel order #{orderToCancel?.ORN}?
+              {orderToCancel && (
+                <span className="block mt-2 text-sm text-gray-600">
+                  Total: ₱{orderToCancel.TAmount.toFixed(2)}
+                </span>
+              )}
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={closeCancelModal}
+                className="px-4 py-2 border rounded hover:bg-gray-100 transition-colors duration-150"
+              >
+                No, Keep Order
+              </button>
+              <button
+                onClick={confirmCancelOrder}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors duration-150"
+              >
+                Yes, Cancel Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

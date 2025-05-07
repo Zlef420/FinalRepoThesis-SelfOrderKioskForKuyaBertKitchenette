@@ -216,23 +216,32 @@ const OrderReview = () => {
     );
   };
 
-  // *** FIXED: Add-on Calculation Logic ***
+  // *** FIXED: Add-on Calculation Logic - Don't multiply add-ons by item quantity ***
   const calculateItemTotal = (item) => {
     const basePrice = Number(item.price) || 0;
     const quantity = Number(item.quantity) || 0;
 
     if (quantity === 0) return 0;
 
-    // Calculate total price of addons for ONE unit of the item
-    const addonsTotalPerUnit = (item.addons || []).reduce((sum, addon) => {
+    // Calculate total price of addons (NOT multiplied by item quantity)
+    const addonsTotalPrice = (item.addons || []).reduce((sum, addon) => {
       const addonPrice = Number(addon.price) || 0;
-      const addonQuantity = Number(addon.quantity) || 0; // Use the quantity of the addon itself
+      const addonQuantity = Number(addon.quantity) || 0;
       return sum + addonPrice * addonQuantity;
     }, 0);
 
-    // Total cost = (Base Price + Addons Price Per Unit) * Item Quantity
-    const total = (basePrice + addonsTotalPerUnit) * quantity;
+    // Total cost = (Base Price * Item Quantity) + Addons Price
+    const total = (basePrice * quantity) + addonsTotalPrice;
     return total;
+  };
+
+  // Calculate addon total for a single item (for display purposes)
+  const calculateAddonTotal = (item) => {
+    return (item.addons || []).reduce((sum, addon) => {
+      const addonPrice = Number(addon.price) || 0;
+      const addonQuantity = Number(addon.quantity) || 0;
+      return sum + addonPrice * addonQuantity;
+    }, 0);
   };
 
   // Calculate total cost of all items in the cart
@@ -492,11 +501,25 @@ const OrderReview = () => {
                             </button>
                           </div>
                         </div>
-                        {/* Original Item Total Price display */}
+                        {/* Item Total Price display with breakdown */}
                         <div className="flex justify-end items-center mt-2">
                           <div className="text-gray-600">
-                            {/* Use the FIXED calculation function here */}
-                            Total: ₱{calculateItemTotal(item)}
+                            {item.addons && item.addons.length > 0 ? (
+                              <div className="text-right">
+                                <div>
+                                  Base: ₱{item.price} × {item.quantity} = ₱
+                                  {item.price * item.quantity}
+                                </div>
+                                <div>
+                                  Add-ons: ₱{calculateAddonTotal(item)}
+                                </div>
+                                <div className="font-semibold">
+                                  Total: ₱{calculateItemTotal(item)}
+                                </div>
+                              </div>
+                            ) : (
+                              <div>Total: ₱{calculateItemTotal(item)}</div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -627,103 +650,103 @@ const OrderReview = () => {
           </div>{" "}
           {/* End Order List Section */}
           {/* Payment Summary Section (Original structure) */}
-          <div className="w-full lg:w-72 bg-white rounded-lg p-3 mb-4 lg:mb-0">
-            {" "}
-            {/* Original width, padding */}
-            <h2 className="text-2xl font-bold mb-5">Total Cost</h2>
-            {/* Cart Summary (Original structure) */}
-            <div className="overflow-y-auto max-h-[100px] mb-5 pr-2">
-              {" "}
-              {/* Original max-h */}
-              {items.length === 0 ? (
-                // Original empty summary message
-                <p className="text-gray-500 text-center py-2">
-                  No items in cart
-                </p>
-              ) : (
-                // Original summary item mapping
-                <div className="space-y-3">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex justify-between text-base" // Original styling
-                    >
-                      {/* Original summary item display */}
-                      <div>
-                        <span className="mr-4">{item.name}</span>
-                        <span>{item.quantity}x</span>
-                      </div>
-                      {/* Use FIXED calculation */}
-                      <div>₱{calculateItemTotal(item)}</div>
-                      {/* Addon display in receipt - simple version */}
-                      {item.addons && item.addons.length > 0 && (
-                        <div className="w-full text-xs text-gray-500 pl-4 -mt-1">
-                          {item.addons.map((addon) => (
-                            <span key={addon.id} className="mr-2">
-                              +{addon.name}
-                              {addon.quantity > 1 ? `(x${addon.quantity})` : ""}
-                            </span>
-                          ))}
+          <div className="w-full lg:w-80 bg-white rounded-lg p-4 mb-4 lg:mb-0 flex flex-col justify-between">
+            <div>
+              <h2 className="text-2xl font-bold mb-5">Total Cost</h2>
+              {/* Cart Summary with improved formatting */}
+              <div className="overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 lg:max-h-[calc(100vh-400px)]">
+                {items.length === 0 ? (
+                  <p className="text-gray-500 text-center py-2">
+                    No items in cart
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {items.map((item) => (
+                      <div key={item.id} className="border-b pb-3 last:border-b-0">
+                        <div className="flex justify-between text-base">
+                          <div className="font-medium">{item.name}</div>
+                          <div>₱{item.price} × {item.quantity}</div>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        
+                        {/* Improved add-ons display */}
+                        {item.addons && item.addons.length > 0 && (
+                          <div className="pl-4 mt-2 text-sm text-gray-600">
+                            <div className="font-medium">Add-ons:</div>
+                            {item.addons.map((addon) => (
+                              <div key={addon.id} className="flex justify-between">
+                                <div>
+                                  • {addon.name} 
+                                  {addon.quantity > 1 && ` (×${addon.quantity})`}
+                                </div>
+                                <div>₱{addon.price * addon.quantity}</div>
+                              </div>
+                            ))}
+                            <div className="flex justify-between font-medium mt-2 text-black">
+                              <div>Item Total:</div>
+                              <div>₱{calculateItemTotal(item)}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mt-auto">
+              {/* Total Amount (Original structure) */}
+              <div className="border-t border-b py-3 my-4">
+                <div className="flex justify-between font-bold">
+                  <span>Total Amount:</span>
+                  <span>₱{calculateTotal()}</span>
                 </div>
-              )}
-            </div>
-            {/* Total Amount (Original structure) */}
-            <div className="border-t border-b py-3 mb-5">
-              <div className="flex justify-between font-bold">
-                <span>Total Amount:</span>
-                {/* Use FIXED calculation */}
-                <span>₱{calculateTotal()}</span>
               </div>
-            </div>
-            {/* Payment Options Section (Original structure) */}
-            <div className="mb-5">
-              <div className="flex justify-between mb-3">
-                <span>Dining choice</span>
-                <span>{selectedOption}</span>
-              </div>
+              {/* Payment Options Section (Original structure) */}
+              <div className="mb-5">
+                <div className="flex justify-between mb-3">
+                  <span>Dining choice</span>
+                  <span>{selectedOption}</span>
+                </div>
 
-              <div className="font-bold mb-3">Select Payment Method:</div>
-              {/* Original payment buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setSelectedPayment("cash")}
-                  className={paymentButtonStyle(selectedPayment === "cash")}
-                  disabled={items.length === 0}
-                >
-                  <Wallet className="size-6 mb-2" />
-                  <span>Cash</span>
-                </button>
-                <button
-                  onClick={() => setSelectedPayment("ewallet")}
-                  className={paymentButtonStyle(selectedPayment === "ewallet")}
-                  disabled={items.length === 0}
-                >
-                  <Smartphone className="size-6 mb-2" />
-                  <span>E-wallet</span>
-                </button>
+                <div className="font-bold mb-3">Select Payment Method:</div>
+                {/* Original payment buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setSelectedPayment("cash")}
+                    className={paymentButtonStyle(selectedPayment === "cash")}
+                    disabled={items.length === 0}
+                  >
+                    <Wallet className="size-6 mb-2" />
+                    <span>Cash</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedPayment("ewallet")}
+                    className={paymentButtonStyle(selectedPayment === "ewallet")}
+                    disabled={items.length === 0}
+                  >
+                    <Smartphone className="size-6 mb-2" />
+                    <span>E-wallet</span>
+                  </button>
+                </div>
               </div>
+              {/* Proceed to Payment Button (Original structure) */}
+              <button
+                className={`w-full py-3 text-white rounded text-center font-bold ${
+                  selectedPayment && items.length > 0
+                    ? "bg-red-500 hover:bg-red-600" // Original colors
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
+                disabled={!selectedPayment || items.length === 0}
+                onClick={handlePayment}
+              >
+                {/* Original button text logic */}
+                {items.length === 0
+                  ? "Cart is Empty"
+                  : selectedPayment
+                  ? "Proceed to Payment"
+                  : "Select Payment Method"}
+              </button>
             </div>
-            {/* Proceed to Payment Button (Original structure) */}
-            <button
-              className={`w-full py-3 text-white rounded text-center font-bold ${
-                selectedPayment && items.length > 0
-                  ? "bg-red-500 hover:bg-red-600" // Original colors
-                  : "bg-gray-400 cursor-not-allowed"
-              }`}
-              disabled={!selectedPayment || items.length === 0}
-              onClick={handlePayment}
-            >
-              {/* Original button text logic */}
-              {items.length === 0
-                ? "Cart is Empty"
-                : selectedPayment
-                ? "Proceed to Payment"
-                : "Select Payment Method"}
-            </button>
           </div>{" "}
           {/* End Payment Summary Section */}
         </div>{" "}
