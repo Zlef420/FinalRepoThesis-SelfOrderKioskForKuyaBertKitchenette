@@ -12,11 +12,15 @@ const PrintableReceipt = ({
   paymentMethod,
 }) => {
   const calculateItemTotal = (item) => {
+    // Check if itemTotal is already calculated (from OrderReview)
+    if (item.itemTotal) return item.itemTotal;
+    
+    // Otherwise calculate it
     const addonsTotal = (item.addons || []).reduce(
-      (sum, addon) => sum + addon.price,
+      (sum, addon) => sum + (addon.price * (addon.quantity || 1)),
       0
     );
-    return (item.price + addonsTotal) * item.quantity;
+    return (item.price * item.quantity) + addonsTotal;
   };
 
   const calculateSubtotal = () => {
@@ -90,11 +94,34 @@ const PrintableReceipt = ({
 
         <div className="border-t border-b border-black py-2 my-2">
           {orderItems.map((item, index) => (
-            <div key={index} className="flex justify-between">
-              <span>
-                {item.quantity} {item.name}
-              </span>
-              <span>{calculateItemTotal(item).toFixed(2)}</span>
+            <div key={index} className="mb-2">
+              <div className="flex justify-between">
+                <span>
+                  {item.quantity} {item.name}
+                </span>
+                <span>{calculateItemTotal(item).toFixed(2)}</span>
+              </div>
+              
+              {/* Add-ons section */}
+              {item.addons && item.addons.length > 0 && (
+                <div className="text-xs text-left ml-4">
+                  <span className="font-semibold">Add-ons: </span>
+                  {item.addons.map((addon, idx) => (
+                    <span key={idx}>
+                      {addon.name}{addon.quantity > 1 && ` x${addon.quantity}`}
+                      {idx < item.addons.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
+              
+              {/* Special instructions section - ensure it works with both details and instructions fields */}
+              {(item.details || item.instructions) && (
+                <div className="text-xs text-left ml-4">
+                  <span className="font-semibold">Instructions: </span>
+                  <span>{item.details || item.instructions}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -137,7 +164,8 @@ const OrderConfirmation = () => {
 
   const paymentMethod = location.state?.paymentMethod || "cash";
   const paymentStatus = location.state?.paymentStatus;
-  const orderItems = JSON.parse(localStorage.getItem("cartItems") || "[]");
+  // Get order items from location state if available, otherwise from localStorage
+  const orderItems = location.state?.orderData?.items || JSON.parse(localStorage.getItem("cartItems") || "[]");
   const diningOption = localStorage.getItem("diningOption") || "Dine In";
 
   const handlePrint = () => {

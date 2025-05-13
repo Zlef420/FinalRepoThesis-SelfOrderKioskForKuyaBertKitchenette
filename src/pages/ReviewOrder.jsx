@@ -375,14 +375,14 @@ const OrderReview = () => {
 
   // --- Original JSX Structure ---
   return (
-    // Original outer div styling
+    // Fixed height outer div with no overflow
     <div className="min-h-screen flex flex-col bg-customBlack bg-cover bg-center overflow-hidden">
       <Header />
-      {/* Main Content Section (Original structure) */}
-      <main className="flex-1 container mx-auto px-4 py-2 max-w-[1400px] overflow-y-auto">
-        <div className="flex flex-col lg:flex-row justify-between gap-6">
+      {/* Main Content Section with fixed height - adjusted to prevent footer overlap */}
+      <main className="flex-1 container mx-auto px-4 py-2 max-w-[1400px] h-[calc(100vh-180px)] overflow-hidden">
+        <div className="flex flex-col lg:flex-row justify-between gap-6 h-full overflow-hidden">
           {/* Order List Section (Original structure) */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-full">
             {/* Order Header (Original structure) */}
             <div className="mb-4 text-white">
               <h2 className="text-2xl font-bold -mb-1 -mt-2">
@@ -395,19 +395,12 @@ const OrderReview = () => {
                 <div>{items.length} Items in your cart</div>
               </div>
             </div>
-            {/* Order Items List (Original structure) */}
-            {/* Added scrollbar styling from previous version as it's helpful */}
-            <div className="flex-1 overflow-y-auto pr-1 -mr-1 max-h-[55vh] lg:max-h-[calc(100vh-250px)] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-700">
+            {/* Order Items List with fixed height - ensure content stays within scrollable area */}
+            <div className="flex-1 overflow-y-auto pr-1 -mr-1 h-[calc(100vh-400px)] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-700">
               {items.length === 0 ? (
-                // Original empty cart display
+                // Empty cart display without redundant return button
                 <div className="flex flex-col items-center justify-center h-40 text-white">
-                  <p className="text-xl mb-4">Your cart is empty</p>
-                  <button
-                    onClick={() => navigate("/home")}
-                    className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded"
-                  >
-                    Return to Menu
-                  </button>
+                  <p className="text-xl">Your cart is empty</p>
                 </div>
               ) : (
                 // Original item mapping structure
@@ -524,10 +517,10 @@ const OrderReview = () => {
                         </div>
                       </div>
 
-                      {/* Item Customization Section (Original structure) */}
+                      {/* Item Customization Section - Contained within the scrollable area */}
                       {item.isExpanded && (
                         <div
-                          className="border-t border-gray-200 p-4 space-y-2 bg-white"
+                          className="border-t border-gray-200 p-4 space-y-2 bg-white overflow-visible"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {/* Add-ons Section (Original structure) */}
@@ -654,7 +647,7 @@ const OrderReview = () => {
             <div>
               <h2 className="text-2xl font-bold mb-5">Total Cost</h2>
               {/* Cart Summary with improved formatting */}
-              <div className="overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 lg:max-h-[calc(100vh-400px)]">
+              <div className="overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 h-[calc(100vh-500px)]">
                 {items.length === 0 ? (
                   <p className="text-gray-500 text-center py-2">
                     No items in cart
@@ -753,7 +746,7 @@ const OrderReview = () => {
         {/* End Main Flex Container */}
       </main>{" "}
       {/* End Main Content Section */}
-      <Footer />
+      <Footer className="mt-4" />
       {/* Modals (Original structure) */}
       <ConfirmationModal
         show={showDeleteItemModal}

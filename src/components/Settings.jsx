@@ -10,6 +10,8 @@ const Settings = () => {
     role: "staff",
     password: "",
     confirmPassword: "",
+    securityQuestion: "What was your first pet's name?",
+    securityAnswer: "",
   });
 
   const [accounts, setAccounts] = useState([
@@ -18,12 +20,16 @@ const Settings = () => {
       username: "admin",
       email: "admin@example.com",
       role: "admin",
+      securityQuestion: "What was your first pet's name?",
+      securityAnswer: "Fido",
     },
     {
       id: 2,
       username: "staff1",
       email: "staff1@example.com",
       role: "staff",
+      securityQuestion: "What was your first pet's name?",
+      securityAnswer: "Whiskers",
     },
   ]);
 
@@ -33,6 +39,12 @@ const Settings = () => {
   const handleImageChange = (e, id) => {
     const file = e.target.files[0];
     if (file) {
+      // Check if the file is an image
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPEG, PNG, GIF, etc.)');
+        return;
+      }
+      
       const imageUrl = URL.createObjectURL(file);
       setUploadedImages((prevImages) =>
         prevImages.map((img) =>
@@ -55,11 +67,18 @@ const Settings = () => {
       return;
     }
 
+    if (!accountForm.securityAnswer.trim()) {
+      alert("Security answer is required!");
+      return;
+    }
+
     const newAccount = {
       id: accounts.length + 1,
       username: accountForm.username,
       email: accountForm.email,
       role: accountForm.role,
+      securityQuestion: accountForm.securityQuestion,
+      securityAnswer: accountForm.securityAnswer,
     };
 
     setAccounts([...accounts, newAccount]);
@@ -69,6 +88,8 @@ const Settings = () => {
       role: "staff",
       password: "",
       confirmPassword: "",
+      securityQuestion: "What was your first pet's name?",
+      securityAnswer: "",
     });
   };
 
@@ -156,6 +177,39 @@ const Settings = () => {
                     ...accountForm,
                     confirmPassword: e.target.value,
                   })
+                }
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium">
+                Security Question:
+              </label>
+              <select
+                className="w-full p-2 border rounded"
+                value={accountForm.securityQuestion}
+                onChange={(e) =>
+                  setAccountForm({ ...accountForm, securityQuestion: e.target.value })
+                }
+                required
+              >
+                <option value="What was your first pet's name?">What was your first pet's name?</option>
+                <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                <option value="What was the name of your elementary school?">What was the name of your elementary school?</option>
+                <option value="What was your childhood nickname?">What was your childhood nickname?</option>
+                <option value="In what city were you born?">In what city were you born?</option>
+              </select>
+            </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium">
+                Security Answer:
+              </label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded"
+                value={accountForm.securityAnswer}
+                onChange={(e) =>
+                  setAccountForm({ ...accountForm, securityAnswer: e.target.value })
                 }
                 required
               />

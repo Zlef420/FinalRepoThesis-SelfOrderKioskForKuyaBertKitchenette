@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 
-// ----- Printable Receipt Component (Adapted from OrderConfirmation) -----
+// ----- Printable Receipt Component (Compact Format) -----
 const CashierPrintableReceipt = ({
   transaction,
   cashAmount,
@@ -38,128 +38,49 @@ const CashierPrintableReceipt = ({
       {/* Print-specific styles */}
       <style type="text/css" media="print">
         {`
-      @page {
-        size: 80mm auto; /* Adjust width as needed, auto height */
-        margin: 2mm; /* Minimal margin */
-      }
-      @media print {
-        /* Basic reset */
-        body {
-          margin: 0;
-          padding: 0;
-        }
-        /* Hide everything except the receipt */
-        body * {
-          visibility: hidden; /* Hide everything by default */
-        }
-        #printable-cashier-receipt-area, #printable-cashier-receipt-area * {
-          visibility: visible; /* Show only the receipt area */
-        }
-        #printable-cashier-receipt-area {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%; /* Use full printable width */
-          font-size: 10pt; /* Adjust font size for thermal printers */
-          font-family: 'Courier New', Courier, monospace; /* Monospaced font */
-          background-color: white !important; /* Ensure white background */
-          padding: 0;
-          margin: 0;
-          box-shadow: none; /* Remove any screen shadows */
-          border: none; /* Remove any screen borders */
-        }
-        .no-print {
-          display: none !important; /* Ensure no-print elements are hidden */
-        }
-        /* Receipt specific styles */
-        #printable-cashier-receipt-area h1 {
-          font-size: 14pt;
-          font-weight: bold;
-          margin-bottom: 2px;
-          text-align: center;
-        }
-        #printable-cashier-receipt-area p,
-        #printable-cashier-receipt-area span,
-        #printable-cashier-receipt-area div:not(.receipt-item div):not(.receipt-totals div) { /* Avoid double applying flex to nested divs */
-          font-size: 10pt;
-          margin-bottom: 1px;
-          line-height: 1.2;
-        }
-        #printable-cashier-receipt-area .receipt-header {
-          text-align: center;
-          margin-bottom: 8px;
-        }
-        #printable-cashier-receipt-area .receipt-header p {
-          margin-bottom: 0; /* tighter spacing in header */
-        }
-        #printable-cashier-receipt-area .receipt-details p {
-          margin-bottom: 2px;
-        }
-        #printable-cashier-receipt-area .receipt-items {
-          border-top: 1px dashed black;
-          border-bottom: 1px dashed black;
-          padding-top: 5px;
-          padding-bottom: 5px;
-          margin-top: 5px;
-          margin-bottom: 5px;
-        }
-        /* Styling for item lines and totals lines */
-        #printable-cashier-receipt-area .receipt-item div,
-        #printable-cashier-receipt-area .receipt-totals div {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 2px; /* Add space between lines */
-        }
-        /* Ensure item quantity/name and total are spaced */
-        #printable-cashier-receipt-area .receipt-item div span:first-child {
-          /* Allow item name to wrap if long */
-          flex-shrink: 1;
-          margin-right: 5px; /* Add space between name and price */
-          word-break: break-word; /* Break long item names */
-        }
-        /* Right-align prices */
-        #printable-cashier-receipt-area .receipt-item div span:last-child,
-        #printable-cashier-receipt-area .receipt-totals div span:last-child {
-          white-space: nowrap; /* Prevent price from wrapping */
-          text-align: right;
-          min-width: 50px; /* Ensure some space for alignment */
-        }
-
-         #printable-cashier-receipt-area .receipt-totals .total-due {
-             font-weight: bold;
-             margin-top: 5px;
-         }
-         /* Style for Change line */
-         #printable-cashier-receipt-area .receipt-totals .change-line {
-             font-weight: bold;
-             border-top: 1px solid black; /* Add separator before change */
-             padding-top: 3px;
-             margin-top: 3px;
-         }
-         #printable-cashier-receipt-area .receipt-footer {
-             text-align: center;
-             margin-top: 8px;
-             border-top: 1px dashed black;
-             padding-top: 5px;
-         }
-      }
-    `}
+          @page {
+            size: 80mm 297mm;
+            margin: 0;
+          }
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            #printable-cashier-receipt-area, #printable-cashier-receipt-area * {
+              visibility: visible;
+            }
+            #printable-cashier-receipt-area {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              font-family: 'Courier New', monospace;
+            }
+            .no-print {
+              display: none !important;
+            }
+            .addon-info, .instruction-info {
+              font-size: 8pt !important;
+              margin-left: 10px !important;
+            }
+          }
+        `}
       </style>
 
       {/* Receipt Content */}
-      <div className="bg-white p-1 w-full font-mono">
-        {" "}
-        {/* Simplified padding for print */}
-        <div className="receipt-header">
-          <h1>Kuya Bert's Kitchenette</h1>
-          <p>Sergio Osmeña St, Atimonan, 4331 Quezon</p>
-          <p>facebook.com/KuyaBertKitchenette</p>
-          <p className="font-bold mt-1">OFFICIAL RECEIPT</p>
+      <div id="printable-receipt" className="text-center bg-white p-1 w-full font-mono">
+        <div className="mb-4">
+          <h1 className="font-bold text-lg">Kuya Bert's Kitchenette</h1>
+          <p className="text-sm">Sergio Osmeña St, Atimonan, 4331 Quezon</p>
+          <p className="text-sm">facebook.com/KuyaBertKitchenette</p>
+          <p className="font-bold mt-2">SALES INVOICE</p>
         </div>
-        <div className="receipt-details text-sm mb-2">
-          <p>Order #: {transaction.ORN}</p>
-          <p>Ref #: {transaction.RefNum}</p>
-          <p>Status: {displayPaymentStatus}</p> {/* Always show PAID here */}
+
+        <div className="text-sm mb-2">
+          <p>Order Number: {transaction.ORN}</p>
+          <p>Reference Number: {transaction.RefNum}</p>
+          <p>Payment Method: CASH</p>
+          <p>Status: {displayPaymentStatus}</p>
           <p>
             Date: {currentDate.toLocaleDateString()} Time:{" "}
             {currentDate.toLocaleTimeString([], {
@@ -168,61 +89,69 @@ const CashierPrintableReceipt = ({
             })}
           </p>
         </div>
-        <div className="receipt-items py-2 my-2">
+
+        <div className="border-t border-b border-black py-2 my-2">
           {transaction.items.map((item, index) => (
-            <div key={index} className="receipt-item text-sm">
-              <div>
+            <div key={index} className="mb-2">
+              <div className="flex justify-between">
                 <span>
                   {item.quantity} {item.name}
                 </span>
                 <span>{item.total.toFixed(2)}</span>
               </div>
-              {/* Optional: Show price per item if needed
-             <div style={{ paddingLeft: '15px', fontSize: '9pt' }}>
-                <span>@ {item.price.toFixed(2)}</span>
-             </div>
-            */}
+              {/* Add-ons section */}
+              {item.addons && item.addons.length > 0 && (
+                <div className="text-xs text-left ml-4 addon-info">
+                  <span className="font-semibold">Add-ons: </span>
+                  {item.addons.map((addon, idx) => (
+                    <span key={idx}>
+                      {addon.name}{addon.quantity > 1 && ` x${addon.quantity}`}
+                      {idx < item.addons.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {/* Special instructions section */}
+              {(item.details || item.instructions) && (
+                <div className="text-xs text-left ml-4 instruction-info">
+                  <span className="font-semibold">Instructions: </span>
+                  <span>{item.details || item.instructions}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>
-        <div className="receipt-totals text-sm">
-          <div>
+        <div className="text-sm">
+          <div className="flex justify-between">
             <span>{transaction.items.length} Item(s)</span>
-            {/* Show Subtotal before VAT details */}
-            {/* <span>Subtotal ₱{subtotal.toFixed(2)}</span> */}
+            <span>Subtotal {subtotal.toFixed(2)}</span>
           </div>
-          <div className="total-due">
-            {" "}
-            {/* Moved Total Due up */}
+          <div className="flex justify-between font-bold">
             <span>TOTAL DUE</span>
             <span>₱{transaction.TAmount.toFixed(2)}</span>
           </div>
-          <div>
+          <div className="flex justify-between">
             <span>CASH</span>
             <span>₱{Number(cashAmount).toFixed(2)}</span>
           </div>
-          <div className="change-line">
-            {" "}
-            {/* Added class for styling */}
+          <div className="flex justify-between font-bold">
             <span>CHANGE</span>
             <span>₱{changeAmount.toFixed(2)}</span>
           </div>
-          {/* VAT Details */}
-          <div className="mt-2 pt-1 border-t border-dashed border-black">
-            {" "}
-            {/* Optional separator */}
-            <div>
-              <span>VATable Sales</span>
-              <span>{subtotal.toFixed(2)}</span>
-            </div>
-            <div>
-              <span>VAT Amount (12%)</span>
-              <span>{vatAmount.toFixed(2)}</span>
-            </div>
+          <div className="flex justify-between">
+            <span>VATable Sales</span>
+            <span>{subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>VAT Amount</span>
+            <span>{vatAmount.toFixed(2)}</span>
           </div>
         </div>
-        <div className="receipt-footer mt-4 text-sm">
-          THANK YOU, AND PLEASE COME AGAIN.
+
+        <div className="text-center mt-4 text-sm">
+          <div className="border-t border-black pt-2">
+            THANK YOU, AND PLEASE COME AGAIN.
+          </div>
         </div>
       </div>
     </div>

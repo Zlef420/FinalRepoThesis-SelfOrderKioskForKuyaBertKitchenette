@@ -126,6 +126,12 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Check if the file is an image
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPEG, PNG, GIF, etc.)');
+        return;
+      }
+      
       if (menuForm.imagePreview && menuForm.imagePreview.startsWith("blob:")) {
         URL.revokeObjectURL(menuForm.imagePreview);
       }
