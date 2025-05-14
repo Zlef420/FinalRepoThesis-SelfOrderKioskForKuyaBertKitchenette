@@ -248,12 +248,14 @@ const Settings = () => {
                       <td className="border p-2 capitalize">{account.role}</td>
                       <td className="border p-2">
                         <button
-                          className="px-3 py-1 text-sm text-red-600 hover:text-red-800"
+                          className={`px-3 py-1 text-sm ${accounts.length <= 1 || account.role === "admin" ? "text-gray-400 cursor-not-allowed" : "text-red-600 hover:text-red-800"}`}
                           onClick={() => handleDelete(account)}
-                          disabled={account.role === "admin"}
+                          disabled={accounts.length <= 1 || account.role === "admin"}
                           title={
                             account.role === "admin"
                               ? "Admin account cannot be deleted"
+                              : accounts.length <= 1
+                              ? "Cannot delete the only account"
                               : ""
                           }
                         >

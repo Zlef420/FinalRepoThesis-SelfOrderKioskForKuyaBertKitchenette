@@ -27,132 +27,212 @@ const PrintableReceipt = ({
     return orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   };
 
-  const calculateVAT = (subtotal) => {
-    return subtotal * 0.12;
-  };
-
   const generateOrderNumber = () => {
     return `SI#${Math.floor(Math.random() * 10000000)}`;
   };
 
   const subtotal = calculateSubtotal();
-  const vat = calculateVAT(subtotal);
   const orderNumber = generateOrderNumber();
   const currentDate = new Date();
 
-  return (
-    <div
-      ref={printRef}
-      className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md font-mono print:shadow-none print:w-full print:max-w-none print:p-1"
-    >
-      <style type="text/css" media="print">
-        {`
-          @page {
-            size: 80mm 297mm;
-            margin: 0;
-          }
-          @media print {
-            body * {
-              visibility: hidden;
+  // Different receipt formats based on payment method
+  if (paymentMethod === "cash") {
+    // Simple order slip for cash payments
+    return (
+      <div
+        ref={printRef}
+        className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md font-mono print:shadow-none print:w-full print:max-w-none print:p-1"
+      >
+        <style type="text/css" media="print">
+          {`
+            @page {
+              size: 80mm 297mm;
+              margin: 0;
             }
-            #printable-receipt, #printable-receipt * {
-              visibility: visible;
+            @media print {
+              body * {
+                visibility: hidden;
+              }
+              #printable-receipt, #printable-receipt * {
+                visibility: visible;
+              }
+              #printable-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+              }
+              .no-print {
+                display: none !important;
+              }
             }
-            #printable-receipt {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-            }
-            .no-print {
-              display: none !important;
-            }
-          }
-        `}
-      </style>
-      <div id="printable-receipt" className="text-center">
-        <div className="mb-4">
-          <h1 className="font-bold text-lg">Kuya Bert's Kitchenette</h1>
-          <p className="text-sm">Sergio Osmeña St, Atimonan, 4331 Quezon</p>
-          <p className="text-sm">facebook.com/KuyaBertKitchenette</p>
-          <p className="font-bold mt-2">SALES INVOICE</p>
-          <p className="font-bold">{diningOption.toUpperCase()}</p>
-        </div>
+          `}
+        </style>
+        <div id="printable-receipt" className="text-center">
+          <div className="mb-4">
+            <h1 className="font-bold text-lg">Kuya Bert's Kitchenette</h1>
+            <p className="text-sm">Sergio Osmeña St, Atimonan, 4331 Quezon</p>
+            <p className="font-bold mt-3 text-base">ORDER SLIP</p>
+            <p className="font-bold text-lg">ORDER #{orderNumber.replace('SI#', '')}</p>
+            <p className="font-bold">{diningOption.toUpperCase()}</p>
+          </div>
 
-        <div className="text-sm mb-2">
-          <p>Order Number: {orderNumber}</p>
-          <p>Reference Number: {orderNumber}</p>
-          <p>Payment Method: {paymentMethod.toUpperCase()}</p>
-          <p>
-            Date: {currentDate.toLocaleDateString()} Time:{" "}
-            {currentDate.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
-        </div>
+          <div className="text-sm mb-2">
+            <p>
+              {currentDate.toLocaleDateString()} {" "}
+              {currentDate.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
 
-        <div className="border-t border-b border-black py-2 my-2">
-          {orderItems.map((item, index) => (
-            <div key={index} className="mb-2">
-              <div className="flex justify-between">
-                <span>
-                  {item.quantity} {item.name}
-                </span>
-                <span>{calculateItemTotal(item).toFixed(2)}</span>
+          <div className="border-t border-b border-black py-2 my-2">
+            {orderItems.map((item, index) => (
+              <div key={index} className="mb-2">
+                <div className="flex justify-between">
+                  <span>
+                    {item.quantity} {item.name}
+                  </span>
+                  <span>₱{calculateItemTotal(item).toFixed(2)}</span>
+                </div>
+                
+                {/* Add-ons section */}
+                {item.addons && item.addons.length > 0 && (
+                  <div className="text-xs text-left ml-4">
+                    <span className="font-semibold">Add-ons: </span>
+                    {item.addons.map((addon, idx) => (
+                      <span key={idx}>
+                        {addon.name}{addon.quantity > 1 && ` x${addon.quantity}`}
+                        {idx < item.addons.length - 1 ? ", " : ""}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Special instructions section */}
+                {(item.details || item.instructions) && (
+                  <div className="text-xs text-left ml-4">
+                    <span className="font-semibold">Special Instructions: </span>
+                    <span>{item.details || item.instructions}</span>
+                  </div>
+                )}
               </div>
-              
-              {/* Add-ons section */}
-              {item.addons && item.addons.length > 0 && (
-                <div className="text-xs text-left ml-4">
-                  <span className="font-semibold">Add-ons: </span>
-                  {item.addons.map((addon, idx) => (
-                    <span key={idx}>
-                      {addon.name}{addon.quantity > 1 && ` x${addon.quantity}`}
-                      {idx < item.addons.length - 1 ? ", " : ""}
-                    </span>
-                  ))}
-                </div>
-              )}
-              
-              {/* Special instructions section - ensure it works with both details and instructions fields */}
-              {(item.details || item.instructions) && (
-                <div className="text-xs text-left ml-4">
-                  <span className="font-semibold">Instructions: </span>
-                  <span>{item.details || item.instructions}</span>
-                </div>
-              )}
+            ))}
+          </div>
+
+          <div className="text-sm mt-4">
+            <div className="flex justify-between font-bold">
+              <span>TOTAL:</span>
+              <span>₱{subtotal.toFixed(2)}</span>
             </div>
-          ))}
-        </div>
-
-        <div className="text-sm">
-          <div className="flex justify-between">
-            <span>{orderItems.length} Item(s)</span>
-            <span>Subtotal {subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between font-bold">
-            <span>TOTAL DUE</span>
-            <span>{(subtotal + vat).toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>VATable Sales</span>
-            <span>{subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>VAT Amount</span>
-            <span>{vat.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div className="text-center mt-4 text-sm">
-          <div className="border-t border-black pt-2">
-            THANK YOU, AND PLEASE COME AGAIN.
+          
+          <div className="mt-6 pt-4 border-t border-dashed border-gray-300">
+            <p className="font-bold text-base">PLEASE PAY AT THE CASHIER</p>
+            <p className="text-sm mt-2">Thank you for dining with us!</p>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  } else {
+    // Original receipt format for e-wallet payments
+    return (
+      <div
+        ref={printRef}
+        className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md font-mono print:shadow-none print:w-full print:max-w-none print:p-1"
+      >
+        <style type="text/css" media="print">
+          {`
+            @page {
+              size: 80mm 297mm;
+              margin: 0;
+            }
+            @media print {
+              body * {
+                visibility: hidden;
+              }
+              #printable-receipt, #printable-receipt * {
+                visibility: visible;
+              }
+              #printable-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+              }
+              .no-print {
+                display: none !important;
+              }
+            }
+          `}
+        </style>
+        <div id="printable-receipt" className="text-center">
+          <div className="mb-4">
+            <h1 className="font-bold text-lg">Kuya Bert's Kitchenette</h1>
+            <p className="text-sm">Sergio Osmeña St, Atimonan, 4331 Quezon</p>
+            <p className="text-sm">facebook.com/KuyaBertKitchenette</p>
+            <p className="font-bold mt-2">SALES INVOICE</p>
+            <p className="font-bold">{diningOption.toUpperCase()}</p>
+          </div>
+
+          <div className="text-sm mb-2">
+            <p>Order Number: {orderNumber}</p>
+            <p>Reference Number: {orderNumber}</p>
+            <p>Payment Method: {paymentMethod.toUpperCase()}</p>
+            <p>
+              Date: {currentDate.toLocaleDateString()} Time:{" "}
+              {currentDate.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+
+          <div className="border-t border-b border-black py-2 my-2">
+            {orderItems.map((item, index) => (
+              <div key={index} className="mb-2">
+                <div className="flex justify-between">
+                  <span>
+                    {item.quantity} {item.name}
+                  </span>
+                  <span>{calculateItemTotal(item).toFixed(2)}</span>
+                </div>
+                
+                {/* Add-ons section */}
+                {item.addons && item.addons.length > 0 && (
+                  <div className="text-xs text-left ml-4">
+                    <span className="font-semibold">Add-ons: </span>
+                    {item.addons.map((addon, idx) => (
+                      <span key={idx}>
+                        {addon.name}{addon.quantity > 1 && ` x${addon.quantity}`}
+                        {idx < item.addons.length - 1 ? ", " : ""}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Special instructions section - ensure it works with both details and instructions fields */}
+                {(item.details || item.instructions) && (
+                  <div className="text-xs text-left ml-4">
+                    <span className="font-semibold">Special Instructions: </span>
+                    <span>{item.details || item.instructions}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="text-sm mt-4">
+            <div className="flex justify-between font-bold mt-2">
+              <span>TOTAL:</span>
+              <span>₱{subtotal.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 };
 
 const OrderConfirmation = () => {
@@ -162,7 +242,7 @@ const OrderConfirmation = () => {
   const [countdown, setCountdown] = useState(5);
   const printRef = useRef();
 
-  const paymentMethod = location.state?.paymentMethod || "cash";
+  const paymentMethod = location.state?.orderData?.paymentMethod || "cash";
   const paymentStatus = location.state?.paymentStatus;
   // Get order items from location state if available, otherwise from localStorage
   const orderItems = location.state?.orderData?.items || JSON.parse(localStorage.getItem("cartItems") || "[]");

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 // Helper function to get status badge styles
 const getStatusClasses = (status) => {
@@ -18,68 +18,208 @@ const getStatusClasses = (status) => {
 
 const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const printSectionRef = useRef(null);
+  
+  // Handle print functionality
+  const handlePrint = () => {
+    if (selectedPayment) {
+      const currentDate = new Date();
+      
+      // Calculate subtotal and VAT (assuming 12% VAT included in amount)
+      const subtotal = selectedPayment.amount / 1.12;
+      const vatAmount = selectedPayment.amount - subtotal;
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Payment Receipt - ORN: ${selectedPayment.orn}</title>
+            <style>
+              @page {
+                size: 80mm 297mm;
+                margin: 0;
+              }
+              body {
+                font-family: 'Courier New', monospace;
+                margin: 0;
+                padding: 0;
+                width: 80mm;
+                background-color: white;
+              }
+              .receipt {
+                width: 100%;
+                padding: 5mm;
+                box-sizing: border-box;
+                text-align: center;
+              }
+              .receipt-header {
+                margin-bottom: 5mm;
+              }
+              .receipt-header h1 {
+                font-size: 16pt;
+                margin: 0 0 2mm 0;
+              }
+              .receipt-header p {
+                font-size: 9pt;
+                margin: 0 0 1mm 0;
+              }
+              .receipt-details {
+                font-size: 9pt;
+                margin-bottom: 3mm;
+                text-align: left;
+              }
+              .receipt-details p {
+                margin: 0 0 1mm 0;
+              }
+              .receipt-items {
+                border-top: 1px dashed black;
+                border-bottom: 1px dashed black;
+                padding: 2mm 0;
+                margin: 2mm 0;
+                text-align: left;
+              }
+              .item {
+                margin-bottom: 2mm;
+              }
+              .item-row {
+                display: flex;
+                justify-content: space-between;
+              }
+              .receipt-summary {
+                font-size: 9pt;
+                text-align: left;
+              }
+              .summary-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 1mm;
+              }
+              .bold {
+                font-weight: bold;
+              }
+              .receipt-footer {
+                margin-top: 5mm;
+                font-size: 9pt;
+                border-top: 1px dashed black;
+                padding-top: 2mm;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="receipt">
+              <div class="receipt-header">
+                <h1>Kuya Bert's Kitchenette</h1>
+                <p>Sergio Osmeña St, Atimonan, 4331 Quezon</p>
+                <p>facebook.com/KuyaBertKitchenette</p>
+                <p class="bold">PAYMENT RECEIPT</p>
+              </div>
+              
+              <div class="receipt-details">
+                <p>Official Receipt Number: ${selectedPayment.orn}</p>
+                <p>Payment Method: ${selectedPayment.method}</p>
+                <p>Status: ${selectedPayment.status}</p>
+                <p>Date: ${selectedPayment.date} Time: ${currentDate.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit"
+                })}</p>
+              </div>
+              
+              <div class="receipt-items">
+                ${selectedPayment.details
+                  .filter(detail => detail.item.toLowerCase() !== "tax")
+                  .map((detail, index) => `
+                    <div class="item">
+                      <div class="item-row">
+                        <span>${detail.item}</span>
+                        <span>₱${detail.amount.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  `).join('')}
+              </div>
+              
+              <div class="receipt-summary">
+                <div class="summary-row">
+                  <span>Subtotal</span>
+                  <span>₱${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="summary-row">
+                  <span>VAT (12%)</span>
+                  <span>₱${vatAmount.toFixed(2)}</span>
+                </div>
+                <div class="summary-row bold">
+                  <span>TOTAL AMOUNT</span>
+                  <span>₱${selectedPayment.amount.toFixed(2)}</span>
+                </div>
+              </div>
+              
+              <div class="receipt-footer">
+                THANK YOU, AND PLEASE COME AGAIN.
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }
+  };
 
-  // Sample payment history data (Tax included in details for calculation reference, but will be filtered out in display)
-  // NOTE: The top-level 'amount' should represent the true total including any tax for accuracy in the main list.
-  // The details view will show the breakdown excluding tax, but the total row will still show the top-level 'amount'.
+  // Sample payment history data with ORN instead of ID and without customer field
   const [payments] = useState([
     {
-      id: "P001",
+      orn: "420",
       amount: 396, // 296 + 100
       method: "Cash",
       status: "Completed",
       date: "30/11/24",
-      customer: "John Doe",
       details: [
-        { item: "Service Fee", amount: 296 },
+        { item: "Food and Beverages", amount: 296 },
         { item: "Tax", amount: 100 },
       ],
     },
     {
-      id: "P002",
+      orn: "419",
       amount: 550, // 450 + 100
       method: "Credit Card",
       status: "Processing",
       date: "29/11/24",
-      customer: "Jane Smith",
       details: [
-        { item: "Service Fee", amount: 450 },
+        { item: "Food and Beverages", amount: 450 },
         { item: "Tax", amount: 100 },
       ],
     },
     {
-      id: "P003",
+      orn: "418",
       amount: 120, // 100 + 20
       method: "GCash",
       status: "Completed",
       date: "28/11/24",
-      customer: "Alice Brown",
       details: [
-        { item: "Product A", amount: 100 },
+        { item: "Food and Beverages", amount: 100 },
         { item: "Tax", amount: 20 },
       ],
     },
     {
-      id: "P004",
+      orn: "417",
       amount: 850, // 750 + 100
       method: "Bank Transfer",
       status: "Pending",
       date: "27/11/24",
-      customer: "Bob Green",
       details: [
-        { item: "Consultation", amount: 750 },
+        { item: "Catering Services", amount: 750 },
         { item: "Tax", amount: 100 },
       ],
     },
     {
-      id: "P005",
+      orn: "416",
       amount: 50,
       method: "Cash",
       status: "Failed",
       date: "26/11/24",
-      customer: "Charlie Davis",
       details: [
-        { item: "Small Fee", amount: 50 },
+        { item: "Take-out Order", amount: 50 },
         // No tax item example
       ],
     },
@@ -87,18 +227,18 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
 
   const filteredPayments = payments.filter(
     (payment) =>
-      payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.orn.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.method.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.date.toLowerCase().includes(searchTerm.toLowerCase())
+      payment.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.amount.toString().includes(searchTerm)
   );
 
   // Reset selected payment if it's filtered out
-  React.useEffect(() => {
+  useEffect(() => {
     if (
       selectedPayment &&
-      !filteredPayments.some((p) => p.id === selectedPayment.id)
+      !filteredPayments.some((p) => p.orn === selectedPayment.orn)
     ) {
       setSelectedPayment(null);
     }
@@ -107,35 +247,24 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
   return (
     // Removed height and overflow - parent component now controls scroll if needed
     <div className="p-4">
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search payments (ID, Customer, Method, Status, Date)..."
-          className="w-full p-2 bg-gray-200 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
       {/* Responsive flex layout: column on small, row on medium+ */}
-      {/* Removed explicit height/overflow from children for large screens */}
       <div className="flex flex-col md:flex-row gap-4">
         {/* Left side - Payment list */}
-        {/* Width: full on small, half on medium+. Added overflow-auto for small screens ONLY. */}
-        {/* Added min-h-[200px] for better stacking view on small screens */}
         <div className="w-full md:w-1/2 overflow-auto md:overflow-visible min-h-[200px]">
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Search payments..."
+              className="w-full p-2 bg-gray-100 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <div className="overflow-x-auto">
-            {" "}
-            {/* Ensure table scrolls horizontally if needed on small screens */}
             <table className="w-full border-collapse text-sm min-w-[600px] md:min-w-full">
-              {" "}
-              {/* Min-width for horizontal scroll */}
               <thead className="sticky top-0 bg-gray-100 z-10">
                 <tr>
-                  <th className="border p-2 text-left font-semibold">ID</th>
-                  <th className="border p-2 text-left font-semibold">
-                    Customer
-                  </th>
+                  <th className="border p-2 text-left font-semibold">ORN</th>
                   <th className="border p-2 text-left font-semibold">Amount</th>
                   <th className="border p-2 text-left font-semibold">Method</th>
                   <th className="border p-2 text-left font-semibold">Status</th>
@@ -146,19 +275,16 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                 {filteredPayments.length > 0 ? (
                   filteredPayments.map((payment) => (
                     <tr
-                      key={payment.id}
+                      key={payment.orn}
                       className={`cursor-pointer hover:bg-gray-100 ${
-                        selectedPayment?.id === payment.id
+                        selectedPayment?.orn === payment.orn
                           ? "bg-orange-100"
                           : "bg-white"
                       }`}
                       onClick={() => setSelectedPayment(payment)}
                     >
                       <td className="border p-2 whitespace-nowrap">
-                        {payment.id}
-                      </td>
-                      <td className="border p-2 whitespace-nowrap">
-                        {payment.customer}
+                        {payment.orn}
                       </td>
                       <td className="border p-2 whitespace-nowrap">
                         ₱{payment.amount.toFixed(2)}
@@ -184,7 +310,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                 ) : (
                   <tr>
                     <td
-                      colSpan="6"
+                      colSpan="5"
                       className="text-center p-4 text-gray-500 border"
                     >
                       No matching payments found.
@@ -197,87 +323,75 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
         </div>
 
         {/* Right side - Payment details */}
-        {/* Width: full on small, half on medium+. Added overflow-auto for small screens ONLY. */}
-        {/* Added min-h-[200px] */}
         <div className="w-full md:w-1/2 overflow-auto md:overflow-visible min-h-[200px]">
           {selectedPayment ? (
-            <div className="bg-white p-4 rounded-lg shadow border border-gray-200 h-full">
-              {" "}
-              {/* Added h-full to match table height on large screens */}
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                Payment Details
-              </h3>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
-                <div>
-                  <p className="text-sm text-gray-600">Payment ID</p>
-                  <p className="font-medium text-gray-900">
-                    {selectedPayment.id}
+            <div className="bg-white p-4 rounded-lg shadow border border-gray-200 h-full" ref={printSectionRef}>
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Payment Details
+                </h3>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrint();
+                  }}
+                  className="px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-600 text-sm print:hidden flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Print Receipt
+                </button>
+              </div>
+              <div className="p-3 bg-gray-50 rounded border border-gray-200 mb-4 title-bar">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <p><span className="font-semibold">Official Receipt Number:</span> {selectedPayment.orn}</p>
+                  <p><span className="font-semibold">Date:</span> {selectedPayment.date}</p>
+                  <p>
+                    <span className="font-semibold">Payment Method:</span> {selectedPayment.method}
                   </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Customer</p>
-                  <p className="font-medium text-gray-900">
-                    {selectedPayment.customer}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Method</p>
-                  <p className="font-medium text-gray-900">
-                    {selectedPayment.method}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Status</p>
-                  {/* Status Badge in Details */}
-                  <p className="font-medium text-gray-900 inline-block">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusClasses(
-                        selectedPayment.status
-                      )}`}
-                    >
+                  <p>
+                    <span className="font-semibold">Status:</span> 
+                    <span className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getStatusClasses(selectedPayment.status)}`}>
                       {selectedPayment.status}
                     </span>
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Date</p>
-                  <p className="font-medium text-gray-900">
-                    {selectedPayment.date}
-                  </p>
-                </div>
               </div>
-              <table className="w-full border-collapse text-sm mb-4">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="border p-2 text-left font-semibold">Item</th>
-                    <th className="border p-2 text-right font-semibold">
-                      Amount
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* Filter out 'Tax' items before mapping */}
-                  {selectedPayment.details
-                    .filter((detail) => detail.item.toLowerCase() !== "tax")
-                    .map((detail, index) => (
-                      <tr key={index}>
-                        <td className="border p-2">{detail.item}</td>
-                        <td className="border p-2 text-right">
-                          ₱{detail.amount.toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  {/* Total row still shows the original full amount */}
-                  <tr className="bg-gray-100">
-                    <td className="border p-2 font-bold text-gray-800">
-                      Total
-                    </td>
-                    <td className="border p-2 font-bold text-gray-800 text-right">
-                      ₱{selectedPayment.amount.toFixed(2)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div className="max-h-[calc(100vh-280px)] overflow-y-auto">
+                <table className="w-full border-collapse text-sm mb-4">
+                  <thead className="bg-gray-50 sticky top-0 z-10">
+                    <tr>
+                      <th className="border p-2 text-left font-semibold">Item</th>
+                      <th className="border p-2 text-right font-semibold">
+                        Amount
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Filter out 'Tax' items before mapping */}
+                    {selectedPayment.details
+                      .filter((detail) => detail.item.toLowerCase() !== "tax")
+                      .map((detail, index) => (
+                        <tr key={index}>
+                          <td className="border p-2">{detail.item}</td>
+                          <td className="border p-2 text-right">
+                            ₱{detail.amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    {/* Total row still shows the original full amount */}
+                    <tr className="bg-gray-100 sticky bottom-0">
+                      <td className="border p-2 font-bold text-gray-800">
+                        Total
+                      </td>
+                      <td className="border p-2 font-bold text-gray-800 text-right">
+                        ₱{selectedPayment.amount.toFixed(2)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300 p-4 min-h-[200px]">
