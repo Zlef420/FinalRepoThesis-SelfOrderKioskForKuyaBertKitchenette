@@ -35,9 +35,9 @@ const PrintableReceipt = ({
   const orderNumber = generateOrderNumber();
   const currentDate = new Date();
 
-  // Different receipt formats based on payment method
+  // Render the appropriate receipt based on payment method
   if (paymentMethod === "cash") {
-    // Simple order slip for cash payments
+    // Cash payment - single receipt
     return (
       <div
         ref={printRef}
@@ -97,7 +97,6 @@ const PrintableReceipt = ({
                   <span>₱{calculateItemTotal(item).toFixed(2)}</span>
                 </div>
                 
-                {/* Add-ons section */}
                 {item.addons && item.addons.length > 0 && (
                   <div className="text-xs text-left ml-4">
                     <span className="font-semibold">Add-ons: </span>
@@ -110,10 +109,9 @@ const PrintableReceipt = ({
                   </div>
                 )}
                 
-                {/* Special instructions section */}
                 {(item.details || item.instructions) && (
                   <div className="text-xs text-left ml-4">
-                    <span className="font-semibold">Special Instructions: </span>
+                    <span className="font-semibold">Note: </span>
                     <span>{item.details || item.instructions}</span>
                   </div>
                 )}
@@ -122,21 +120,16 @@ const PrintableReceipt = ({
           </div>
 
           <div className="text-sm mt-4">
-            <div className="flex justify-between font-bold">
+            <div className="flex justify-between font-bold mt-2">
               <span>TOTAL:</span>
               <span>₱{subtotal.toFixed(2)}</span>
             </div>
           </div>
-          
-          <div className="mt-6 pt-4 border-t border-dashed border-gray-300">
-            <p className="font-bold text-base">PLEASE PAY AT THE CASHIER</p>
-            <p className="text-sm mt-2">Thank you for dining with us!</p>
-          </div>
         </div>
       </div>
     );
-  } else {
-    // Original receipt format for e-wallet payments
+  } else if (paymentMethod === "ewallet") {
+    // E-wallet payment - dual receipts (customer and cashier copies)
     return (
       <div
         ref={printRef}
@@ -164,74 +157,148 @@ const PrintableReceipt = ({
               .no-print {
                 display: none !important;
               }
+              .receipt-copy {
+                page-break-after: always;
+              }
             }
           `}
         </style>
-        <div id="printable-receipt" className="text-center">
-          <div className="mb-4">
-            <h1 className="font-bold text-lg">Kuya Bert's Kitchenette</h1>
-            <p className="text-sm">Sergio Osmeña St, Atimonan, 4331 Quezon</p>
-            <p className="text-sm">facebook.com/KuyaBertKitchenette</p>
-            <p className="font-bold mt-2">SALES INVOICE</p>
-            <p className="font-bold">{diningOption.toUpperCase()}</p>
-          </div>
+        <div id="printable-receipt">
+          {/* Customer Copy */}
+          <div className="text-center receipt-copy">
+            <div className="mb-4">
+              <h1 className="font-bold text-lg">Kuya Bert's Kitchenette</h1>
+              <p className="text-sm">Sergio Osmeña St, Atimonan, 4331 Quezon</p>
+              <p className="font-bold mt-3 text-base">ORDER SLIP</p>
+              <p className="font-bold text-lg">ORDER #{orderNumber.replace('SI#', '')}</p>
+              <p className="font-bold">{diningOption.toUpperCase()}</p>
+              <p className="font-bold text-sm mt-1">*** CUSTOMER COPY ***</p>
+            </div>
 
-          <div className="text-sm mb-2">
-            <p>Order Number: {orderNumber}</p>
-            <p>Reference Number: {orderNumber}</p>
-            <p>Payment Method: {paymentMethod.toUpperCase()}</p>
-            <p>
-              Date: {currentDate.toLocaleDateString()} Time:{" "}
-              {currentDate.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          </div>
+            <div className="text-sm mb-2">
+              <p>
+                {currentDate.toLocaleDateString()} {" "}
+                {currentDate.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
 
-          <div className="border-t border-b border-black py-2 my-2">
-            {orderItems.map((item, index) => (
-              <div key={index} className="mb-2">
-                <div className="flex justify-between">
-                  <span>
-                    {item.quantity} {item.name}
-                  </span>
-                  <span>{calculateItemTotal(item).toFixed(2)}</span>
+            <div className="border-t border-b border-black py-2 my-2">
+              {orderItems.map((item, index) => (
+                <div key={index} className="mb-2">
+                  <div className="flex justify-between">
+                    <span>
+                      {item.quantity} {item.name}
+                    </span>
+                    <span>₱{calculateItemTotal(item).toFixed(2)}</span>
+                  </div>
+                  
+                  {item.addons && item.addons.length > 0 && (
+                    <div className="text-xs text-left ml-4">
+                      <span className="font-semibold">Add-ons: </span>
+                      {item.addons.map((addon, idx) => (
+                        <span key={idx}>
+                          {addon.name}{addon.quantity > 1 && ` x${addon.quantity}`}
+                          {idx < item.addons.length - 1 ? ", " : ""}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {(item.details || item.instructions) && (
+                    <div className="text-xs text-left ml-4">
+                      <span className="font-semibold">Note: </span>
+                      <span>{item.details || item.instructions}</span>
+                    </div>
+                  )}
                 </div>
-                
-                {/* Add-ons section */}
-                {item.addons && item.addons.length > 0 && (
-                  <div className="text-xs text-left ml-4">
-                    <span className="font-semibold">Add-ons: </span>
-                    {item.addons.map((addon, idx) => (
-                      <span key={idx}>
-                        {addon.name}{addon.quantity > 1 && ` x${addon.quantity}`}
-                        {idx < item.addons.length - 1 ? ", " : ""}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                
-                {/* Special instructions section - ensure it works with both details and instructions fields */}
-                {(item.details || item.instructions) && (
-                  <div className="text-xs text-left ml-4">
-                    <span className="font-semibold">Special Instructions: </span>
-                    <span>{item.details || item.instructions}</span>
-                  </div>
-                )}
+              ))}
+            </div>
+
+            <div className="mt-2">
+              <div className="flex justify-between font-bold">
+                <span>TOTAL:</span>
+                <span>₱{subtotal.toFixed(2)}</span>
               </div>
-            ))}
+              <div className="mt-2 text-sm">
+                <p className="font-bold">Payment Method: E-Wallet</p>
+                <p className="mt-4">Thank you for your order!</p>
+              </div>
+            </div>
           </div>
 
-          <div className="text-sm mt-4">
-            <div className="flex justify-between font-bold mt-2">
-              <span>TOTAL:</span>
-              <span>₱{subtotal.toFixed(2)}</span>
+          {/* Cashier Copy */}
+          <div className="text-center mt-8">
+            <div className="mb-4">
+              <h1 className="font-bold text-lg">Kuya Bert's Kitchenette</h1>
+              <p className="text-sm">Sergio Osmeña St, Atimonan, 4331 Quezon</p>
+              <p className="font-bold mt-3 text-base">ORDER SLIP</p>
+              <p className="font-bold text-lg">ORDER #{orderNumber.replace('SI#', '')}</p>
+              <p className="font-bold">{diningOption.toUpperCase()}</p>
+              <p className="font-bold text-sm mt-1">*** CASHIER COPY ***</p>
+            </div>
+
+            <div className="text-sm mb-2">
+              <p>
+                {currentDate.toLocaleDateString()} {" "}
+                {currentDate.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+
+            <div className="border-t border-b border-black py-2 my-2">
+              {orderItems.map((item, index) => (
+                <div key={index} className="mb-2">
+                  <div className="flex justify-between">
+                    <span>
+                      {item.quantity} {item.name}
+                    </span>
+                    <span>₱{calculateItemTotal(item).toFixed(2)}</span>
+                  </div>
+                  
+                  {item.addons && item.addons.length > 0 && (
+                    <div className="text-xs text-left ml-4">
+                      <span className="font-semibold">Add-ons: </span>
+                      {item.addons.map((addon, idx) => (
+                        <span key={idx}>
+                          {addon.name}{addon.quantity > 1 && ` x${addon.quantity}`}
+                          {idx < item.addons.length - 1 ? ", " : ""}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {(item.details || item.instructions) && (
+                    <div className="text-xs text-left ml-4">
+                      <span className="font-semibold">Note: </span>
+                      <span>{item.details || item.instructions}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-2">
+              <div className="flex justify-between font-bold">
+                <span>TOTAL:</span>
+                <span>₱{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="mt-2 text-sm">
+                <p className="font-bold">Payment Method: E-Wallet</p>
+                <p className="mt-4">Thank you for your order!</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
     );
+  } else {
+    // Default case - return null if payment method is not recognized
+    return null;
   }
 };
 
