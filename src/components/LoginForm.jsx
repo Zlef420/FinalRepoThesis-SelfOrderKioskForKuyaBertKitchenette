@@ -1,22 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { UserCog, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
+import { supabase } from '../supabaseClient'; // Import Supabase client
 
 const LoginForm = ({ onClose }) => {
   const navigate = useNavigate();
   const { login, currentEmail } = useAuth();
-  const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [focusedField, setFocusedField] = useState("");
   const [loginRole, setLoginRole] = useState(null); // Track role post-login
-
-  const MOCK_CREDENTIALS = {
-    admin: { email: "admin@example.com", password: "admin123" },
-    cashier: { email: "cashier@example.com", password: "cashier123" },
-  };
 
   // Handle Escape key press to close the form
   useEffect(() => {
@@ -32,29 +26,52 @@ const LoginForm = ({ onClose }) => {
     };
   }, [onClose]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login attempt:", { role, email });
+    console.log("Login attempt:", { email });
 
-    if (!role) {
-      toast.error("Please select a role");
+    if (!email || !password) {
+      toast.error("Please enter email and password");
       return;
     }
 
-    const credentials = MOCK_CREDENTIALS[role];
-    if (email === credentials.email && password === credentials.password) {
-      const loggedInRole = login(role, email);
-      console.log("Login successful, role:", loggedInRole);
-      toast.success("Login successful!");
-      setLoginRole(loggedInRole); // Trigger navigation via effect
-    } else {
-      console.log("Invalid credentials");
-      toast.error("Invalid credentials");
+    try {
+      // Query Supabase account_table
+      // IMPORTANT: This method of querying passwords directly is insecure.
+      // Consider using Supabase Auth for proper password handling.
+      const { data, error } = await supabase
+        .from('account_table')
+        .select('username, password, role') // Fetch username, password, and role
+        .eq('username', email) // Assuming 'email' from form maps to 'username' in DB
+        .eq('password', password) // Direct password comparison (INSECURE)
+        .single(); // Expecting a single user or null
+
+      if (error && error.code !== 'PGRST116') { // PGRST116: Row not found (not an error for login logic)
+        console.error('Error logging in:', error);
+        toast.error(`Login failed: ${error.message}`);
+        return;
+      }
+
+      if (data) {
+        // User found and credentials match
+        console.log("Supabase login successful, user data:", data);
+        const loggedInRole = login(data.role, data.username); // Use role and username from DB
+        toast.success("Login successful!");
+        setLoginRole(loggedInRole); // Trigger navigation via effect
+      } else {
+        // No user found with matching username and password, or other error handled above
+        console.log("Invalid credentials or user not found");
+        toast.error("Invalid credentials");
+      }
+    } catch (err) {
+      console.error("Unexpected error during login:", err);
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
 
   useEffect(() => {
-    if (loginRole && currentEmail === email) {
+    // currentEmail is set by AuthContext's login function, which now receives username from DB
+    if (loginRole && currentEmail) {
       console.log("Effect triggered, currentEmail:", currentEmail);
       if (loginRole === "admin") {
         console.log("Navigating to /admin-page");
@@ -74,34 +91,9 @@ const LoginForm = ({ onClose }) => {
   return (
     <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">Login</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <button
-              type="button"
-              onClick={() => setRole("admin")}
-              className={`p-4 border-2 rounded-lg flex flex-col items-center justify-center gap-2 transition-all ${
-                role === "admin"
-                  ? "border-customOrange text-customOrange"
-                  : "border-gray-200 text-gray-500 hover:border-gray-300"
-              }`}
-            >
-              <UserCog className="size-6" />
-              <span>Admin</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole("cashier")}
-              className={`p-4 border-2 rounded-lg flex flex-col items-center justify-center gap-2 transition-all ${
-                role === "cashier"
-                  ? "border-customOrange text-customOrange"
-                  : "border-gray-200 text-gray-500 hover:border-gray-300"
-              }`}
-            >
-              <Users className="size-6" />
-              <span>Cashier</span>
-            </button>
-          </div>
-
+          {/* Role selection buttons removed */}
           <div className="relative">
             <input
               type="email"
