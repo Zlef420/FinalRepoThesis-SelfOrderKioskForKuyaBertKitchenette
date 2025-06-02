@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
-import Header from "../components/Header"; // Assuming these exist
-import Footer from "../components/Footer"; // Assuming these exist
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
 import {
   Trash2,
@@ -11,11 +11,18 @@ import {
   AlertCircle,
   X,
 } from "lucide-react";
-import { CartContext } from "../context/CartContext"; // Assuming you have this context setup
+import { CartContext } from "../context/CartContext";
+import { supabase } from "../supabaseClient";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 // OrderReview component: displays and manages the user's order before payment
 const OrderReview = () => {
   const navigate = useNavigate();
+  // Get user information from AuthContext at the top level
+  const { currentEmail } = useAuth();
+  const user_id = currentEmail || "guest"; // Use guest if not logged in
+  
   // Get CartContext data - Adjust based on your actual context implementation
   const {
     cartItems,
@@ -306,30 +313,150 @@ const OrderReview = () => {
     } ${items.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`;
 
   // Handle navigation to payment page
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedPayment || items.length === 0) {
       return;
     }
 
-    // Prepare final order data (using original structure)
-    const orderData = {
-      items: items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        details: item.details,
-        addons: item.addons,
-        itemTotal: calculateItemTotal(item),
-      })),
-      totalAmount: calculateTotal(),
-      diningOption: selectedOption,
-      paymentMethod: selectedPayment,
-    };
+    // User ID is now accessed from the component level variables
 
-    const destination =
-      selectedPayment === "ewallet" ? "/ewallet-payment" : "/order-conf";
-    navigate(destination, { state: { orderData } });
+    try {
+      // Generate order number and reference number
+      const order_number = Date.now(); // Numeric timestamp as order number
+      const ref_number = `REF-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+      const payment_ref_id = Date.now() + Math.floor(Math.random() * 1000); // Unique payment reference
+
+      // Prepare payment method value
+      const payment_method = selectedPayment === "ewallet" ? 2 : 1; // 1 for cash, 2 for e-wallet
+      
+      // Calculate total amount
+      const total_amount = calculateTotal();
+
+      // 1. Insert into trans_table first to get trans_id
+      const { data: transData, error: transError } = await supabase
+        .from('trans_table')
+        .insert([
+          { 
+            ref_number: ref_number,
+            order_number: order_number,
+            order_type: selectedOption, // Dine in or Take out
+            trans_date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
+            trans_time: new Date().toTimeString().split(' ')[0], // Current time in HH:MM:SS format
+            order_status: 'Pending', // Initial status
+            pymnt_status: 'Pending', // Always pending initially, cashier will confirm
+            pymnt_method: payment_method,
+            total_amntdue: total_amount,
+            amount_paid: 0, // No amount paid yet for cash, cashier will handle
+            user_id: user_id
+          }
+        ])
+        .select();
+
+      if (transError) {
+        console.error("Transaction error:", transError);
+        throw transError;
+      }
+      
+      if (!transData || transData.length === 0) {
+        throw new Error("No transaction data returned");
+      }
+
+      const trans_id = transData[0].trans_id;
+
+      // 2. Insert items into trans_items_table
+      const itemsToInsert = items.map(item => {
+        // Format order notes to include special instructions and addons
+        let order_notes = '';
+        
+        if (item.details) {
+          order_notes += `Instructions: ${item.details}\n`;
+        }
+        
+        if (item.addons && item.addons.length > 0) {
+          order_notes += 'Add-ons: ' + item.addons.map(addon => 
+            `${addon.name} (₱${addon.price})${addon.quantity > 1 ? ` x${addon.quantity}` : ''}`
+          ).join(', ');
+        }
+
+        return {
+          fk_trans_id: trans_id,
+          fk_prod_id: String(item.id), // Convert to string as per schema
+          prdct_name: item.name,
+          quantity: item.quantity,
+          unit_price: item.price,
+          item_subtotal: calculateItemTotal(item),
+          order_notes: order_notes.trim()
+        };
+      });
+
+      const { error: itemsError } = await supabase
+        .from('trans_items_table')
+        .insert(itemsToInsert);
+
+      if (itemsError) {
+        console.error("Items error:", itemsError);
+        throw itemsError;
+      }
+
+      // 3. Insert into payment_table only for e-wallet payments
+      if (selectedPayment === "ewallet" || selectedPayment === "cash") {
+        const { error: paymentError } = await supabase
+          .from('payment_table')
+          .insert([
+            {
+              fk_trans_id: trans_id,
+              pymnt_ref_id: payment_ref_id,
+              order_number: order_number,
+              pymnt_mthod: selectedPayment === "cash" ? "Cash" : "E-Wallet",
+              pymnt_status: "Pending", // Always pending for both cash and e-wallet at this stage
+              pymnt_amount: total_amount,
+              pymnt_change: 0, // No change for now
+              pymnt_date: new Date().toISOString().split('T')[0], // Current date
+              pymnt_time: new Date().toTimeString().split(' ')[0] // Current time
+            }
+          ]);
+
+        if (paymentError) {
+          console.error("Payment error:", paymentError);
+          throw paymentError;
+        }
+      }
+
+      // Prepare final order data (using original structure)
+      const orderData = {
+        trans_id: trans_id,
+        ref_number: ref_number,
+        order_number: order_number,
+        items: items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          details: item.details,
+          addons: item.addons,
+          itemTotal: calculateItemTotal(item),
+        })),
+        totalAmount: total_amount,
+        diningOption: selectedOption,
+        paymentMethod: selectedPayment,
+      };
+
+      // Clear cart after successful order
+      if (typeof clearCart === "function") {
+        clearCart();
+      }
+
+      // Show success message
+      toast.success("Order placed successfully!");
+
+      // Navigate to appropriate page
+      const destination =
+        selectedPayment === "ewallet" ? "/ewallet-payment" : "/order-conf";
+      navigate(destination, { state: { orderData } });
+    } catch (error) {
+      console.error("Error saving order:", error);
+      toast.error("Failed to place order. Please try again.");
+    }
   };
 
   // Modal component (Original structure)
