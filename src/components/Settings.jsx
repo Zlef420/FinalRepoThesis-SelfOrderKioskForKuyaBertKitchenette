@@ -1,40 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSharedState } from "../context/SharedStateContext";
+import { supabase } from "../supabaseClient"; // Added Supabase client
 
 const Settings = () => {
   const { uploadedImages, setUploadedImages } = useSharedState();
 
   const [accountForm, setAccountForm] = useState({
-    username: "",
-    email: "",
-    role: "staff",
+    email: "", // Changed from username to email
+    role: "Cashier", // Default role to Cashier
     password: "",
     confirmPassword: "",
     securityQuestion: "What was your first pet's name?",
     securityAnswer: "",
   });
 
-  const [accounts, setAccounts] = useState([
-    {
-      id: 1,
-      username: "admin",
-      email: "admin@example.com",
-      role: "admin",
-      securityQuestion: "What was your first pet's name?",
-      securityAnswer: "Fido",
-    },
-    {
-      id: 2,
-      username: "staff1",
-      email: "staff1@example.com",
-      role: "staff",
-      securityQuestion: "What was your first pet's name?",
-      securityAnswer: "Whiskers",
-    },
-  ]);
-
+  const [accounts, setAccounts] = useState([]); // Initialize as empty, will be fetched
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+
+  // Fetch accounts from Supabase
+  const fetchAccounts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('account_table')
+        .select('id, email, role'); // Fetch necessary fields
+      if (error) {
+        console.error('Error fetching accounts:', error);
+        alert(`Failed to fetch accounts: ${error.message}`);
+        setAccounts([]); // Set to empty array on error
+      } else {
+        setAccounts(data || []);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching accounts:', err);
+      alert('An unexpected error occurred while fetching accounts.');
+      setAccounts([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchAccounts();
+  }, []); // Fetch on component mount
 
   const handleImageChange = (e, id) => {
     const file = e.target.files[0];
@@ -60,7 +66,7 @@ const Settings = () => {
     );
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { // Made async
     e.preventDefault();
     if (accountForm.password !== accountForm.confirmPassword) {
       alert("Passwords do not match!");
@@ -72,25 +78,61 @@ const Settings = () => {
       return;
     }
 
-    const newAccount = {
-      id: accounts.length + 1,
-      username: accountForm.username,
-      email: accountForm.email,
-      role: accountForm.role,
-      securityQuestion: accountForm.securityQuestion,
-      securityAnswer: accountForm.securityAnswer,
-    };
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(accountForm.email)) { // Changed to accountForm.email
+      alert("Please enter a valid email address.");
+      return;
+    }
+    
+    // IMPORTANT: Storing plain text passwords is a security risk.
+    // Consider using Supabase Auth for proper password hashing.
+    try {
+      // Attempt a select to potentially refresh schema cache for 'security_answ'
+      const { error: selectError } = await supabase
+        .from('account_table')
+        .select('security_question, security_answer') // Also check security_question
+        .limit(1);
 
-    setAccounts([...accounts, newAccount]);
-    setAccountForm({
-      username: "",
-      email: "",
-      role: "staff",
-      password: "",
-      confirmPassword: "",
-      securityQuestion: "What was your first pet's name?",
-      securityAnswer: "",
-    });
+      if (selectError && selectError.code !== 'PGRST116') { // PGRST116: no rows found, not an error for this test
+        console.warn('Pre-insert select check for security_answ failed or column not found by select:', selectError);
+        // We can still proceed to the insert to see if the original error persists or changes
+      } else if (!selectError) {
+        console.log('Pre-insert select check for security_answ was successful.');
+      }
+
+      const { data, error } = await supabase
+        .from('account_table')
+        .insert([
+          {
+            email: accountForm.email, // Changed from username, ensure 'email' is the column name in Supabase
+            password: accountForm.password, // Plain text password
+            role: accountForm.role,
+            security_question: accountForm.securityQuestion, // Changed from security_quest
+            security_answer: accountForm.securityAnswer, 
+          },
+        ]);
+
+      if (error) {
+        console.error("Error adding account:", error);
+        alert(`Failed to add account: ${error.message}`);
+      } else {
+        alert("Account added successfully!");
+        fetchAccounts(); // Refresh the accounts list
+        setAccountForm({ // Reset form
+          email: "", // Changed from username
+          role: "Cashier", // Reset to default role
+          password: "",
+          confirmPassword: "",
+          securityQuestion: "What was your first pet's name?",
+          securityAnswer: "",
+        });
+        // Optionally, you might want to refresh a list of accounts if displayed from DB
+      }
+    } catch (error) {
+      console.error("Unexpected error adding account:", error);
+      alert("An unexpected error occurred. Please try again.");
+    }
   };
 
   const handleDelete = (account) => {
@@ -98,8 +140,38 @@ const Settings = () => {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    setAccounts(accounts.filter((acc) => acc.id !== selectedAccount.id));
+  const confirmDelete = async () => {
+    if (!selectedAccount) return;
+
+    // Prevent deleting the last admin account
+    if (selectedAccount.role === 'admin') {
+      const adminAccounts = accounts.filter(acc => acc.role === 'admin');
+      if (adminAccounts.length <= 1) {
+        alert('Cannot delete the last admin account.');
+        setShowDeleteModal(false);
+        setSelectedAccount(null);
+        return;
+      }
+    }
+
+    try {
+      const { error } = await supabase
+        .from('account_table')
+        .delete()
+        .eq('id', selectedAccount.id);
+
+      if (error) {
+        console.error('Error deleting account:', error);
+        alert(`Failed to delete account: ${error.message}`);
+      } else {
+        alert('Account deleted successfully!');
+        fetchAccounts(); // Refresh the accounts list
+      }
+    } catch (err) {
+      console.error('Unexpected error deleting account:', err);
+      alert('An unexpected error occurred while deleting the account.');
+    }
+
     setShowDeleteModal(false);
     setSelectedAccount(null);
   };
@@ -113,30 +185,20 @@ const Settings = () => {
           <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
             <div>
               <label className="block mb-1 text-sm font-medium">
-                Username:
+                Email:
               </label>
               <input
-                type="text"
+                type="email" // Changed type to email
                 className="w-full p-2 border rounded"
-                value={accountForm.username}
+                value={accountForm.email} // Changed to accountForm.email
                 onChange={(e) =>
-                  setAccountForm({ ...accountForm, username: e.target.value })
+                  setAccountForm({ ...accountForm, email: e.target.value }) // Changed to accountForm.email
                 }
                 required
+                placeholder="Enter email address"
               />
             </div>
-            <div>
-              <label className="block mb-1 text-sm font-medium">Email:</label>
-              <input
-                type="email"
-                className="w-full p-2 border rounded"
-                value={accountForm.email}
-                onChange={(e) =>
-                  setAccountForm({ ...accountForm, email: e.target.value })
-                }
-                required
-              />
-            </div>
+
             <div>
               <label className="block mb-1 text-sm font-medium">Role:</label>
               <select
@@ -146,7 +208,7 @@ const Settings = () => {
                   setAccountForm({ ...accountForm, role: e.target.value })
                 }
               >
-                <option value="staff">Staff</option>
+                <option value="Cashier">Cashier</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
@@ -234,7 +296,6 @@ const Settings = () => {
               <table className="w-full border-collapse">
                 <thead className="sticky top-0 bg-white">
                   <tr>
-                    <th className="border p-2 text-left">Username</th>
                     <th className="border p-2 text-left">Email</th>
                     <th className="border p-2 text-left">Role</th>
                     <th className="border p-2 text-left">Actions</th>
@@ -243,14 +304,13 @@ const Settings = () => {
                 <tbody>
                   {accounts.map((account) => (
                     <tr key={account.id}>
-                      <td className="border p-2">{account.username}</td>
                       <td className="border p-2">{account.email}</td>
                       <td className="border p-2 capitalize">{account.role}</td>
                       <td className="border p-2">
                         <button
                           className={`px-3 py-1 text-sm ${accounts.length <= 1 || account.role === "admin" ? "text-gray-400 cursor-not-allowed" : "text-red-600 hover:text-red-800"}`}
                           onClick={() => handleDelete(account)}
-                          disabled={accounts.length <= 1 || account.role === "admin"}
+                          disabled={account.role === 'admin' && accounts.filter(acc => acc.role === 'admin').length <= 1}
                           title={
                             account.role === "admin"
                               ? "Admin account cannot be deleted"
@@ -324,7 +384,7 @@ const Settings = () => {
             <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
             <p className="mb-4">
               Are you sure you want to delete the account for{" "}
-              {selectedAccount?.username}? This action cannot be undone.
+              {selectedAccount?.email}? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-2">
               <button

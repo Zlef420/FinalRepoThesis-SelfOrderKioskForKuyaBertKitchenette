@@ -41,8 +41,8 @@ const LoginForm = ({ onClose }) => {
       // Consider using Supabase Auth for proper password handling.
       const { data, error } = await supabase
         .from('account_table')
-        .select('username, password, role') // Fetch username, password, and role
-        .eq('username', email) // Assuming 'email' from form maps to 'username' in DB
+        .select('email, password, role') // Fetch email, password, and role
+        .eq('email', email) // Filter by 'email' column using the form's email state
         .eq('password', password) // Direct password comparison (INSECURE)
         .single(); // Expecting a single user or null
 
@@ -55,7 +55,7 @@ const LoginForm = ({ onClose }) => {
       if (data) {
         // User found and credentials match
         console.log("Supabase login successful, user data:", data);
-        const loggedInRole = login(data.role, data.username); // Use role and username from DB
+        const loggedInRole = login(data.role, data.email); // Use role and email from DB
         toast.success("Login successful!");
         setLoginRole(loggedInRole); // Trigger navigation via effect
       } else {

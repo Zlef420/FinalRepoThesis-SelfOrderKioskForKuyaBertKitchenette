@@ -399,7 +399,8 @@ const OrderReview = () => {
       }
 
       // 3. Insert into payment_table only for e-wallet payments
-      if (selectedPayment === "ewallet" || selectedPayment === "cash") {
+    // For cash payments, the record will be created by the cashier upon payment finalization.
+    if (selectedPayment === "ewallet") {
         const { error: paymentError } = await supabase
           .from('payment_table')
           .insert([

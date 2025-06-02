@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
+import { supabase } from '../supabaseClient'; // Ensure this path is correct
 
 // Helper function to get status badge styles
-const getStatusClasses = (status) => {
+export const getStatusClasses = (status) => {
   switch (status.toLowerCase()) {
     case "completed":
       return "bg-green-100 text-green-800";
@@ -17,8 +18,38 @@ const getStatusClasses = (status) => {
 };
 
 const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
+  const [allPayments, setAllPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const printSectionRef = useRef(null);
+
+  // Fetch payments from Supabase
+  useEffect(() => {
+    const fetchPayments = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data, error: supabaseError } = await supabase
+          .from('payment_table')
+          .select('pymnt_id, fk_trans_id, pymnt_ref_id, order_number, pymnt_mthod, pymnt_status, pymnt_amount, pymnt_date, pymnt_time')
+          .order('pymnt_date', { ascending: false })
+          .order('pymnt_time', { ascending: false });
+
+        if (supabaseError) {
+          throw supabaseError;
+        }
+        setAllPayments(data || []);
+      } catch (err) {
+        console.error("Error fetching payments:", err);
+        setError(err.message || 'Failed to fetch payments.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, []);
   
   // Handle print functionality
   const handlePrint = () => {
@@ -166,8 +197,8 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
     }
   };
 
-  // Sample payment history data with ORN instead of ID and without customer field
-  const [payments] = useState([
+  // Dummy data (renamed, will be replaced by allPayments state)
+  const dummyPayments = [
     {
       orn: "420",
       amount: 396, // 296 + 100
@@ -223,22 +254,26 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
         // No tax item example
       ],
     },
-  ]);
+  ];
 
-  const filteredPayments = payments.filter(
-    (payment) =>
-      payment.orn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.method.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.amount.toString().includes(searchTerm)
-  );
+  // Filtered payments based on searchTerm
+  const filteredPayments = searchTerm
+    ? allPayments.filter(
+        (payment) =>
+          payment.order_number?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+          payment.pymnt_ref_id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || // Added search by payment_ref_id
+          payment.pymnt_mthod?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          payment.pymnt_status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          payment.pymnt_date?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          payment.pymnt_amount.toString().includes(searchTerm)
+      )
+    : allPayments;
 
   // Reset selected payment if it's filtered out
   useEffect(() => {
     if (
       selectedPayment &&
-      !filteredPayments.some((p) => p.orn === selectedPayment.orn)
+      !filteredPayments.some((p) => p.pymnt_id === selectedPayment.pymnt_id)
     ) {
       setSelectedPayment(null);
     }
@@ -272,49 +307,67 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                 </tr>
               </thead>
               <tbody>
-                {filteredPayments.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="text-center p-4 text-gray-500">Loading payments...</td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan="5" className="text-center p-4 text-red-500">Error: {error}</td>
+                  </tr>
+                ) : filteredPayments.length > 0 ? (
                   filteredPayments.map((payment) => (
                     <tr
-                      key={payment.orn}
+                      key={payment.pymnt_id}
                       className={`cursor-pointer hover:bg-gray-100 ${
-                        selectedPayment?.orn === payment.orn
+                        selectedPayment?.pymnt_id === payment.pymnt_id
                           ? "bg-orange-100"
                           : "bg-white"
                       }`}
-                      onClick={() => setSelectedPayment(payment)}
+                      onClick={() => {
+                        setSelectedPayment({
+                          pymnt_id: payment.pymnt_id, // Keep for selection tracking
+                          orn: payment.order_number, // Map to 'orn' for details panel/print
+                          amount: payment.pymnt_amount,
+                          method: payment.pymnt_mthod,
+                          status: payment.pymnt_status,
+                          date: payment.pymnt_date,
+                          time: payment.pymnt_time, // Store for potential use
+                          ref_number: payment.pymnt_ref_id, // For receipt
+                          // Construct details for receipt, as payment_table doesn't have itemized list
+                          details: [ 
+                            { item: "Total Payment", amount: payment.pymnt_amount }
+                            // If you had access to trans_items_table here, you could itemize
+                          ],
+                        });
+                      }}
                     >
                       <td className="border p-2 whitespace-nowrap">
-                        {payment.orn}
+                        {payment.order_number} {/* Display order_number from payment_table */}
                       </td>
                       <td className="border p-2 whitespace-nowrap">
-                        ₱{payment.amount.toFixed(2)}
+                        ₱{payment.pymnt_amount.toFixed(2)}
                       </td>
                       <td className="border p-2 whitespace-nowrap">
-                        {payment.method}
+                        {payment.pymnt_mthod}
                       </td>
                       <td className="border p-2 whitespace-nowrap">
-                        {/* Status Badge */}
                         <span
                           className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusClasses(
-                            payment.status
+                            payment.pymnt_status
                           )}`}
                         >
-                          {payment.status}
+                          {payment.pymnt_status}
                         </span>
                       </td>
                       <td className="border p-2 whitespace-nowrap">
-                        {payment.date}
+                        {new Date(payment.pymnt_date).toLocaleDateString()} {/* Format date */}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td
-                      colSpan="5"
-                      className="text-center p-4 text-gray-500 border"
-                    >
-                      No matching payments found.
-                    </td>
+                    <td colSpan="5" className="text-center p-4 text-gray-500">No payments found.</td>
                   </tr>
                 )}
               </tbody>
