@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 
-function MenuCard({ name, price, description, image, onAddToCart }) {
+function MenuCard({ product, onAddToCart }) {
+  const { prdct_name: name, prdct_price: price, prdct_dscrpt: description, prdct_imgurl: image } = product;
   const [isScaling, setIsScaling] = useState(false);
   const [isDescriptionVisible, setIsDescriptionVisible] = useState(false);
   const modalRef = useRef(null);
@@ -55,7 +56,7 @@ function MenuCard({ name, price, description, image, onAddToCart }) {
           className="w-full h-32 object-cover rounded-md mb-4"
         />
         <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
-        <p className="text-gray-600 mb-2">₱{price.toFixed(2)}</p>
+        <p className="text-gray-600 mb-2">₱{typeof price === 'number' ? price.toFixed(2) : 'N/A'}</p>
         <button
           className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
           onClick={handleAddToCartClick}
@@ -80,7 +81,7 @@ function MenuCard({ name, price, description, image, onAddToCart }) {
               alt={name} 
               className="w-full h-48 object-cover rounded-md mb-4" 
             />
-            <p className="text-gray-700 mb-1 text-lg">Price: <span className="font-semibold">₱{price.toFixed(2)}</span></p>
+            <p className="text-gray-700 mb-1 text-lg">Price: <span className="font-semibold">₱{typeof price === 'number' ? price.toFixed(2) : 'N/A'}</span></p>
             <p className="text-gray-600 text-sm mb-4">{description || "No description available."}</p>
             
             <div className="text-center mt-5">

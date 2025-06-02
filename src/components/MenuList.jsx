@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
+import { supabase } from "../supabaseClient"; // Import Supabase client
 
 const MenuList = ({ searchTerm, setSearchTerm }) => {
+  const BUCKET_NAME = 'product-images';
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -16,105 +18,43 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
   });
   const fileInputRef = useRef(null);
 
-  const [menuItems, setMenuItems] = useState([
-    {
-      id: 1,
-      name: "Sisig Plate",
-      price: 99.0,
-      image: "/img/sisig.jpg",
-      category: "Main Dish",
-      isAvailable: true,
-    },
-    {
-      id: 2,
-      name: "Creamy Carbonara",
-      price: 99.0,
-      image: "/img/carbonara.jpg",
-      category: "Pasta",
-      isAvailable: true,
-    },
-    {
-      id: 3,
-      name: "Classic Adobo",
-      price: 120.5,
-      image: "/img/adobo.jpg",
-      category: "Main Dish",
-      isAvailable: false,
-    },
-    {
-      id: 4,
-      name: "Pancit Canton Special",
-      price: 85.0,
-      image: "/img/pancit.jpg",
-      category: "Noodles",
-      isAvailable: true,
-    },
-    {
-      id: 5,
-      name: "Cheeseburger Deluxe",
-      price: 150.0,
-      image: "/img/burger.jpg",
-      category: "Snacks",
-      isAvailable: true,
-    },
-    {
-      id: 6,
-      name: "Crispy French Fries",
-      price: 60.0,
-      image: "/img/fries.jpg",
-      category: "Snacks",
-      isAvailable: true,
-    },
-    {
-      id: 7,
-      name: "Refreshing Iced Tea",
-      price: 50.0,
-      image: "/img/iced-tea.jpg",
-      category: "Drinks",
-      isAvailable: false,
-    },
-    {
-      id: 8,
-      name: "Pepperoni Pizza Slice",
-      price: 100.0,
-      image: "/img/pizza.jpg",
-      category: "Snacks",
-      isAvailable: true,
-    },
-    {
-      id: 9,
-      name: "Fried Chicken Bucket",
-      price: 180.0,
-      image: "/img/chicken-joy.jpg",
-      category: "Main Dish",
-      isAvailable: true,
-    },
-    {
-      id: 10,
-      name: "Special Halo-Halo",
-      price: 110.0,
-      image: "/img/halo-halo.jpg",
-      category: "Dessert",
-      isAvailable: true,
-    },
-    {
-      id: 11,
-      name: "Leche Flan",
-      price: 75.0,
-      image: "/img/leche-flan.jpg",
-      category: "Dessert",
-      isAvailable: true,
-    },
-    {
-      id: 12,
-      name: "Bottled Water",
-      price: 25.0,
-      image: "/img/water.jpg",
-      category: "Drinks",
-      isAvailable: true,
-    },
-  ]);
+  const [menuItems, setMenuItems] = useState([]); // Correctly initialized as empty, will be fetched from Supabase
 
+  // Fetch menu items from Supabase
+  const fetchMenuItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('product_details')
+        .select('product_id, prdct_name, prdct_price, prdct_categ, is_available, prdct_imgurl');
+
+      if (error) {
+        console.error('Error fetching menu items:', error);
+        alert('Failed to fetch menu items.');
+        setMenuItems([]);
+        return;
+      }
+      // Map Supabase columns to component state structure
+      const formattedData = data.map(item => ({
+        id: item.product_id,
+        name: item.prdct_name,
+        price: item.prdct_price,
+        category: item.prdct_categ,
+        isAvailable: item.is_available,
+        image: item.prdct_imgurl, // This will be the Supabase storage URL
+      }));
+      setMenuItems(formattedData);
+    } catch (err) {
+      console.error('Unexpected error fetching menu items:', err);
+      alert('An unexpected error occurred while fetching menu items.');
+      setMenuItems([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchMenuItems();
+  }, []);
+
+  // Effect for cleaning up blob URLs
   useEffect(() => {
     return () => {
       if (menuForm.imagePreview && menuForm.imagePreview.startsWith("blob:")) {
@@ -169,66 +109,176 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
     setShowAvailabilityModal(true);
   };
 
-  const confirmDelete = () => {
-    setMenuItems((prevItems) =>
-      prevItems.filter((item) => item.id !== selectedItem?.id)
-    );
+  const confirmDelete = async () => {
+    if (!selectedItem) return;
+
+    try {
+      // 1. Delete image from Supabase Storage if it exists
+      if (selectedItem.image) {
+        try {
+            // Extract file name from URL. Assumes URL is like: .../bucket_name/file_name.jpg?token=...
+            // Or .../bucket_name/file_name.jpg (if no token for public URLs)
+            const urlParts = selectedItem.image.split('/');
+            let fileNameWithPotentialQuery = urlParts[urlParts.length - 1];
+            const fileName = fileNameWithPotentialQuery.split('?')[0]; // Remove query parameters if any
+            
+            if (fileName) {
+                console.log(`Attempting to delete from storage: ${BUCKET_NAME}/${fileName}`);
+                const { error: storageError } = await supabase.storage
+                .from(BUCKET_NAME)
+                .remove([fileName]);
+                if (storageError) {
+                // Log storage error but don't necessarily block DB deletion if it's just a cleanup step
+                console.error('Error deleting image from storage:', storageError);
+                // alert(`Could not delete image from storage: ${storageError.message}. Proceeding with DB deletion.`);
+                }
+            } else {
+                console.warn('Could not extract filename from image URL:', selectedItem.image);
+            }
+        } catch (e) {
+            console.error('Error parsing image URL for deletion:', e);
+        }
+      }
+
+      // 2. Delete item from the database
+      const { error: dbError } = await supabase
+        .from('product_details')
+        .delete()
+        .eq('product_id', selectedItem.id);
+
+      if (dbError) {
+        console.error('Error deleting item from database:', dbError);
+        alert(`Failed to delete ${selectedItem.name} from database: ${dbError.message}`);
+        setShowDeleteModal(false);
+        setSelectedItem(null);
+        return;
+      }
+
+      alert(`${selectedItem.name} deleted successfully!`);
+      fetchMenuItems(); // Refresh list
+    } catch (deleteError) {
+      console.error('Unexpected error during deletion process:', deleteError);
+      alert(`An unexpected error occurred while deleting ${selectedItem.name}.`);
+    }
     setShowDeleteModal(false);
     setSelectedItem(null);
   };
 
-  const confirmAvailabilityToggle = () => {
+  const confirmAvailabilityToggle = async () => {
     if (!selectedItem) return;
-    setMenuItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === selectedItem.id
-          ? { ...item, isAvailable: !item.isAvailable }
-          : item
-      )
-    );
+    const newAvailability = !selectedItem.isAvailable;
+    try {
+      const { error } = await supabase
+        .from('product_details')
+        .update({ is_available: newAvailability })
+        .eq('product_id', selectedItem.id);
+
+      if (error) {
+        console.error('Error updating availability:', error);
+        alert(`Failed to update availability for ${selectedItem.name}: ${error.message}`);
+        setShowAvailabilityModal(false);
+        setSelectedItem(null);
+        return;
+      }
+
+      alert(
+        `${selectedItem.name} marked as ${newAvailability ? "Available" : "Sold Out"}.`
+      );
+      fetchMenuItems(); // Refresh list
+    } catch (availabilityError) {
+      console.error('Unexpected error updating availability:', availabilityError);
+      alert(`An unexpected error occurred while updating availability for ${selectedItem.name}.`);
+    }
     setShowAvailabilityModal(false);
     setSelectedItem(null);
   };
 
-  const handleMenuSubmit = (e) => {
+  const handleMenuSubmit = async (e) => {
     e.preventDefault();
-    const priceAsNumber = Number(menuForm.price) || 0;
+    let imageUrlForDb = null;
 
-    if (!menuForm.name || !menuForm.category || priceAsNumber <= 0) {
-      alert(
-        "Please fill in all fields with valid values (Price must be greater than 0)."
-      );
-      return;
+    // 1. Handle Image Upload if a new image file is selected
+    if (menuForm.image && typeof menuForm.image !== 'string') { // menuForm.image is a File object
+      const file = menuForm.image;
+      // Sanitize file name: replace spaces with underscores, and ensure uniqueness
+      const sanitizedFileName = file.name.replace(/\s+/g, '_');
+      const fileName = `${Date.now()}-${sanitizedFileName}`;
+      try {
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false, // Set to true if you want to overwrite, false to error if exists
+          });
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          alert(`Image upload failed: ${uploadError.message}`);
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from(BUCKET_NAME)
+          .getPublicUrl(fileName);
+        imageUrlForDb = urlData.publicUrl;
+
+      } catch (uploadCatchError) {
+        console.error('Unexpected error during image upload process:', uploadCatchError);
+        alert('An unexpected error occurred during image upload.');
+        return;
+      }
+    } else if (isEditing && typeof menuForm.imagePreview === 'string') {
+      // If editing and imagePreview is a string, it's an existing Supabase URL. Retain it if no new file.
+      imageUrlForDb = menuForm.imagePreview;
     }
+    // If not editing and no new file, imageUrlForDb remains null, which is correct.
 
-    if (isEditing && menuForm.id !== null) {
-      const imagePath =
-        menuForm.imagePreview && menuForm.imagePreview.startsWith("blob:")
-          ? menuForm.imagePreview
-          : menuItems.find((item) => item.id === menuForm.id)?.image ||
-            "/placeholder.jpg";
+    // 2. Prepare Product Data for Supabase
+    const productData = {
+      prdct_name: menuForm.name,
+      prdct_price: parseFloat(menuForm.price) || 0,
+      prdct_categ: menuForm.category,
+      is_available: menuForm.isAvailable,
+      prdct_imgurl: imageUrlForDb,
+      // prdct_dscrpt: menuForm.description, // Uncomment and use if you add description to your form and DB
+    };
 
-      setMenuItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === menuForm.id
-            ? { ...menuForm, image: imagePath, price: priceAsNumber }
-            : item
-        )
-      );
-    } else {
-      const newId =
-        menuItems.length > 0 ? Math.max(...menuItems.map((i) => i.id)) + 1 : 1;
-      const imagePath = menuForm.imagePreview || "/placeholder.jpg";
-      const newItem = {
-        ...menuForm,
-        id: newId,
-        price: priceAsNumber,
-        isAvailable: true,
-        image: imagePath,
-      };
-      setMenuItems((prevItems) => [...prevItems, newItem]);
+    try {
+      if (isEditing) {
+        // Update existing item in Supabase
+        const { data, error } = await supabase
+          .from('product_details')
+          .update(productData)
+          .eq('product_id', menuForm.id)
+          .select(); // .select() is optional here but can be useful for getting updated data
+
+        if (error) {
+          console.error('Error updating menu item:', error);
+          alert(`Failed to update menu item: ${error.message}`);
+          return;
+        }
+        alert("Menu item updated successfully!");
+      } else {
+        // Add new item to Supabase
+        // For insert, Supabase typically auto-generates product_id if it's a serial key
+        const { data, error } = await supabase
+          .from('product_details')
+          .insert([productData])
+          .select();
+
+        if (error) {
+          console.error('Error adding menu item:', error);
+          alert(`Failed to add menu item: ${error.message}`);
+          return;
+        }
+        alert("Menu item added successfully!");
+      }
+      fetchMenuItems(); // Refresh the list from Supabase
+      resetForm(); // Reset form fields
+    } catch (dbError) {
+      console.error('Unexpected database error:', dbError);
+      alert('An unexpected database error occurred.');
     }
-    resetForm();
   };
 
   const resetForm = () => {

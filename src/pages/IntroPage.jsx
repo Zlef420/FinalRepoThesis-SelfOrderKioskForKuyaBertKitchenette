@@ -1,32 +1,70 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate from react-router-dom
-import { CircleChevronLeft, CircleChevronRight } from "lucide-react"; // Import Lucide icons
+import { useNavigate } from "react-router-dom";
+import { CircleChevronLeft, CircleChevronRight } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { useSharedState } from "../context/SharedStateContext"; // Import shared state
+import { supabase } from "../supabaseClient"; // Import Supabase client
 
 function IntroPage() {
-  const { uploadedImages } = useSharedState(); // Access uploaded images dynamically
+  const [advertisementImages, setAdvertisementImages] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [resetTimer, setResetTimer] = useState(0);
-  const navigate = useNavigate(); // Initialize the useNavigate hook
+  const [isLoadingAds, setIsLoadingAds] = useState(true);
+  const [resetTimer, setResetTimer] = useState(0); 
+  const navigate = useNavigate();
 
-  // Effect hook for auto-swiping images
   useEffect(() => {
+    const fetchAds = async () => {
+      setIsLoadingAds(true);
+      try {
+        const { data, error } = await supabase
+          .from('intro_advertisements') // Corrected table name
+          .select('slot_id, image_url')   // Corrected column names
+          .not('image_url', 'is', null) // Filter out null or empty image_urls
+          .neq('image_url', '')
+          .order('slot_id', { ascending: true }); // Order by slot_id for consistent display
+
+        if (error) {
+          console.error("Error fetching intro advertisement images from Supabase:", error);
+          throw error; // Re-throw to be caught by the outer catch
+        }
+        
+        // Ensure data is not null and filter out any ads that might still have null/empty image_url
+        const validAds = data ? data.filter(ad => ad.image_url) : [];
+
+        const formattedAds = validAds.map(ad => ({
+          id: `intro-ad-${ad.slot_id}`, // Use slot_id for a unique key
+          image: ad.image_url          // Use image_url for the image source
+        }));
+        setAdvertisementImages(formattedAds);
+      } catch (error) { // This catch will now handle errors from the query or if data is null/falsy
+        console.error("Error in fetchAds logic or Supabase query processing:", error);
+        setAdvertisementImages([]); // Set to empty array on error
+      } finally {
+        setIsLoadingAds(false);
+      }
+    };
+
+    fetchAds();
+  }, []);
+
+  useEffect(() => {
+    if (advertisementImages.length === 0) return;
     const interval = setInterval(() => {
       goToNext();
     }, 4000);
     return () => clearInterval(interval);
-  }, [resetTimer]);
+  }, [resetTimer, advertisementImages.length]);
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % uploadedImages.length);
+    if (advertisementImages.length === 0) return;
+    setCurrentIndex((prev) => (prev + 1) % advertisementImages.length);
     setResetTimer((prev) => prev + 1);
   };
 
   const goToPrevious = () => {
+    if (advertisementImages.length === 0) return;
     setCurrentIndex((prev) =>
-      prev === 0 ? uploadedImages.length - 1 : prev - 1
+      prev === 0 ? advertisementImages.length - 1 : prev - 1
     );
     setResetTimer((prev) => prev + 1);
   };
@@ -42,29 +80,43 @@ function IntroPage() {
               transform: `translateX(-${currentIndex * 100}%)`,
             }}
           >
-            {uploadedImages.map((item, index) => (
-              <div key={item.id} className="w-full h-full flex-shrink-0">
-                <img
-                  src={item.image}
-                  alt="Advertisement"
-                  className="w-full h-full object-cover"
-                />
+            {isLoadingAds ? (
+              <div className="w-full h-full flex-shrink-0 flex items-center justify-center">
+                <p className="text-xl text-white">Loading advertisements...</p>
               </div>
-            ))}
+            ) : advertisementImages.length > 0 ? (
+              advertisementImages.map((item, index) => (
+                <div key={item.id} className="w-full h-full flex-shrink-0">
+                  <img
+                    src={item.image}
+                    alt="Advertisement"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="w-full h-full flex-shrink-0 flex items-center justify-center bg-gray-700">
+                <img src="/images/photos/KBcover.png" alt="Kuya Bert Kiosk" className="w-full h-full object-contain"/>
+              </div>
+            )}
           </div>
         </div>
-        <button
-          onClick={goToPrevious}
-          className="absolute left-4 sm:left-6 md:left-8 lg:left-10 bg-transparent border-black px-0 py-0 rounded-full hover:bg-[#d94e1e] transition"
-        >
-          <CircleChevronLeft className="size-8 sm:size-10 md:size-12" />
-        </button>
-        <button
-          onClick={goToNext}
-          className="absolute right-4 sm:right-6 md:right-8 lg:right-10 bg-transparent border-black rounded-full hover:bg-[#d94e1e] transition"
-        >
-          <CircleChevronRight className="size-8 sm:size-10 md:size-12" />
-        </button>
+        {advertisementImages.length > 1 && (
+          <>
+            <button
+              onClick={goToPrevious}
+              className="absolute left-4 sm:left-6 md:left-8 lg:left-10 bg-transparent border-black px-0 py-0 rounded-full hover:bg-[#d94e1e] transition z-10"
+            >
+              <CircleChevronLeft className="size-8 sm:size-10 md:size-12" />
+            </button>
+            <button
+              onClick={goToNext}
+              className="absolute right-4 sm:right-6 md:right-8 lg:right-10 bg-transparent border-black px-0 py-0 rounded-full hover:bg-[#d94e1e] transition z-10"
+            >
+              <CircleChevronRight className="size-8 sm:size-10 md:size-12" />
+            </button>
+          </>
+        )}
       </div>
       <div className="flex justify-center -mt-3">
         <button

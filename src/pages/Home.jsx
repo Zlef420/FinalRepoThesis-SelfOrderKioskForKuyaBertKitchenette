@@ -1,4 +1,5 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { supabase } from "../supabaseClient"; // Import Supabase client
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Navigation from "../components/Navigation";
@@ -7,23 +8,40 @@ import MenuCard from "../components/MenuCard";
 import { CartContext } from "../context/CartContext";
 import { Menu, ShoppingCart } from "lucide-react";
 
-const menuItems = [
-  { id: 1, name: "Sisig", price: 99 },
-  { id: 2, name: "Fried Chicken", price: 99 },
-  { id: 3, name: "Corn Soup", price: 50 },
-  { id: 4, name: "Halo-halo", price: 89 },
-  { id: 5, name: "Chaofan", price: 120 },
-  { id: 6, name: "Tonkatsu", price: 99 },
-];
+
 
 function Home() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { cartItems, addToCart, deleteItem } = useContext(CartContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const filteredItems = menuItems.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const { data, error: dbError } = await supabase
+          .from('product_details')
+          .select('*') // Select all columns, or specify: 'prod_id, prod_name, prod_price, prod_description, prod_image_url, prod_category, is_available'
+          .order('prdct_name', { ascending: true });
+
+        if (dbError) throw dbError;
+        setProducts(data || []);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+        setError(err.message || 'Failed to fetch products.');
+      }
+      setLoading(false);
+    };
+
+    fetchProducts();
+  }, []);
+
+  const filteredItems = products.filter((product) =>
+    product.prdct_name && product.prdct_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalCartItems = cartItems.reduce(
@@ -93,18 +111,20 @@ function Home() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4">
-            {filteredItems.length > 0 ? (
-              filteredItems.map((item) => (
+            {loading && <p className="col-span-full text-gray-500 text-center">Loading menu...</p>}
+            {error && <p className="col-span-full text-red-500 text-center">Error: {error}</p>}
+            {!loading && !error && filteredItems.length > 0 ? (
+              filteredItems.map((product) => (
                 <MenuCard
-                  key={item.id}
-                  name={item.name}
-                  price={item.price}
-                  onAddToCart={() => addToCart(item)}
+                  key={product.product_id} // Use the actual primary key 'product_id'
+                  product={product} // Pass the whole product object
+                  onAddToCart={() => addToCart(product)} // Ensure addToCart handles the product object
                 />
               ))
-            ) : (
+            ) : !loading && !error && (
+              // This condition handles the case where there are no items after loading and no error
               <p className="col-span-full text-gray-500 text-center">
-                No items match your search.
+                No items match your search or no products available.
               </p>
             )}
           </div>
