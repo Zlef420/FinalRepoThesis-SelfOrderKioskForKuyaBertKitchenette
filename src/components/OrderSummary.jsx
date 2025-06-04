@@ -39,7 +39,7 @@ const OrderItem = ({ item, onDeleteClick }) => (
     </div>
     <div className="flex items-center space-x-2">
       <span className="text-black text-xs sm:text-sm font-bold">
-        ₱{(item.price * item.quantity).toFixed(2)}
+        ₱{((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)).toFixed(2)}
       </span>
       <button
         className="text-red-500 hover:text-red-600"
@@ -96,7 +96,7 @@ function OrderSummary({
   const effectiveCartOpen = controlledByParent ? isCartOpen : internalCartOpen;
 
   const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0),
     0
   );
 

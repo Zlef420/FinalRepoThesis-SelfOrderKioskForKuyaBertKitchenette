@@ -118,7 +118,7 @@ function Home() {
                 <MenuCard
                   key={product.product_id} // Use the actual primary key 'product_id'
                   product={product} // Pass the whole product object
-                  onAddToCart={() => addToCart(product)} // Ensure addToCart handles the product object
+                  onAddToCart={addToCart} // Pass the addToCart function directly
                 />
               ))
             ) : !loading && !error && (

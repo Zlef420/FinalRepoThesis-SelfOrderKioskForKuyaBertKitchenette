@@ -9,7 +9,14 @@ function MenuCard({ product, onAddToCart }) {
   const handleAddToCartClick = (event) => {
     event.stopPropagation(); 
     setIsScaling(true);
-    onAddToCart();
+    const itemToAdd = {
+      id: product.product_id, // Map product_id to id
+      name: name,             // Already mapped from prdct_name
+      price: price,           // Already mapped from prdct_price
+      image: image,           // Already mapped from prdct_imgurl
+      description: description // Already mapped from prdct_dscrpt
+    };
+    onAddToCart(itemToAdd);
 
     setTimeout(() => {
       setIsScaling(false);
