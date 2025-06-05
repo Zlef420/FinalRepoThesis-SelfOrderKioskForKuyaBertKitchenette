@@ -357,47 +357,51 @@ const OrderReview = () => {
 
   // Handle navigation to payment page
   const handlePayment = async () => {
-    console.log("[ReviewOrder PAYMENT] Attempting payment. Current Order Number from state:", currentOrderNumber);
     if (!selectedPayment || localItems.length === 0) {
       return;
     }
 
-    // const user_id = currentEmail || "guest"; // Already defined at component scope
-
-    // Use currentOrderNumber from state
     if (currentOrderNumber === null || currentOrderNumber === undefined) {
       toast.error("Order number is not available. Please wait or try refreshing.");
-      console.error("handlePayment: currentOrderNumber is not set.");
-      return; 
+      return;
     }
     const order_number = currentOrderNumber;
-    console.log("[ReviewOrder PAYMENT] Using order_number for transaction:", order_number);
 
     try {
-      const ref_number = `REF-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-      const payment_ref_id = Date.now() + Math.floor(Math.random() * 1000); // Unique payment reference
-
-      // Prepare payment method value
-      const payment_method = selectedPayment === "ewallet" ? 2 : 1; // 1 for cash, 2 for e-wallet
+      // Generate ULID-like ref_number
+      const generateUlidLike = () => {
+        const timestampPart = new Date().getTime().toString(36).toUpperCase();
+        // Generate a longer random part for better uniqueness, e.g., 7-10 characters
+        const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase(); 
+        return `${timestampPart}-${randomPart}`;
+      };
+      const ref_number = generateUlidLike();
       
-      // Calculate total amount
+      const payment_ref_id = Date.now() + Math.floor(Math.random() * 1000); // Keep this as is or could also be ULID-like if preferred
+
+      // Determine payment method string for trans_table and payment_table
+      const paymentMethodString = selectedPayment === "ewallet" ? "E-Wallet" : "Cash";
+
+      // Determine payment status based on payment type
+      const paymentStatus = selectedPayment === "ewallet" ? "Paid" : "Pending";
+      
       const total_amount = calculateTotal();
 
-      // 1. Insert into trans_table first to get trans_id
+      // 1. Insert into trans_table
       const { data: transData, error: transError } = await supabase
         .from('trans_table')
         .insert([
-          { 
-            ref_number: ref_number,
+          {
+            ref_number: ref_number, // New ULID-like ref_number
             order_number: order_number,
-            order_type: selectedOption, // Dine in or Take out
-            trans_date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
-            trans_time: new Date().toTimeString().split(' ')[0], // Current time in HH:MM:SS format
-            order_status: 'Pending', // Initial status
-            pymnt_status: 'Pending', // Always pending initially, cashier will confirm
-            pymnt_method: payment_method,
+            order_type: selectedOption,
+            trans_date: new Date().toISOString().split('T')[0],
+            trans_time: new Date().toTimeString().split(' ')[0],
+            order_status: 'Pending', // Initial order status is always Pending
+            pymnt_status: paymentStatus, // Corrected payment status
+            pymnt_method: paymentMethodString, // Corrected to insert string "Cash" or "E-Wallet"
             total_amntdue: total_amount,
-            amount_paid: 0, // No amount paid yet for cash, cashier will handle
+            amount_paid: selectedPayment === "ewallet" ? total_amount : 0, // For e-wallet, amount_paid is total_amount
             user_id: user_id
           }
         ])
@@ -411,27 +415,22 @@ const OrderReview = () => {
       if (!transData || transData.length === 0) {
         throw new Error("No transaction data returned");
       }
-
       const trans_id = transData[0].trans_id;
 
-      // 2. Insert items into trans_items_table
+      // 2. Insert items into trans_items_table (no changes needed here based on request)
       const itemsToInsert = localItems.map(item => {
-        // Format order notes to include special instructions and addons
         let order_notes = '';
-        
         if (item.details) {
           order_notes += `Instructions: ${item.details}\n`;
         }
-        
         if (item.addons && item.addons.length > 0) {
           order_notes += 'Add-ons: ' + item.addons.map(addon => 
             `${addon.name} (₱${addon.price})${addon.quantity > 1 ? ` x${addon.quantity}` : ''}`
           ).join(', ');
         }
-
         return {
           fk_trans_id: trans_id,
-          fk_prod_id: String(item.id), // Convert to string as per schema
+          fk_prod_id: String(item.id),
           prdct_name: item.name,
           quantity: item.quantity,
           unit_price: item.price,
@@ -439,19 +438,16 @@ const OrderReview = () => {
           order_notes: order_notes.trim()
         };
       });
-
       const { error: itemsError } = await supabase
         .from('trans_items_table')
         .insert(itemsToInsert);
-
       if (itemsError) {
         console.error("Items error:", itemsError);
         throw itemsError;
       }
 
       // 3. Insert into payment_table only for e-wallet payments
-    // For cash payments, the record will be created by the cashier upon payment finalization.
-    if (selectedPayment === "ewallet") {
+      if (selectedPayment === "ewallet") {
         const { error: paymentError } = await supabase
           .from('payment_table')
           .insert([
@@ -459,22 +455,21 @@ const OrderReview = () => {
               fk_trans_id: trans_id,
               pymnt_ref_id: payment_ref_id,
               order_number: order_number,
-              pymnt_mthod: selectedPayment === "cash" ? "Cash" : "E-Wallet",
-              pymnt_status: "Pending", // Always pending for both cash and e-wallet at this stage
+              pymnt_mthod: paymentMethodString, // Using "E-Wallet"
+              pymnt_status: "Paid", // E-wallet is considered Paid immediately
               pymnt_amount: total_amount,
-              pymnt_change: 0, // No change for now
-              pymnt_date: new Date().toISOString().split('T')[0], // Current date
-              pymnt_time: new Date().toTimeString().split(' ')[0] // Current time
+              pymnt_change: 0,
+              pymnt_date: new Date().toISOString().split('T')[0],
+              pymnt_time: new Date().toTimeString().split(' ')[0]
             }
           ]);
-
         if (paymentError) {
           console.error("Payment error:", paymentError);
           throw paymentError;
         }
       }
 
-      // Prepare final order data (using original structure)
+      // Prepare final order data for navigation
       const orderData = {
         trans_id: trans_id,
         ref_number: ref_number,
@@ -490,22 +485,23 @@ const OrderReview = () => {
         })),
         totalAmount: total_amount,
         diningOption: selectedOption,
-        paymentMethod: selectedPayment,
+        paymentMethod: selectedPayment, // This is 'cash' or 'ewallet'
       };
 
-      // Clear cart after successful order
       if (typeof clearCart === "function") {
         clearCart();
       }
-
-      // Show success message
       toast.success("Order placed successfully!");
 
       // Navigate to appropriate page
       if (selectedPayment === "cash") {
         navigate("/order-conf", { state: { orderData } }); 
       } else if (selectedPayment === "ewallet") {
-        navigate("/ewallet-payment", { state: { orderData } }); 
+        // For e-wallet, pass the already determined 'Paid' status
+        // The EWalletPayment page might not be strictly needed if payment is confirmed here
+        // but if it is, ensure it handles this state correctly.
+        // The OrderConfirmation page will use orderData.paymentMethod to show receipt.
+        navigate("/ewallet-payment", { state: { orderData } }); // Or direct to order-conf if QR scan is simulated
       }
 
     } catch (error) {

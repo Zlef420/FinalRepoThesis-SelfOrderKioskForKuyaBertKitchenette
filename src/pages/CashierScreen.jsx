@@ -554,76 +554,81 @@ const CashierScreen = () => {
                     </thead>
                     <tbody>
                       {transactions.length > 0 ? (
-                        transactions.map((transaction) => (
-                          <tr
-                            key={transaction.ORN}
-                            onClick={() => handleTransactionClick(transaction)}
-                            className={`cursor-pointer hover:bg-gray-200 border-b border-gray-200 ${
-                              selectedTransaction?.ORN === transaction.ORN
-                                ? "bg-blue-100 font-medium"
-                                : "hover:bg-gray-100"
-                            }`}
-                        >
-                          <td className="p-2">{transaction.ORN}</td>
-                          <td className="p-2">
-                            ₱{transaction.TAmount.toFixed(2)}
-                          </td>
-                          <td className="p-2">{transaction.RefNum}</td>
-                          <td
-                            className={`p-2 font-medium ${
-                              transaction.PaymentStat === "Paid"
-                                ? "text-green-600"
-                                : transaction.PaymentStat === "Pending"
-                                ? "text-orange-500"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            {transaction.PaymentStat}
-                          </td>
-                          <td className="p-2" onClick={(e) => e.stopPropagation()}>
-                            <select
-                              value={transaction.OrderStatus}
-                              onChange={(e) =>
-                                handleOrderStatusChange(transaction.ORN, e.target.value)
-                              }
-                              className={`w-full p-1 rounded border ${
-                                transaction.OrderStatus === "Waiting"
-                                  ? "text-yellow-600 border-yellow-300 bg-yellow-50"
-                                  : transaction.OrderStatus === "In Progress"
-                                  ? "text-blue-600 border-blue-300 bg-blue-50"
-                                  : "text-green-600 border-green-300 bg-green-50"
+                        transactions.map((transaction) => {
+                          console.log(`Rendering transaction ORN: ${transaction.ORN}, OrderStatus: '${transaction.OrderStatus}' (Type: ${typeof transaction.OrderStatus})`);
+                          return (
+                            <tr
+                              key={transaction.trans_id}
+                              onClick={() => handleTransactionClick(transaction)}
+                              className={`cursor-pointer hover:bg-gray-200 border-b border-gray-200 ${
+                                selectedTransaction?.ORN === transaction.ORN
+                                  ? "bg-blue-100 font-medium"
+                                  : "hover:bg-gray-100"
                               }`}
                             >
-                              <option value="Waiting">Waiting</option>
-                              <option value="In Progress">In Progress</option>
-                              <option value="Done">Done</option>
-                            </select>
-                          </td>
-                          <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => handleCancelOrder(transaction.ORN)}
-                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded"
-                              title="Cancel Order"
-                            >
-                              <X size={16} />
-                            </button>
+                              <td className="p-2">{transaction.ORN}</td>
+                              <td className="p-2">
+                                ₱{transaction.TAmount.toFixed(2)}
+                              </td>
+                              <td className="p-2">{transaction.RefNum}</td>
+                              <td
+                                className={`p-2 font-medium ${
+                                  transaction.PaymentStat === "Paid"
+                                    ? "text-green-600"
+                                    : transaction.PaymentStat === "Pending"
+                                    ? "text-orange-500"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {transaction.PaymentStat}
+                              </td>
+                              <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                                <select
+                                  value={transaction.OrderStatus}
+                                  onChange={(e) =>
+                                    handleOrderStatusChange(transaction.ORN, e.target.value)
+                                  }
+                                  className={`w-full p-1 rounded border ${
+                                    (transaction.OrderStatus?.toLowerCase() === "waiting" || transaction.OrderStatus?.toLowerCase() === "pending")
+                                      ? "text-yellow-600 border-yellow-300 bg-yellow-50"
+                                      : transaction.OrderStatus?.toLowerCase() === "in progress"
+                                      ? "text-blue-600 border-blue-300 bg-blue-50"
+                                      : transaction.OrderStatus?.toLowerCase() === "done"
+                                      ? "text-green-600 border-green-300 bg-green-50"
+                                      : "text-gray-700 border-gray-300 bg-gray-50"
+                                  }`}
+                                >
+                                  <option value="Waiting">Waiting</option>
+                                  <option value="In Progress">In Progress</option>
+                                  <option value="Done">Done</option>
+                                </select>
+                              </td>
+                              <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => handleCancelOrder(transaction.ORN)}
+                                  className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded"
+                                  title="Cancel Order"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan="6"
+                            className="text-center text-gray-500 py-6"
+                          >
+                            No transactions found
+                            {searchQuery ? ' matching "' + searchQuery + '"' : ""}
+                            .
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan="6"
-                          className="text-center text-gray-500 py-6"
-                        >
-                          No transactions found
-                          {searchQuery ? ' matching "' + searchQuery + '"' : ""}
-                          .
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
                 )}
               </div>
             </div>
