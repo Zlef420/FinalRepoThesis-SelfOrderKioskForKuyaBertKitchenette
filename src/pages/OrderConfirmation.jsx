@@ -10,6 +10,7 @@ const PrintableReceipt = ({
   diningOption,
   printRef,
   paymentMethod,
+  dbOrderNumber, // Added prop for database order number
 }) => {
   const calculateItemTotal = (item) => {
     // Check if itemTotal is already calculated (from OrderReview)
@@ -27,12 +28,13 @@ const PrintableReceipt = ({
     return orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   };
 
-  const generateOrderNumber = () => {
-    return `SI#${Math.floor(Math.random() * 10000000)}`;
-  };
+  // const generateOrderNumber = () => { // Keep for reference or remove
+  //   return `SI#${Math.floor(Math.random() * 10000000)}`;
+  // };
 
   const subtotal = calculateSubtotal();
-  const orderNumber = generateOrderNumber();
+  // Use the passed dbOrderNumber if available, otherwise fallback (though ideally it should always be available)
+  const orderNumber = dbOrderNumber ? String(dbOrderNumber) : `SI#${Math.floor(Math.random() * 10000000)}`;
   const currentDate = new Date();
 
   // Render the appropriate receipt based on payment method
@@ -311,8 +313,10 @@ const OrderConfirmation = () => {
 
   const paymentMethod = location.state?.orderData?.paymentMethod || "cash";
   const paymentStatus = location.state?.paymentStatus;
-  // Get order items from location state if available, otherwise from localStorage
-  const orderItems = location.state?.orderData?.items || JSON.parse(localStorage.getItem("cartItems") || "[]");
+  // Get order items and order_number from location state
+  const orderData = location.state?.orderData;
+  const orderItems = orderData?.items || JSON.parse(localStorage.getItem("cartItems") || "[]");
+  const dbOrderNumber = orderData?.order_number; // Get the order_number from database
   const diningOption = localStorage.getItem("diningOption") || "Dine In";
 
   const handlePrint = () => {
@@ -397,6 +401,7 @@ const OrderConfirmation = () => {
                   diningOption={diningOption}
                   printRef={printRef}
                   paymentMethod={paymentMethod}
+                  dbOrderNumber={dbOrderNumber} // Pass dbOrderNumber to PrintableReceipt
                 />
                 <button
                   onClick={handlePrint}

@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trash, ShoppingCart, X } from "lucide-react";
+import { supabase } from "../supabaseClient";
+import toast from "react-hot-toast";
 
 // Sub-components
 const DeleteModal = ({ onClose, onConfirm, title, message }) => (
@@ -80,7 +82,6 @@ const DiningOption = ({ option, selected, onClick }) => (
 
 function OrderSummary({
   cartItems,
-  orderNumber,
   onDeleteItem,
   onCloseCart,
   isCartOpen,
@@ -92,6 +93,36 @@ function OrderSummary({
   const [showRemoveAllModal, setShowRemoveAllModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [internalCartOpen, setInternalCartOpen] = useState(false);
+
+  const [displayedOrderNumber, setDisplayedOrderNumber] = useState(null);
+
+  useEffect(() => {
+    const fetchOrderNumberForSummary = async () => {
+      if (cartItems && cartItems.length > 0) {
+        console.log("[OrderSummary EFFECT] Fetching order number for display...");
+        try {
+          const { data: orderNumData, error: orderNumError } = await supabase.rpc('get_next_daily_order_number');
+          if (orderNumError) {
+            console.error("[OrderSummary EFFECT] Error fetching order number:", orderNumError);
+            setDisplayedOrderNumber(null);
+          } else if (orderNumData === null || orderNumData === undefined) {
+            console.error("[OrderSummary EFFECT] RPC returned null/undefined.");
+            setDisplayedOrderNumber(null);
+          } else {
+            console.log("[OrderSummary EFFECT] Fetched order number for display:", orderNumData);
+            setDisplayedOrderNumber(orderNumData);
+          }
+        } catch (error) {
+          console.error("[OrderSummary EFFECT] Exception fetching order number:", error);
+          setDisplayedOrderNumber(null);
+        }
+      } else {
+        setDisplayedOrderNumber(null);
+      }
+    };
+
+    fetchOrderNumberForSummary();
+  }, [cartItems]);
 
   const effectiveCartOpen = controlledByParent ? isCartOpen : internalCartOpen;
 
@@ -126,7 +157,7 @@ function OrderSummary({
   const handleGoToPayment = () => {
     localStorage.setItem("cartItems", JSON.stringify(cartItems));
     localStorage.setItem("diningOption", selectedOption);
-    navigate("/review-order");
+    navigate("/review-order", { state: { preFetchedOrderNumber: displayedOrderNumber } });
   };
 
   const handleCloseCart = () => {
@@ -138,6 +169,8 @@ function OrderSummary({
   };
 
   const renderMobileCartButton = !controlledByParent;
+
+  console.log("[OrderSummary RENDER] displayedOrderNumber state:", displayedOrderNumber);
 
   return (
     <>
@@ -171,7 +204,7 @@ function OrderSummary({
 
         <div className="pt-6 md:pt-0">
           <h2 className="text-base sm:text-lg font-bold text-center pt-2">
-            Order #{orderNumber}
+            Order #{displayedOrderNumber !== null ? displayedOrderNumber : "..."}
           </h2>
           <div className="flex justify-center space-x-2 mt-2 overflow-auto">
             <DiningOption

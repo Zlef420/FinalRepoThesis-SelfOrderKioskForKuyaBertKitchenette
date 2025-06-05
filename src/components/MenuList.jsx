@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { toast } from 'react-hot-toast';
 import { supabase } from "../supabaseClient"; // Import Supabase client
 
 const MenuList = ({ searchTerm, setSearchTerm }) => {
@@ -12,6 +13,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
     name: "",
     price: "",
     category: "",
+    description: "", // Added description field
     image: null,
     imagePreview: null,
     isAvailable: true,
@@ -25,11 +27,11 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
     try {
       const { data, error } = await supabase
         .from('product_details')
-        .select('product_id, prdct_name, prdct_price, prdct_categ, is_available, prdct_imgurl');
+        .select('product_id, prdct_name, prdct_price, prdct_categ, is_available, prdct_imgurl, prdct_dscrpt'); // Added prdct_dscrpt
 
       if (error) {
         console.error('Error fetching menu items:', error);
-        alert('Failed to fetch menu items.');
+        toast.error('Failed to fetch menu items.');
         setMenuItems([]);
         return;
       }
@@ -39,13 +41,14 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
         name: item.prdct_name,
         price: item.prdct_price,
         category: item.prdct_categ,
-        isAvailable: item.is_available,
+        description: item.prdct_dscrpt || '', // Added description, default to empty string if null
+        isAvailable: item.is_available === true, // Ensure boolean, treating null/false from DB as false
         image: item.prdct_imgurl, // This will be the Supabase storage URL
       }));
       setMenuItems(formattedData);
     } catch (err) {
       console.error('Unexpected error fetching menu items:', err);
-      alert('An unexpected error occurred while fetching menu items.');
+      toast.error('An unexpected error occurred while fetching menu items.');
       setMenuItems([]);
     }
   };
@@ -68,7 +71,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
     if (file) {
       // Check if the file is an image
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file (JPEG, PNG, GIF, etc.)');
+        toast.error('Please select an image file (JPEG, PNG, GIF, etc.)');
         return;
       }
       
@@ -93,6 +96,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
       name: item.name,
       price: item.price,
       category: item.category,
+      description: item.description || '', // Added description
       image: null,
       imagePreview: item.image,
       isAvailable: item.isAvailable,
@@ -141,24 +145,26 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
       }
 
       // 2. Delete item from the database
+      console.log('[Delete] Attempting to delete item from DB. ID:', selectedItem.id);
       const { error: dbError } = await supabase
         .from('product_details')
         .delete()
         .eq('product_id', selectedItem.id);
+      console.log('[Delete] Supabase delete call completed. DB Error:', dbError);
 
       if (dbError) {
         console.error('Error deleting item from database:', dbError);
-        alert(`Failed to delete ${selectedItem.name} from database: ${dbError.message}`);
+        toast.error(`Failed to delete ${selectedItem.name} from database: ${dbError.message}`);
         setShowDeleteModal(false);
         setSelectedItem(null);
         return;
       }
 
-      alert(`${selectedItem.name} deleted successfully!`);
+      toast.success(`${selectedItem.name} deleted successfully!`);
       fetchMenuItems(); // Refresh list
     } catch (deleteError) {
       console.error('Unexpected error during deletion process:', deleteError);
-      alert(`An unexpected error occurred while deleting ${selectedItem.name}.`);
+      toast.error(`An unexpected error occurred while deleting ${selectedItem.name}.`);
     }
     setShowDeleteModal(false);
     setSelectedItem(null);
@@ -167,27 +173,30 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
   const confirmAvailabilityToggle = async () => {
     if (!selectedItem) return;
     const newAvailability = !selectedItem.isAvailable;
+
     try {
+      console.log('[AvailabilityToggle] Attempting to update item ID:', selectedItem.id, 'to isAvailable:', newAvailability);
       const { error } = await supabase
         .from('product_details')
         .update({ is_available: newAvailability })
         .eq('product_id', selectedItem.id);
+      console.log('[AvailabilityToggle] Supabase update call completed. Error:', error);
 
       if (error) {
         console.error('Error updating availability:', error);
-        alert(`Failed to update availability for ${selectedItem.name}: ${error.message}`);
+        toast.error(`Failed to update availability for ${selectedItem.name}: ${error.message}`);
         setShowAvailabilityModal(false);
         setSelectedItem(null);
         return;
       }
 
-      alert(
+      toast.success(
         `${selectedItem.name} marked as ${newAvailability ? "Available" : "Sold Out"}.`
       );
       fetchMenuItems(); // Refresh list
     } catch (availabilityError) {
       console.error('Unexpected error updating availability:', availabilityError);
-      alert(`An unexpected error occurred while updating availability for ${selectedItem.name}.`);
+      toast.error(`An unexpected error occurred while updating availability for ${selectedItem.name}.`);
     }
     setShowAvailabilityModal(false);
     setSelectedItem(null);
@@ -213,7 +222,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
 
         if (uploadError) {
           console.error('Error uploading image:', uploadError);
-          alert(`Image upload failed: ${uploadError.message}`);
+          toast.error(`Image upload failed: ${uploadError.message}`);
           return;
         }
 
@@ -224,82 +233,83 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
 
       } catch (uploadCatchError) {
         console.error('Unexpected error during image upload process:', uploadCatchError);
-        alert('An unexpected error occurred during image upload.');
+        toast.error('An unexpected error occurred during image upload.');
         return;
       }
     } else if (isEditing && typeof menuForm.imagePreview === 'string') {
-      // If editing and imagePreview is a string, it's an existing Supabase URL. Retain it if no new file.
+      // Retain existing image URL if no new file selected
       imageUrlForDb = menuForm.imagePreview;
     }
-    // If not editing and no new file, imageUrlForDb remains null, which is correct.
 
-    // 2. Prepare Product Data for Supabase
+    // Prepare product data for Supabase
     const productData = {
       prdct_name: menuForm.name,
       prdct_price: parseFloat(menuForm.price) || 0,
       prdct_categ: menuForm.category,
+      prdct_dscrpt: menuForm.description,
       is_available: menuForm.isAvailable,
       prdct_imgurl: imageUrlForDb,
-      // prdct_dscrpt: menuForm.description, // Uncomment and use if you add description to your form and DB
     };
 
     try {
       if (isEditing) {
-        // Update existing item in Supabase
-        const { data, error } = await supabase
+        console.log('[SubmitEdit] Attempting to update item ID:', menuForm.id, 'Data:', productData);
+        const { error } = await supabase
           .from('product_details')
           .update(productData)
-          .eq('product_id', menuForm.id)
-          .select(); // .select() is optional here but can be useful for getting updated data
+          .eq('product_id', menuForm.id);
+        console.log('[SubmitEdit] Supabase update call completed. Error:', error);
 
         if (error) {
           console.error('Error updating menu item:', error);
-          alert(`Failed to update menu item: ${error.message}`);
+          toast.error(`Failed to update menu item: ${error.message}`);
           return;
         }
-        alert("Menu item updated successfully!");
+        toast.success('Menu item updated successfully!');
       } else {
-        // Add new item to Supabase
-        // For insert, Supabase typically auto-generates product_id if it's a serial key
-        const { data, error } = await supabase
+        console.log('[SubmitNew] Attempting to insert new item. Data:', productData);
+        const { error } = await supabase
           .from('product_details')
-          .insert([productData])
-          .select();
+          .insert([productData]);
+        console.log('[SubmitNew] Supabase insert call completed. Error:', error);
 
         if (error) {
           console.error('Error adding menu item:', error);
-          alert(`Failed to add menu item: ${error.message}`);
+          toast.error(`Failed to add menu item: ${error.message}`);
           return;
         }
-        alert("Menu item added successfully!");
+        toast.success('Menu item added successfully!');
       }
-      fetchMenuItems(); // Refresh the list from Supabase
-      resetForm(); // Reset form fields
+
+      fetchMenuItems();
+      resetForm();
     } catch (dbError) {
       console.error('Unexpected database error:', dbError);
-      alert('An unexpected database error occurred.');
+      toast.error('An unexpected database error occurred.');
     }
   };
 
   const resetForm = () => {
-    if (menuForm.imagePreview && menuForm.imagePreview.startsWith("blob:")) {
+    if (menuForm.imagePreview && menuForm.imagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(menuForm.imagePreview);
     }
     setMenuForm({
       id: null,
-      name: "",
-      price: "",
-      category: "",
+      name: '',
+      price: '',
+      category: '',
+      description: '',
       image: null,
       imagePreview: null,
       isAvailable: true,
     });
     setIsEditing(false);
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
+  // Apply search filter
   const filteredMenuItems = menuItems.filter(
     (item) =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -308,145 +318,101 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
 
   return (
     <>
-      <div className="flex flex-col md:flex-row h-full overflow-hidden bg-gray-100">
-        <div className="w-full md:flex-1 p-4 flex flex-col overflow-hidden">
-          <div className="mb-4 shrink-0">
+      <div className="flex flex-col lg:flex-row gap-6 p-4 h-full">
+        {/* Menu Items List Section */}
+        <div className="flex-grow lg:w-2/3 bg-white p-4 rounded-lg shadow overflow-y-auto">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800">Menu Items</h2>
+          <div className="mb-4">
             <input
               type="text"
-              placeholder="Search menu items..."
-              className="w-full p-2 bg-white rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
+              placeholder="Search items by name or category..."
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pb-2 pr-2">
-            {filteredMenuItems.length > 0 ? (
-              filteredMenuItems.map((item) => (
-                <div
-                  key={item.id}
-                  className={`bg-white border rounded-lg shadow flex flex-col ${
-                    item.isAvailable ? "border-gray-200" : "border-red-300"
-                  }`}
-                >
-                  <div className="relative h-36 md:h-40 shrink-0 bg-gray-200 rounded-t-lg overflow-hidden group">
-                    <img
-                      src={item.image || `/placeholder-image.png`}
-                      alt={item.name}
-                      loading="lazy"
-                      className={`w-full h-full object-cover transition-opacity duration-300 ${
-                        !item.isAvailable ? "opacity-60" : ""
-                      }`}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = `/placeholder-image.png`;
-                      }}
-                    />
-                    {!item.isAvailable && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-t-lg pointer-events-none">
-                        <span className="text-white text-base font-semibold px-3 py-1 bg-red-600 rounded shadow">
-                          SOLD OUT
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3 flex-grow flex flex-col justify-between">
-                    <div className="mb-2">
-                      <h3
-                        className="font-semibold text-md lg:text-lg truncate"
-                        title={item.name}
-                      >
-                        {item.name}
-                      </h3>
-                      <p className="text-orange-600 font-medium text-sm">
-                        ₱{Number(item.price).toFixed(2)}
-                      </p>
-                      <p
-                        className="text-xs text-gray-500 truncate"
-                        title={item.category}
-                      >
-                        {item.category}
-                      </p>
-                    </div>
-                    <div className="flex gap-1.5 flex-wrap justify-end">
-                      <button
-                        className={`py-1 px-2.5 text-xs font-medium rounded transition-colors ${
-                          item.isAvailable
-                            ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                            : "bg-green-100 text-green-800 hover:bg-green-200"
-                        }`}
-                        onClick={() => handleAvailabilityToggle(item)}
-                        title={
-                          item.isAvailable
-                            ? "Mark as Sold Out"
-                            : "Mark as Available"
-                        }
-                      >
-                        {item.isAvailable ? "Set Sold Out" : "Set Available"}
-                      </button>
-                      <button
-                        className="py-1 px-2.5 text-xs font-medium text-blue-800 bg-blue-100 hover:bg-blue-200 rounded transition-colors"
-                        onClick={() => handleEdit(item)}
-                        title="Edit Item"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="py-1 px-2.5 text-xs font-medium text-red-800 bg-red-100 hover:bg-red-200 rounded transition-colors"
-                        onClick={() => handleDelete(item)}
-                        title="Delete Item"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredMenuItems.map((item) => (
+              <div
+                key={item.id}
+                className={`p-4 border rounded-lg shadow-sm flex flex-col justify-between ${
+                  item.isAvailable ? "bg-white" : "bg-gray-100 opacity-70"
+                }`}
+              >
+                <img
+                  src={item.image || 'https://via.placeholder.com/150?text=No+Image'}
+                  alt={item.name}
+                  className="w-full h-32 object-cover rounded-md mb-3"
+                  onError={(e) => { e.target.onerror = null; e.target.src='https://via.placeholder.com/150?text=No+Image'; }}
+                />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700">{item.name}</h3>
+                  <p className="text-sm text-gray-500 mb-1">{item.category}</p>
+                  <p className="text-xs text-gray-500 mb-2 h-10 overflow-y-auto">{item.description || 'No description available.'}</p>
+                  <p className="text-lg font-bold text-orange-600 mb-2">₱{parseFloat(item.price).toFixed(2)}</p>
+                  <p className={`text-xs font-medium ${item.isAvailable ? 'text-green-600' : 'text-red-600'}`}>
+                    {item.isAvailable ? "Available" : "Sold Out"}
+                  </p>
                 </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center text-gray-500 p-8 italic">
-                No menu items found matching your search.
+                <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                  <button
+                    className="flex-1 px-3 py-1.5 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                    onClick={() => handleEdit(item)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="flex-1 px-3 py-1.5 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
+                    onClick={() => handleDelete(item)}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    className={`flex-1 px-3 py-1.5 text-white text-xs rounded transition-colors ${
+                      item.isAvailable
+                        ? "bg-yellow-500 hover:bg-yellow-600"
+                        : "bg-green-500 hover:bg-green-600"
+                    }`}
+                    onClick={() => handleAvailabilityToggle(item)}
+                  >
+                    {item.isAvailable ? "Set Sold Out" : "Set Available"}
+                  </button>
+                </div>
               </div>
-            )}
+            ))}
           </div>
         </div>
-        <div
-          id="menu-form-section"
-          className="w-full md:w-auto md:max-w-sm lg:max-w-md flex flex-col mt-6 md:mt-0 border-t md:border-t-0 md:border-l border-gray-300 bg-white shadow-lg"
-        >
-          <h2 className="text-lg font-semibold p-4 shrink-0 border-b">
-            {isEditing ? "Edit Menu Item" : "Add New Menu Item"}
+
+        {/* Add/Edit Item Form Section */}
+        <div className="lg:w-1/3 bg-white p-4 rounded-lg shadow flex flex-col h-full max-h-[calc(100vh-4rem)]"> {/* Adjust max-h as needed */}
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+            {isEditing ? "Edit Menu Item" : "Add New Item"}
           </h2>
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="overflow-y-auto flex-grow pr-2"> {/* Added pr-2 for scrollbar spacing */}
             <form onSubmit={handleMenuSubmit} id="menu-item-form">
               <div className="mb-4">
                 <label
                   htmlFor="menu-item-image"
                   className="block mb-1 text-sm font-medium text-gray-700"
                 >
-                  Image:
+                  Product Image:
                 </label>
-                <div
-                  className="mb-2 relative h-32 w-full bg-gray-100 rounded border border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-200"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {menuForm.imagePreview ? (
+                {menuForm.imagePreview && (
+                  <div className="mb-2">
                     <img
                       src={menuForm.imagePreview}
                       alt="Preview"
-                      className="h-full w-full object-cover rounded"
+                      className="w-full h-40 object-cover rounded border"
                     />
-                  ) : (
-                    <span className="text-center text-gray-400 px-2 text-sm">
-                      Click to select image
-                    </span>
-                  )}
-                </div>
+                  </div>
+                )}
                 <input
                   id="menu-item-image"
                   type="file"
                   accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
                   ref={fileInputRef}
+                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                  onChange={handleImageChange}
                 />
               </div>
               <div className="mb-4">
@@ -465,6 +431,23 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
                     setMenuForm((prev) => ({ ...prev, name: e.target.value }))
                   }
                   required
+                />
+              </div>
+               <div className="mb-4">
+                <label
+                  htmlFor="menu-item-description"
+                  className="block mb-1 text-sm font-medium text-gray-700"
+                >
+                  Description:
+                </label>
+                <textarea
+                  id="menu-item-description"
+                  rows={3} // Adjusted rows for better fit
+                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  value={menuForm.description}
+                  onChange={(e) =>
+                    setMenuForm((prev) => ({ ...prev, description: e.target.value }))
+                  }
                 />
               </div>
               <div className="mb-4">
@@ -508,6 +491,21 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
                   }
                   required
                 />
+              </div>
+              {/* Availability Toggle */}
+              <div className="mb-4">
+                <label htmlFor="menu-item-available" className="flex items-center cursor-pointer">
+                  <input
+                    id="menu-item-available"
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 text-orange-600 rounded focus:ring-orange-500 border-gray-300"
+                    checked={menuForm.isAvailable}
+                    onChange={(e) =>
+                      setMenuForm((prev) => ({ ...prev, isAvailable: e.target.checked }))
+                    }
+                  />
+                  <span className="ml-2 text-sm font-medium text-gray-700">Available for Ordering</span>
+                </label>
               </div>
             </form>
           </div>

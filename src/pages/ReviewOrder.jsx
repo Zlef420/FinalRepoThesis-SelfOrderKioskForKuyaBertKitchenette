@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Trash2,
   Wallet,
@@ -19,6 +19,7 @@ import toast from "react-hot-toast";
 // OrderReview component: displays and manages the user's order before payment
 const OrderReview = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // Keep for potential future use, but preFetchedOrderNumber won't be used for setCurrentOrderNumber
   // Get user information from AuthContext at the top level
   const { currentEmail } = useAuth();
   const user_id = currentEmail || "guest"; // Use guest if not logged in
@@ -31,6 +32,8 @@ const OrderReview = () => {
     removeItem, // Keep if needed
     updateItemQuantity, // Ideal function for context updates
     clearCart, // Ideal function for removing all
+    items, // Assuming `items` is the local state for cart items derived from CartContext/localStorage
+    setItems, // Make sure `items` and `setItems` are correctly defined and used as per your existing setup
   } = useContext(CartContext);
 
   // State for dining option
@@ -39,10 +42,9 @@ const OrderReview = () => {
   });
 
   // State for cart items - Initialize robustly
-  const [items, setItems] = useState(() => {
-    const contextCartItems = Array.isArray(cartItems) ? cartItems : [];
+  const [localItems, setLocalItems] = useState(() => {
+    const contextCartItems = Array.isArray(cartItems) ? cartItems : []; // cartItems from context
     let initialItems = [];
-
     if (contextCartItems.length > 0) {
       initialItems = contextCartItems;
     } else {
@@ -51,11 +53,10 @@ const OrderReview = () => {
         initialItems = savedItems ? JSON.parse(savedItems) : [];
         if (!Array.isArray(initialItems)) initialItems = [];
       } catch (e) {
-        console.error("Failed to parse cartItems from localStorage", e);
+        console.error("Failed to parse cartItems from localStorage for OrderReview items state", e);
         initialItems = [];
       }
     }
-
     return initialItems.map((item) => ({
       ...item,
       quantity: Math.max(1, Number(item.quantity) || 1),
@@ -81,29 +82,71 @@ const OrderReview = () => {
     { id: 4, name: "Extra Rice", price: 30 },
   ];
 
+  // Ensure currentOrderNumber state is declared
+  const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
+  
+  // useEffect to fetch and set the order number
+  useEffect(() => {
+    const fetchOrderNumber = async () => {
+      console.log("[ReviewOrder EFFECT] Triggered fetchOrderNumber. localItems.length:", localItems.length);
+      if (localItems.length === 0) {
+        console.log("[ReviewOrder EFFECT] No items in cart, skipping order number fetch.");
+        // Optionally set to null or a placeholder if cart becomes empty
+        // setCurrentOrderNumber(null); 
+        return;
+      }
+
+      console.log("[ReviewOrder EFFECT] Calling supabase.rpc('get_next_daily_order_number')...");
+      try {
+        const { data: orderNumData, error: orderNumError } = await supabase.rpc('get_next_daily_order_number');
+        
+        if (orderNumError) {
+          console.error("[ReviewOrder EFFECT] Error from supabase.rpc:", orderNumError);
+          toast.error("Could not fetch order number. DB Error.");
+          setCurrentOrderNumber(null); // Set to null or a specific error indicator
+        } else {
+          console.log("[ReviewOrder EFFECT] Successfully received from supabase.rpc. Data:", orderNumData);
+          if (orderNumData === null || orderNumData === undefined) {
+            console.error("[ReviewOrder EFFECT] RPC returned null/undefined. This is unexpected.");
+            toast.error("Invalid order number from DB.");
+            setCurrentOrderNumber(null);
+          } else {
+            console.log(`[ReviewOrder EFFECT] Setting currentOrderNumber to: ${orderNumData}`);
+            setCurrentOrderNumber(orderNumData);
+          }
+        }
+      } catch (error) {
+        console.error("[ReviewOrder EFFECT] Exception during fetchOrderNumber:", error);
+        toast.error("App error fetching order number.");
+        setCurrentOrderNumber(null);
+      }
+    };
+
+    fetchOrderNumber();
+
+  }, [localItems.length]); // Dependency: re-run if the number of items changes.
+                         // Supabase client instance is generally stable, so not always needed here unless it can change.
+
+  console.log("[ReviewOrder RENDER] currentOrderNumber state:", currentOrderNumber);
+
   // Sync local `items` state changes back to localStorage
   useEffect(() => {
-    const validItems = items.filter(
+    const validItems = localItems.filter(
       (item) => item && item.id && item.quantity > 0
     );
     localStorage.setItem("cartItems", JSON.stringify(validItems));
-  }, [items]);
+  }, [localItems]);
 
   // Sync dining option with localStorage
   useEffect(() => {
     localStorage.setItem("diningOption", selectedOption);
   }, [selectedOption]);
 
-  // Sync with CartContext state if it changes externally (optional)
-  // useEffect(() => {
-  //    // Logic here if needed
-  // }, [cartItems]);
-
   // *** FIXED: Minus button spam and quantity logic ***
   const updateQuantity = (e, id, increment) => {
     e.stopPropagation();
 
-    const currentItem = items.find((item) => item.id === id);
+    const currentItem = localItems.find((item) => item.id === id);
     if (!currentItem) return;
 
     const currentQuantity = currentItem.quantity;
@@ -117,7 +160,7 @@ const OrderReview = () => {
     const newQuantity = Math.max(1, currentQuantity + increment);
 
     if (newQuantity !== currentQuantity) {
-      setItems((currentItems) =>
+      setLocalItems((currentItems) =>
         currentItems.map((item) =>
           item.id === id ? { ...item, quantity: newQuantity } : item
         )
@@ -134,8 +177,8 @@ const OrderReview = () => {
 
   // Toggle item details expansion
   const toggleExpand = (id) => {
-    setItems(
-      items.map((item) =>
+    setLocalItems(
+      localItems.map((item) =>
         item.id === id ? { ...item, isExpanded: !item.isExpanded } : item
       )
     );
@@ -143,8 +186,8 @@ const OrderReview = () => {
 
   // Update special instructions for an item
   const updateDescription = (id, description) => {
-    setItems(
-      items.map((item) =>
+    setLocalItems(
+      localItems.map((item) =>
         item.id === id
           ? { ...item, details: description, isSaved: false }
           : item
@@ -154,7 +197,7 @@ const OrderReview = () => {
 
   // Add or remove one instance of an addon
   const updateAddonQuantity = (itemId, addon, increment) => {
-    setItems((prevItems) =>
+    setLocalItems((prevItems) =>
       prevItems.map((item) => {
         if (item.id === itemId) {
           const currentAddons = Array.isArray(item.addons) ? item.addons : [];
@@ -205,7 +248,7 @@ const OrderReview = () => {
   // Save item changes (instructions, addons) and collapse details
   const saveChanges = (e, id) => {
     e.stopPropagation();
-    setItems((currentItems) =>
+    setLocalItems((currentItems) =>
       currentItems.map((item) => {
         if (item.id === id && !item.isSaved) {
           if (typeof updateItemQuantity === "function") {
@@ -253,7 +296,7 @@ const OrderReview = () => {
 
   // Calculate total cost of all items in the cart
   const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+    return localItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   };
 
   // Show delete item confirmation modal
@@ -266,8 +309,8 @@ const OrderReview = () => {
   // Delete a single item from the cart (local state and context)
   const deleteItemLocal = () => {
     if (itemToDelete !== null) {
-      const updatedItems = items.filter((item) => item.id !== itemToDelete);
-      setItems(updatedItems);
+      const updatedItems = localItems.filter((item) => item.id !== itemToDelete);
+      setLocalItems(updatedItems);
 
       if (typeof deleteItem === "function") {
         deleteItem(itemToDelete);
@@ -282,14 +325,14 @@ const OrderReview = () => {
 
   // Show delete all items confirmation modal
   const confirmDeleteAllItems = () => {
-    if (items.length === 0) return;
+    if (localItems.length === 0) return;
     setShowDeleteAllModal(true);
   };
 
   // Delete all items from the cart (local state and context)
   const deleteAllItems = () => {
-    const itemIds = items.map((item) => item.id);
-    setItems([]);
+    const itemIds = localItems.map((item) => item.id);
+    setLocalItems([]);
 
     if (typeof clearCart === "function") {
       clearCart();
@@ -310,19 +353,27 @@ const OrderReview = () => {
       isSelected
         ? "bg-blue-100 border-blue-500"
         : "border-gray-300 hover:bg-gray-200"
-    } ${items.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`;
+    } ${localItems.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`;
 
   // Handle navigation to payment page
   const handlePayment = async () => {
-    if (!selectedPayment || items.length === 0) {
+    console.log("[ReviewOrder PAYMENT] Attempting payment. Current Order Number from state:", currentOrderNumber);
+    if (!selectedPayment || localItems.length === 0) {
       return;
     }
 
-    // User ID is now accessed from the component level variables
+    // const user_id = currentEmail || "guest"; // Already defined at component scope
+
+    // Use currentOrderNumber from state
+    if (currentOrderNumber === null || currentOrderNumber === undefined) {
+      toast.error("Order number is not available. Please wait or try refreshing.");
+      console.error("handlePayment: currentOrderNumber is not set.");
+      return; 
+    }
+    const order_number = currentOrderNumber;
+    console.log("[ReviewOrder PAYMENT] Using order_number for transaction:", order_number);
 
     try {
-      // Generate order number and reference number
-      const order_number = Date.now(); // Numeric timestamp as order number
       const ref_number = `REF-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
       const payment_ref_id = Date.now() + Math.floor(Math.random() * 1000); // Unique payment reference
 
@@ -364,7 +415,7 @@ const OrderReview = () => {
       const trans_id = transData[0].trans_id;
 
       // 2. Insert items into trans_items_table
-      const itemsToInsert = items.map(item => {
+      const itemsToInsert = localItems.map(item => {
         // Format order notes to include special instructions and addons
         let order_notes = '';
         
@@ -428,7 +479,7 @@ const OrderReview = () => {
         trans_id: trans_id,
         ref_number: ref_number,
         order_number: order_number,
-        items: items.map((item) => ({
+        items: localItems.map((item) => ({
           id: item.id,
           name: item.name,
           price: item.price,
@@ -451,9 +502,12 @@ const OrderReview = () => {
       toast.success("Order placed successfully!");
 
       // Navigate to appropriate page
-      const destination =
-        selectedPayment === "ewallet" ? "/ewallet-payment" : "/order-conf";
-      navigate(destination, { state: { orderData } });
+      if (selectedPayment === "cash") {
+        navigate("/order-conf", { state: { orderData } }); 
+      } else if (selectedPayment === "ewallet") {
+        navigate("/ewallet-payment", { state: { orderData } }); 
+      }
+
     } catch (error) {
       console.error("Error saving order:", error);
       toast.error("Failed to place order. Please try again.");
@@ -513,19 +567,17 @@ const OrderReview = () => {
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-full">
             {/* Order Header (Original structure) */}
             <div className="mb-4 text-white">
-              <h2 className="text-2xl font-bold -mb-1 -mt-2">
-                <span>Order</span>
-                <span className="ml-2">#420</span>{" "}
-                {/* Keep static as per original */}
-              </h2>
-              <div className="flex justify-between items-center border-b border-gray-600 pb-2">
-                <p className="text-lg">Review your Order</p>
-                <div>{items.length} Items in your cart</div>
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold text-white">Review your Order</h1>
+                {/* Display currentOrderNumber */}
+                {currentOrderNumber !== null && (
+                  <span className="text-xl font-bold text-white">Order #{currentOrderNumber}</span>
+                )}
               </div>
             </div>
             {/* Order Items List with fixed height - ensure content stays within scrollable area */}
             <div className="flex-1 overflow-y-auto pr-1 -mr-1 h-[calc(100vh-400px)] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-700">
-              {items.length === 0 ? (
+              {localItems.length === 0 ? (
                 // Empty cart display without redundant return button
                 <div className="flex flex-col items-center justify-center h-40 text-white">
                   <p className="text-xl">Your cart is empty</p>
@@ -533,7 +585,7 @@ const OrderReview = () => {
               ) : (
                 // Original item mapping structure
                 <div className="space-y-4">
-                  {items.map((item) => (
+                  {localItems.map((item) => (
                     <div
                       key={item.id}
                       // Original item container styling
@@ -756,7 +808,7 @@ const OrderReview = () => {
                 Return
               </button>
               {/* Original Remove All button */}
-              {items.length > 0 && (
+              {localItems.length > 0 && (
                 <button
                   onClick={confirmDeleteAllItems}
                   className="py-2 px-2 text-sm text-red-500 hover:text-white
@@ -776,13 +828,13 @@ const OrderReview = () => {
               <h2 className="text-2xl font-bold mb-5">Total Cost</h2>
               {/* Cart Summary with improved formatting */}
               <div className="overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 h-[calc(100vh-500px)]">
-                {items.length === 0 ? (
+                {localItems.length === 0 ? (
                   <p className="text-gray-500 text-center py-2">
                     No items in cart
                   </p>
                 ) : (
                   <div className="space-y-4">
-                    {items.map((item) => (
+                    {localItems.map((item) => (
                       <div key={item.id} className="border-b pb-3 last:border-b-0">
                         <div className="flex justify-between text-base">
                           <div className="font-medium">{item.name}</div>
@@ -835,7 +887,7 @@ const OrderReview = () => {
                   <button
                     onClick={() => setSelectedPayment("cash")}
                     className={paymentButtonStyle(selectedPayment === "cash")}
-                    disabled={items.length === 0}
+                    disabled={localItems.length === 0}
                   >
                     <Wallet className="size-6 mb-2" />
                     <span>Cash</span>
@@ -843,7 +895,7 @@ const OrderReview = () => {
                   <button
                     onClick={() => setSelectedPayment("ewallet")}
                     className={paymentButtonStyle(selectedPayment === "ewallet")}
-                    disabled={items.length === 0}
+                    disabled={localItems.length === 0}
                   >
                     <Smartphone className="size-6 mb-2" />
                     <span>E-wallet</span>
@@ -853,15 +905,15 @@ const OrderReview = () => {
               {/* Proceed to Payment Button (Original structure) */}
               <button
                 className={`w-full py-3 text-white rounded text-center font-bold ${
-                  selectedPayment && items.length > 0
+                  selectedPayment && localItems.length > 0
                     ? "bg-red-500 hover:bg-red-600" // Original colors
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
-                disabled={!selectedPayment || items.length === 0}
+                disabled={!selectedPayment || localItems.length === 0}
                 onClick={handlePayment}
               >
                 {/* Original button text logic */}
-                {items.length === 0
+                {localItems.length === 0
                   ? "Cart is Empty"
                   : selectedPayment
                   ? "Proceed to Payment"
