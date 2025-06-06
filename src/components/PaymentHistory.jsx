@@ -280,13 +280,12 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
   }, [filteredPayments, selectedPayment]);
 
   return (
-    // Removed height and overflow - parent component now controls scroll if needed
     <div className="p-4">
       {/* Responsive flex layout: column on small, row on medium+ */}
       <div className="flex flex-col md:flex-row gap-4">
         {/* Left side - Payment list */}
-        <div className="w-full md:w-1/2 overflow-auto md:overflow-visible min-h-[200px]">
-          <div className="mb-4">
+        <div className="w-full md:w-1/2 flex flex-col min-h-[200px]">
+          <div className="sticky top-0 z-20 bg-white py-2">
             <input
               type="text"
               placeholder="Search payments..."
@@ -295,15 +294,15 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[calc(80vh-56px)]">
             <table className="w-full border-collapse text-sm min-w-[600px] md:min-w-full">
               <thead className="sticky top-0 bg-gray-100 z-10">
                 <tr>
-                  <th className="border p-2 text-left font-semibold">ORN</th>
-                  <th className="border p-2 text-left font-semibold">Amount</th>
+                  <th className="border p-2 text-left font-semibold w-20">ORN</th>
+                  <th className="border p-2 text-left font-semibold w-32">Amount</th>
                   <th className="border p-2 text-left font-semibold">Method</th>
-                  <th className="border p-2 text-left font-semibold">Status</th>
-                  <th className="border p-2 text-left font-semibold">Date</th>
+                  <th className="border p-2 text-left font-semibold w-24">Status</th>
+                  <th className="border p-2 text-left font-semibold w-28">Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -376,7 +375,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
         </div>
 
         {/* Right side - Payment details */}
-        <div className="w-full md:w-1/2 overflow-auto md:overflow-visible min-h-[200px]">
+        <div className="w-full md:w-1/2 overflow-auto max-h-[80vh] min-h-[200px]">
           {selectedPayment ? (
             <div className="bg-white p-4 rounded-lg shadow border border-gray-200 h-full" ref={printSectionRef}>
               <div className="flex justify-between items-start mb-4">

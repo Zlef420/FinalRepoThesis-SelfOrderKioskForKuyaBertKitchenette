@@ -480,15 +480,18 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
                 </label>
                 <input
                   id="menu-item-price"
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="0.00"
                   className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                   value={menuForm.price}
-                  onChange={(e) =>
-                    setMenuForm((prev) => ({ ...prev, price: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only non-negative numbers and a single decimal point
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setMenuForm((prev) => ({ ...prev, price: value }));
+                    }
+                  }}
                   required
                 />
               </div>

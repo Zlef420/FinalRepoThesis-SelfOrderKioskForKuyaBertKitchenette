@@ -57,13 +57,15 @@ const OrderReview = () => {
         initialItems = [];
       }
     }
-    return initialItems.map((item) => ({
-      ...item,
+    return initialItems.map((item) => {
+      const { addons, ...itemWithoutAddons } = item;
+      return {
+        ...itemWithoutAddons,
       quantity: Math.max(1, Number(item.quantity) || 1),
-      addons: Array.isArray(item.addons) ? item.addons : [],
       isExpanded: item.isExpanded || false,
       isSaved: item.isSaved !== undefined ? Boolean(item.isSaved) : true,
-    }));
+      };
+    });
   });
 
   // State for selected payment method
@@ -73,14 +75,6 @@ const OrderReview = () => {
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-
-  // Available addons for items (ensure prices are numbers)
-  const availableAddons = [
-    { id: 1, name: "Gravy", price: 20 },
-    { id: 2, name: "Extra Sauce", price: 15 },
-    { id: 3, name: "Cheese", price: 25 },
-    { id: 4, name: "Extra Rice", price: 30 },
-  ];
 
   // Ensure currentOrderNumber state is declared
   const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
@@ -195,56 +189,6 @@ const OrderReview = () => {
     );
   };
 
-  // Add or remove one instance of an addon
-  const updateAddonQuantity = (itemId, addon, increment) => {
-    setLocalItems((prevItems) =>
-      prevItems.map((item) => {
-        if (item.id === itemId) {
-          const currentAddons = Array.isArray(item.addons) ? item.addons : [];
-          const existingAddonIndex = currentAddons.findIndex(
-            (a) => a.id === addon.id
-          );
-          let newAddons = [...currentAddons];
-          let changed = false;
-
-          if (existingAddonIndex >= 0) {
-            const existingAddon = currentAddons[existingAddonIndex];
-            const currentQuantity = Number(existingAddon.quantity) || 0;
-            const newQuantity = Math.max(0, currentQuantity + increment);
-
-            if (newQuantity === 0) {
-              if (currentQuantity > 0) {
-                newAddons.splice(existingAddonIndex, 1);
-                changed = true;
-              }
-            } else if (newQuantity !== currentQuantity) {
-              newAddons[existingAddonIndex] = {
-                ...existingAddon,
-                quantity: newQuantity,
-              };
-              changed = true;
-            }
-          } else if (increment > 0) {
-            newAddons.push({ ...addon, quantity: 1 });
-            changed = true;
-          }
-
-          return changed
-            ? { ...item, addons: newAddons, isSaved: false }
-            : item;
-        }
-        return item;
-      })
-    );
-  };
-
-  // Get current quantity of a specific addon for an item
-  const getAddonQuantity = (item, addonId) => {
-    if (!Array.isArray(item.addons)) return 0;
-    const addon = item.addons.find((a) => a.id === addonId);
-    return addon ? Number(addon.quantity) || 0 : 0;
-  };
-
   // Save item changes (instructions, addons) and collapse details
   const saveChanges = (e, id) => {
     e.stopPropagation();
@@ -252,7 +196,7 @@ const OrderReview = () => {
       currentItems.map((item) => {
         if (item.id === id && !item.isSaved) {
           if (typeof updateItemQuantity === "function") {
-            updateItemQuantity(id, item.quantity, item.addons, item.details);
+            updateItemQuantity(id, item.quantity, undefined, item.details);
           } else if (typeof addToCart === "function") {
             addToCart(item);
           }
@@ -273,25 +217,9 @@ const OrderReview = () => {
 
     if (quantity === 0) return 0;
 
-    // Calculate total price of addons (NOT multiplied by item quantity)
-    const addonsTotalPrice = (item.addons || []).reduce((sum, addon) => {
-      const addonPrice = Number(addon.price) || 0;
-      const addonQuantity = Number(addon.quantity) || 0;
-      return sum + addonPrice * addonQuantity;
-    }, 0);
-
-    // Total cost = (Base Price * Item Quantity) + Addons Price
-    const total = (basePrice * quantity) + addonsTotalPrice;
+    // Total cost = (Base Price * Item Quantity)
+    const total = (basePrice * quantity);
     return total;
-  };
-
-  // Calculate addon total for a single item (for display purposes)
-  const calculateAddonTotal = (item) => {
-    return (item.addons || []).reduce((sum, addon) => {
-      const addonPrice = Number(addon.price) || 0;
-      const addonQuantity = Number(addon.quantity) || 0;
-      return sum + addonPrice * addonQuantity;
-    }, 0);
   };
 
   // Calculate total cost of all items in the cart
@@ -423,11 +351,6 @@ const OrderReview = () => {
         if (item.details) {
           order_notes += `Instructions: ${item.details}\n`;
         }
-        if (item.addons && item.addons.length > 0) {
-          order_notes += 'Add-ons: ' + item.addons.map(addon => 
-            `${addon.name} (₱${addon.price})${addon.quantity > 1 ? ` x${addon.quantity}` : ''}`
-          ).join(', ');
-        }
         return {
           fk_trans_id: trans_id,
           fk_prod_id: String(item.id),
@@ -480,7 +403,6 @@ const OrderReview = () => {
           price: item.price,
           quantity: item.quantity,
           details: item.details,
-          addons: item.addons,
           itemTotal: calculateItemTotal(item),
         })),
         totalAmount: total_amount,
@@ -621,24 +543,6 @@ const OrderReview = () => {
                                     {item.details}
                                   </div>
                                 )}
-                                {(item.addons || []).length > 0 && (
-                                  <div className="break-words">
-                                    <span className="font-medium">
-                                      Add-ons:{" "}
-                                    </span>
-                                    {item.addons.map((addon, idx) => (
-                                      <span key={addon.id}>
-                                        {addon.name} (₱{addon.price})
-                                        {/* Show addon quantity if > 1 */}
-                                        {Number(addon.quantity) > 1 &&
-                                          ` x${addon.quantity}`}
-                                        {idx < item.addons.length - 1
-                                          ? ", "
-                                          : ""}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
                               </div>
                             )}
                           </div>
@@ -673,22 +577,7 @@ const OrderReview = () => {
                         {/* Item Total Price display with breakdown */}
                         <div className="flex justify-end items-center mt-2">
                           <div className="text-gray-600">
-                            {item.addons && item.addons.length > 0 ? (
-                              <div className="text-right">
-                                <div>
-                                  Base: ₱{item.price} × {item.quantity} = ₱
-                                  {item.price * item.quantity}
-                                </div>
-                                <div>
-                                  Add-ons: ₱{calculateAddonTotal(item)}
-                                </div>
-                                <div className="font-semibold">
-                                  Total: ₱{calculateItemTotal(item)}
-                                </div>
-                              </div>
-                            ) : (
                               <div>Total: ₱{calculateItemTotal(item)}</div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -699,61 +588,6 @@ const OrderReview = () => {
                           className="border-t border-gray-200 p-4 space-y-2 bg-white overflow-visible"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {/* Add-ons Section (Original structure) */}
-                          <div className="space-y-2">
-                            <h3 className="font-semibold">Add-ons</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {availableAddons.map((addon) => {
-                                const quantity = getAddonQuantity(
-                                  item,
-                                  addon.id
-                                );
-                                return (
-                                  // Original addon display structure
-                                  <div
-                                    key={addon.id}
-                                    className="flex items-center justify-between p-2 bg-gray-50 rounded"
-                                  >
-                                    <span>
-                                      {addon.name} - ₱{addon.price}
-                                    </span>
-                                    {/* Original addon quantity controls */}
-                                    <div className="flex items-center space-x-2">
-                                      <button
-                                        onClick={() =>
-                                          updateAddonQuantity(
-                                            item.id,
-                                            addon,
-                                            -1
-                                          )
-                                        }
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                          quantity > 0
-                                            ? "bg-red-500 text-white" // Original colors
-                                            : "bg-gray-300 text-gray-500"
-                                        }`}
-                                        disabled={quantity === 0}
-                                      >
-                                        -
-                                      </button>
-                                      <span className="w-6 text-center">
-                                        {quantity}
-                                      </span>
-                                      <button
-                                        onClick={() =>
-                                          updateAddonQuantity(item.id, addon, 1)
-                                        }
-                                        className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center" // Original colors
-                                      >
-                                        +
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-
                           {/* Special Instructions Section (Original structure) */}
                           <div>
                             <h3 className="font-semibold mb-2">
@@ -834,30 +668,10 @@ const OrderReview = () => {
                       <div key={item.id} className="border-b pb-3 last:border-b-0">
                         <div className="flex justify-between text-base">
                           <div className="font-medium">{item.name}</div>
-                          <div>₱{item.price} × {item.quantity}</div>
+                          <div>₱{item.price * item.quantity}</div>
                         </div>
-                        
-                        {/* Improved add-ons display */}
-                        {item.addons && item.addons.length > 0 && (
-                          <div className="pl-4 mt-2 text-sm text-gray-600">
-                            <div className="font-medium">Add-ons:</div>
-                            {item.addons.map((addon) => (
-                              <div key={addon.id} className="flex justify-between">
-                                <div>
-                                  • {addon.name} 
-                                  {addon.quantity > 1 && ` (×${addon.quantity})`}
-                                </div>
-                                <div>₱{addon.price * addon.quantity}</div>
                               </div>
                             ))}
-                            <div className="flex justify-between font-medium mt-2 text-black">
-                              <div>Item Total:</div>
-                              <div>₱{calculateItemTotal(item)}</div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>

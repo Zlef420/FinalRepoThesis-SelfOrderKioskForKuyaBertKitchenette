@@ -257,7 +257,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
     return (
       (transaction.order_number?.toString().toLowerCase().includes(searchTerm.toLowerCase())) || // ORN is order_number // Case-insensitive
       (transaction.pymnt_status?.toLowerCase().includes(searchTerm.toLowerCase())) || // Payment status
-      transaction.TranDate.includes(searchTerm) || // Search by date
+      (transaction.trans_date?.includes(searchTerm)) || // Search by date - fixed field name
       (transaction.total_amntdue?.toString().includes(searchTerm)) // Total Amount // Search by amount
     );
   });
@@ -273,7 +273,6 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
   }, [filteredTransactions, selectedTransaction]);
 
   return (
-    // Removed height and overflow - parent component now controls scroll if needed
     <div className="p-4">
 
       {/* Responsive flex layout: column on small, row on medium+ */}
@@ -281,8 +280,8 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
         {/* Left side - Transaction list */}
         {/* Width: full on small, half on medium+. Added overflow-auto for small screens ONLY. */}
         {/* Added min-h-[200px] */}
-        <div className="w-full md:w-1/2 overflow-auto md:overflow-visible min-h-[200px]">
-          <div className="mb-4">
+        <div className="w-full md:w-1/2 flex flex-col min-h-[200px]">
+          <div className="sticky top-0 z-20 bg-white py-2">
             <input
               type="text"
               placeholder="Search transactions..."
@@ -291,7 +290,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[calc(80vh-56px)]">
             {" "}
             {/* Ensure table scrolls horizontally if needed */}
             <table className="w-full border-collapse text-sm min-w-[500px] md:min-w-full">
@@ -299,8 +298,8 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
               {/* Min-width for horizontal scroll */}
               <thead className="sticky top-0 bg-gray-100 z-10">
                 <tr>
-                  <th className="border p-2 text-left font-semibold">ORN</th>
-                  <th className="border p-2 text-left font-semibold">
+                  <th className="border p-2 text-left font-semibold w-20">ORN</th>
+                  <th className="border p-2 text-left font-semibold w-32">
                     Total Amount
                   </th>{" "}
                   {/* Renamed */}
@@ -308,7 +307,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
                     Reference
                   </th>{" "}
                   {/* Renamed */}
-                  <th className="border p-2 text-left font-semibold">
+                  <th className="border p-2 text-left font-semibold w-28">
                     Date
                   </th>{" "}
                   {/* Renamed */}
@@ -337,7 +336,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
                         {transaction.ref_number}
                       </td>
                       <td className="border p-2 whitespace-nowrap">
-                        {transaction.TranDate}
+                        {transaction.trans_date ? new Date(transaction.trans_date).toLocaleDateString() : 'N/A'}
                       </td>
                     </tr>
                   ))
@@ -359,7 +358,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
         {/* Right side - Transaction details */}
         {/* Width: full on small, half on medium+. Added overflow-auto for small screens ONLY. */}
         {/* Added min-h-[200px] */}
-        <div className="w-full md:w-1/2 overflow-auto md:overflow-visible min-h-[200px]">
+        <div className="w-full md:w-1/2 overflow-auto max-h-[80vh] min-h-[200px]">
           {selectedTransaction ? (
           <div>
             {/* Transaction Header Info */}
