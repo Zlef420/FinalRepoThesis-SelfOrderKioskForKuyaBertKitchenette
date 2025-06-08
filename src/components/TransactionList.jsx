@@ -291,58 +291,54 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
             />
           </div>
           <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[calc(80vh-56px)]">
-            {" "}
-            {/* Ensure table scrolls horizontally if needed */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order #</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ref #</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredTransactions.map((transaction) => (
+            <table className="w-full border-collapse text-sm min-w-[600px] md:min-w-full">
+              <thead className="sticky top-0 bg-gray-100 z-10">
+                <tr>
+                  <th className="border p-2 text-left font-semibold w-20">Order #</th>
+                  <th className="border p-2 text-left font-semibold">Ref #</th>
+                  <th className="border p-2 text-left font-semibold w-40">Date/Time</th>
+                  <th className="border p-2 text-left font-semibold w-32">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="4" className="text-center p-4 text-gray-500 border">Loading transactions...</td></tr>
+                ) : error ? (
+                  <tr><td colSpan="4" className="text-center p-4 text-red-500 border">Error: {error}</td></tr>
+                ) : filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((transaction) => (
                     <tr
-                      key={transaction.order_number}
+                      key={transaction.trans_id}
                       className={`cursor-pointer hover:bg-gray-100 ${
-                        selectedTransaction?.order_number === transaction.order_number
-                          ? "bg-orange-100" // Use consistent selection color
+                        selectedTransaction?.trans_id === transaction.trans_id
+                          ? "bg-orange-100"
                           : "bg-white"
                       }`}
                       onClick={() => setSelectedTransaction(transaction)}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="border p-2 whitespace-nowrap">
                         {transaction.order_number}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="border p-2 whitespace-nowrap">
                         {transaction.ref_number}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {transaction.trans_date ? new Date(transaction.trans_date).toLocaleDateString() : 'N/A'}
+                      <td className="border p-2 whitespace-nowrap">
+                        {`${new Date(transaction.trans_date).toLocaleDateString()} ${transaction.trans_time}`}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {selectedTransaction?.order_status}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {selectedTransaction?.pymnt_status}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="border p-2 whitespace-nowrap text-right">
                         ₱{(transaction.total_amntdue || 0).toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="#" className="text-indigo-600 hover:text-indigo-900">Edit</a>
-                      </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="text-center p-4 text-gray-500 border">
+                      No matching transactions found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
