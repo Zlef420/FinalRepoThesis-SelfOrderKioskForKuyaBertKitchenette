@@ -9,12 +9,13 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
-  X,
+  X
 } from "lucide-react";
 import { CartContext } from "../context/CartContext";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
+
 
 // OrderReview component: displays and manages the user's order before payment
 const OrderReview = () => {
@@ -85,8 +86,7 @@ const OrderReview = () => {
       console.log("[ReviewOrder EFFECT] Triggered fetchOrderNumber. localItems.length:", localItems.length);
       if (localItems.length === 0) {
         console.log("[ReviewOrder EFFECT] No items in cart, skipping order number fetch.");
-        // Optionally set to null or a placeholder if cart becomes empty
-        // setCurrentOrderNumber(null); 
+        setCurrentOrderNumber(null); 
         return;
       }
 
@@ -99,15 +99,8 @@ const OrderReview = () => {
           toast.error("Could not fetch order number. DB Error.");
           setCurrentOrderNumber(null); // Set to null or a specific error indicator
         } else {
-          console.log("[ReviewOrder EFFECT] Successfully received from supabase.rpc. Data:", orderNumData);
-          if (orderNumData === null || orderNumData === undefined) {
-            console.error("[ReviewOrder EFFECT] RPC returned null/undefined. This is unexpected.");
-            toast.error("Invalid order number from DB.");
-            setCurrentOrderNumber(null);
-          } else {
-            console.log(`[ReviewOrder EFFECT] Setting currentOrderNumber to: ${orderNumData}`);
-            setCurrentOrderNumber(orderNumData);
-          }
+          console.log(`[ReviewOrder EFFECT] Setting currentOrderNumber to: ${orderNumData}`);
+          setCurrentOrderNumber(orderNumData);
         }
       } catch (error) {
         console.error("[ReviewOrder EFFECT] Exception during fetchOrderNumber:", error);
@@ -118,8 +111,7 @@ const OrderReview = () => {
 
     fetchOrderNumber();
 
-  }, [localItems.length]); // Dependency: re-run if the number of items changes.
-                         // Supabase client instance is generally stable, so not always needed here unless it can change.
+  }, [localItems.length]);
 
   console.log("[ReviewOrder RENDER] currentOrderNumber state:", currentOrderNumber);
 
@@ -305,9 +297,10 @@ const OrderReview = () => {
       };
       const ref_number = generateUlidLike();
       
-      const payment_ref_id = Date.now() + Math.floor(Math.random() * 1000); // Keep this as is or could also be ULID-like if preferred
+      const payment_ref_id = Date.now() + Math.floor(Math.random() * 1000);
 
-      // Determine payment method string for trans_table and payment_table
+      // --- FIX: Use numeric value for pymnt_method to match DB schema ---
+      const paymentMethodNumeric = selectedPayment === "ewallet" ? 1 : 0; // 0 for Cash, 1 for E-Wallet
       const paymentMethodString = selectedPayment === "ewallet" ? "E-Wallet" : "Cash";
 
       // Determine payment status based on payment type
@@ -320,16 +313,16 @@ const OrderReview = () => {
         .from('trans_table')
         .insert([
           {
-            ref_number: ref_number, // New ULID-like ref_number
+            ref_number: ref_number,
             order_number: order_number,
             order_type: selectedOption,
-            trans_date: new Date().toISOString().split('T')[0],
+            trans_date: new Date().toISOString(),
             trans_time: new Date().toTimeString().split(' ')[0],
-            order_status: 'Pending', // Initial order status is always Pending
-            pymnt_status: paymentStatus, // Corrected payment status
-            pymnt_method: paymentMethodString, // Corrected to insert string "Cash" or "E-Wallet"
+            order_status: 'Pending',
+            pymnt_status: paymentStatus,
+            pymnt_method: paymentMethodNumeric, // Using the numeric value
             total_amntdue: total_amount,
-            amount_paid: selectedPayment === "ewallet" ? total_amount : 0, // For e-wallet, amount_paid is total_amount
+            amount_paid: selectedPayment === "ewallet" ? total_amount : 0,
             user_id: user_id
           }
         ])
@@ -337,6 +330,12 @@ const OrderReview = () => {
 
       if (transError) {
         console.error("Transaction error:", transError);
+        // Provide more specific feedback if possible
+        if (transError.message.includes("pymnt_method")) {
+            toast.error("A database error occurred with the payment method. Please contact support.");
+        } else {
+            toast.error("Failed to save transaction.");
+        }
         throw transError;
       }
       
@@ -378,8 +377,8 @@ const OrderReview = () => {
               fk_trans_id: trans_id,
               pymnt_ref_id: payment_ref_id,
               order_number: order_number,
-              pymnt_mthod: paymentMethodString, // Using "E-Wallet"
-              pymnt_status: "Paid", // E-wallet is considered Paid immediately
+              pymnt_mthod: paymentMethodString, // Assuming payment_table `pymnt_mthod` is text
+              pymnt_status: "Paid",
               pymnt_amount: total_amount,
               pymnt_change: 0,
               pymnt_date: new Date().toISOString().split('T')[0],

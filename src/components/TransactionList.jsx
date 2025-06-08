@@ -293,29 +293,21 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
           <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[calc(80vh-56px)]">
             {" "}
             {/* Ensure table scrolls horizontally if needed */}
-            <table className="w-full border-collapse text-sm min-w-[500px] md:min-w-full">
-              {" "}
-              {/* Min-width for horizontal scroll */}
-              <thead className="sticky top-0 bg-gray-100 z-10">
-                <tr>
-                  <th className="border p-2 text-left font-semibold w-20">ORN</th>
-                  <th className="border p-2 text-left font-semibold w-32">
-                    Total Amount
-                  </th>{" "}
-                  {/* Renamed */}
-                  <th className="border p-2 text-left font-semibold">
-                    Reference
-                  </th>{" "}
-                  {/* Renamed */}
-                  <th className="border p-2 text-left font-semibold w-28">
-                    Date
-                  </th>{" "}
-                  {/* Renamed */}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((transaction) => (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order #</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ref #</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredTransactions.map((transaction) => (
                     <tr
                       key={transaction.order_number}
                       className={`cursor-pointer hover:bg-gray-100 ${
@@ -325,131 +317,139 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
                       }`}
                       onClick={() => setSelectedTransaction(transaction)}
                     >
-                      <td className="border p-2 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {transaction.order_number}
                       </td>
-                      {/* Format currency */}
-                      <td className="border p-2 text-right">
-                        ₱{(transaction.total_amntdue || 0).toFixed(2)}
-                      </td>
-                      <td className="border p-2 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {transaction.ref_number}
                       </td>
-                      <td className="border p-2 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {transaction.trans_date ? new Date(transaction.trans_date).toLocaleDateString() : 'N/A'}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {selectedTransaction?.order_status}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {selectedTransaction?.pymnt_status}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ₱{(transaction.total_amntdue || 0).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="#" className="text-indigo-600 hover:text-indigo-900">Edit</a>
+                      </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="text-center p-4 text-gray-500 border"
-                    >
-                      No matching transactions found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
         {/* Right side - Transaction details */}
-        {/* Width: full on small, half on medium+. Added overflow-auto for small screens ONLY. */}
-        {/* Added min-h-[200px] */}
         <div className="w-full md:w-1/2 overflow-auto max-h-[80vh] min-h-[200px]">
           {selectedTransaction ? (
-          <div>
-            {/* Transaction Header Info */}
-            <div className="mb-4 pb-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">Transaction Details</h2>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-600">
-                <p><strong>Order Number:</strong> {selectedTransaction.order_number}</p>
-                <p><strong>Reference No:</strong> {selectedTransaction.ref_number}</p>
-                <p><strong>Date:</strong> {new Date(selectedTransaction.trans_date).toLocaleDateString()}</p>
-                <p><strong>Time:</strong> {selectedTransaction.trans_time}</p>
-                <p><strong>Payment Method:</strong> {selectedTransaction.pymnt_mthd}</p>
-                <p><strong>Payment Status:</strong> <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClasses(selectedTransaction.pymnt_status)}`}>{selectedTransaction.pymnt_status}</span></p>
-                <p><strong>Order Status:</strong> <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClasses(selectedTransaction.order_status)}`}>{selectedTransaction.order_status}</span></p>
-              </div>
-            </div>
-
-            {/* Items Table */}
-            <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-700 mb-2">Items Ordered</h3>
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-200 rounded-md">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="border-b p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
-                      <th className="border-b p-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
-                      <th className="border-b p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {loadingItems ? (
-                      <tr><td colSpan="3" className="text-center p-4 text-gray-500">Loading items...</td></tr>
-                    ) : itemsError ? (
-                      <tr><td colSpan="3" className="text-center p-4 text-red-500">Error: {itemsError}</td></tr>
-                    ) : transactionItems.length > 0 ? (
-                      transactionItems.map((item) => (
-                        <React.Fragment key={item.trans_item_id}>
-                          <tr className="hover:bg-gray-50">
-                            <td className="p-3 text-sm text-gray-700">{item.prdct_name}</td>
-                            <td className="p-3 text-sm text-gray-700 text-right">
-                              ₱{(item.unit_price || 0).toFixed(2)}
-                            </td>
-                            <td className="p-3 text-sm text-gray-700 text-center">
-                              {item.quantity}
-                            </td>
-                          </tr>
-                          {item.addons_details && Array.isArray(item.addons_details) && item.addons_details.length > 0 && (
-                            item.addons_details.map((addon, addonIndex) => (
-                              <tr key={`${item.trans_item_id}-addon-${addonIndex}`} className="bg-gray-50 text-xs hover:bg-gray-100">
-                                <td className="p-2 pl-6 italic text-gray-600">
-                                  • {addon.name}
-                                </td>
-                                <td className="p-2 italic text-gray-600 text-right">
-                                  {addon.price > 0 ? `₱${(addon.price || 0).toFixed(2)}` : 'Free'}
-                                </td>
-                                <td className="p-2 italic text-gray-600 text-center">
-                                  {addon.quantity}
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </React.Fragment>
-                      ))
-                    ) : (
-                      <tr><td colSpan="3" className="text-center p-4 text-gray-500">No items in this transaction.</td></tr>
-                    )}
-                  </tbody>
-                  <tfoot className="bg-gray-50">
-                    <tr className="font-semibold text-gray-700">
-                      <td className="p-3 text-right border-t border-gray-200" colSpan="2">Total Transaction Amount:</td>
-                      <td className="p-3 text-right border-t border-gray-200">
-                        ₱{(selectedTransaction?.total_amntdue || 0).toFixed(2)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-
-            {/* Print Button */} 
-            <div className="mt-6 text-right">
+          <div className="bg-white p-4 rounded-lg shadow border border-gray-200 h-full">
+            {/* Transaction Header Info - Redesigned to match Payment History */}
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">Transaction Details</h2>
               <button
                 onClick={handlePrint}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-md hover:shadow-lg transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 bg-orange-500 text-white rounded hover:bg-orange-600 text-sm print:hidden flex items-center"
                 disabled={!selectedTransaction || transactionItems.length === 0 || loadingItems}
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
                 Print Receipt
               </button>
             </div>
+
+            {/* Transaction Info Card - Redesigned to match Payment History */}
+            <div className="p-3 bg-gray-50 rounded border border-gray-200 mb-4">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <p><span className="font-semibold">Order Number:</span> {selectedTransaction.order_number}</p>
+                <p><span className="font-semibold">Reference No:<br /></span> {selectedTransaction.ref_number}</p>
+                <p><span className="font-semibold">Date:</span> {new Date(selectedTransaction.trans_date).toLocaleDateString()}</p>
+                <p><span className="font-semibold">Time:</span> {selectedTransaction.trans_time}</p>
+                <p><span className="font-semibold">Payment Method:</span> {selectedTransaction.pymnt_method}</p>
+                <p>
+                  <span className="font-semibold">Payment Status:</span>
+                  <span className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getStatusClasses(selectedTransaction.pymnt_status)}`}>
+                    {selectedTransaction.pymnt_status}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold">Order Status:</span>
+                  <span className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getStatusClasses(selectedTransaction.order_status)}`}>
+                    {selectedTransaction.order_status}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            {/* Items Table - Redesigned to match Payment History */}
+            <div className="max-h-[calc(100vh-280px)] overflow-y-auto">
+              <h3 className="text-lg font-medium text-gray-700 mb-2">Items Ordered</h3>
+              <table className="w-full border-collapse text-sm mb-4">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="border p-2 text-left font-semibold">Product Name</th>
+                    <th className="border p-2 text-right font-semibold w-32">Unit Price</th>
+                    <th className="border p-2 text-center font-semibold w-24">Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingItems ? (
+                    <tr><td colSpan="3" className="text-center p-4 text-gray-500">Loading items...</td></tr>
+                  ) : itemsError ? (
+                    <tr><td colSpan="3" className="text-center p-4 text-red-500">Error: {itemsError}</td></tr>
+                  ) : transactionItems.length > 0 ? (
+                    transactionItems.map((item) => (
+                      <React.Fragment key={item.trans_item_id}>
+                        <tr className="hover:bg-gray-50">
+                          <td className="p-3 text-sm text-gray-700">{item.prdct_name}</td>
+                          <td className="p-3 text-sm text-gray-700 text-right">
+                            ₱{(item.unit_price || 0).toFixed(2)}
+                          </td>
+                          <td className="p-3 text-sm text-gray-700 text-center">
+                            {item.quantity}
+                          </td>
+                        </tr>
+                        {item.addons_details && Array.isArray(item.addons_details) && item.addons_details.length > 0 && (
+                          item.addons_details.map((addon, addonIndex) => (
+                            <tr key={`${item.trans_item_id}-addon-${addonIndex}`} className="bg-gray-50 text-xs hover:bg-gray-100">
+                              <td className="p-2 pl-6 italic text-gray-600">
+                                • {addon.name}
+                              </td>
+                              <td className="p-2 italic text-gray-600 text-right">
+                                {addon.price > 0 ? `₱${(addon.price || 0).toFixed(2)}` : 'Free'}
+                              </td>
+                              <td className="p-2 italic text-gray-600 text-center">
+                                {addon.quantity}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    <tr><td colSpan="3" className="text-center p-4 text-gray-500">No items in this transaction.</td></tr>
+                  )}
+                </tbody>
+                <tfoot className="bg-gray-50">
+                  <tr className="font-semibold text-gray-700">
+                    <td className="p-3 text-right border-t border-gray-200" colSpan="2">Total Transaction Amount:</td>
+                    <td className="p-3 text-right border-t border-gray-200">
+                      ₱{(selectedTransaction?.total_amntdue || 0).toFixed(2)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-center text-gray-400 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 p-6">
+          <div className="flex items-center justify-center h-full text-center text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-300 p-6">
             <div>
               <svg className="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />

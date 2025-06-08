@@ -105,9 +105,6 @@ function OrderSummary({
           if (orderNumError) {
             console.error("[OrderSummary EFFECT] Error fetching order number:", orderNumError);
             setDisplayedOrderNumber(null);
-          } else if (orderNumData === null || orderNumData === undefined) {
-            console.error("[OrderSummary EFFECT] RPC returned null/undefined.");
-            setDisplayedOrderNumber(null);
           } else {
             console.log("[OrderSummary EFFECT] Fetched order number for display:", orderNumData);
             setDisplayedOrderNumber(orderNumData);

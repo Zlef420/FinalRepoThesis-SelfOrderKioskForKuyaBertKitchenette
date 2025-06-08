@@ -377,9 +377,9 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
         {/* Right side - Payment details */}
         <div className="w-full md:w-1/2 overflow-auto max-h-[80vh] min-h-[200px]">
           {selectedPayment ? (
-            <div className="bg-white p-4 rounded-lg shadow border border-gray-200 h-full" ref={printSectionRef}>
+            <div className="bg-white p-4 rounded-lg shadow border border-gray-200 h-full">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
+                <h3 className="text-xl font-semibold text-gray-800">
                   Payment Details
                 </h3>
                 <button 
@@ -387,7 +387,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                     e.stopPropagation();
                     handlePrint();
                   }}
-                  className="px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-600 text-sm print:hidden flex items-center"
+                  className="px-3 py-1.5 bg-orange-500 text-white rounded hover:bg-orange-600 text-sm print:hidden flex items-center"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -395,13 +395,11 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                   Print Receipt
                 </button>
               </div>
-              <div className="p-3 bg-gray-50 rounded border border-gray-200 mb-4 title-bar">
+              <div className="p-3 bg-gray-50 rounded border border-gray-200 mb-4">
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <p><span className="font-semibold">Official Receipt Number:</span> {selectedPayment.orn}</p>
                   <p><span className="font-semibold">Date:</span> {selectedPayment.date}</p>
-                  <p>
-                    <span className="font-semibold">Payment Method:</span> {selectedPayment.method}
-                  </p>
+                  <p><span className="font-semibold">Payment Method:</span> {selectedPayment.method}</p>
                   <p>
                     <span className="font-semibold">Status:</span> 
                     <span className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getStatusClasses(selectedPayment.status)}`}>
@@ -415,7 +413,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
                       <th className="border p-2 text-left font-semibold">Item</th>
-                      <th className="border p-2 text-right font-semibold">
+                      <th className="border p-2 text-right font-semibold w-32">
                         Amount
                       </th>
                     </tr>
@@ -425,29 +423,35 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                     {selectedPayment.details
                       .filter((detail) => detail.item.toLowerCase() !== "tax")
                       .map((detail, index) => (
-                        <tr key={index}>
+                        <tr key={index} className="hover:bg-gray-50">
                           <td className="border p-2">{detail.item}</td>
                           <td className="border p-2 text-right">
                             ₱{detail.amount.toFixed(2)}
                           </td>
                         </tr>
                       ))}
-                    {/* Total row still shows the original full amount */}
-                    <tr className="bg-gray-100 sticky bottom-0">
-                      <td className="border p-2 font-bold text-gray-800">
-                        Total
-                      </td>
-                      <td className="border p-2 font-bold text-gray-800 text-right">
+                  </tbody>
+                  {/* Total row still shows the original full amount */}
+                  <tfoot className="bg-gray-50">
+                    <tr className="font-semibold text-gray-700">
+                      <td className="border p-2 text-right">Total</td>
+                      <td className="border p-2 text-right">
                         ₱{selectedPayment.amount.toFixed(2)}
                       </td>
                     </tr>
-                  </tbody>
+                  </tfoot>
                 </table>
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300 p-4 min-h-[200px]">
-              Select a payment from the list to view details
+              <div>
+                <svg className="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                <h3 className="mt-2 text-sm font-medium text-gray-700">No payment selected</h3>
+                <p className="mt-1 text-sm text-gray-500">Select a payment from the list to view details</p>
+              </div>
             </div>
           )}
         </div>
