@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient"; // Supabase client
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 
 const Settings = () => {
@@ -17,6 +17,19 @@ const Settings = () => {
   const [accounts, setAccounts] = useState([]); // Initialize as empty, will be fetched
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+
+  // State for Forgot Password Modal
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotPasswordForm, setForgotPasswordForm] = useState({
+    email: "",
+    securityQuestion: "What was your first pet's name?",
+    securityAnswer: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
+  const [isVerified, setIsVerified] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [targetAccount, setTargetAccount] = useState(null);
 
   // State for Ad Deletion Modal
   const [showAdDeleteModal, setShowAdDeleteModal] = useState(false);
@@ -37,14 +50,14 @@ const Settings = () => {
         .select('id, email, role'); // Fetch necessary fields
       if (error) {
         console.error('Error fetching accounts:', error);
-        alert(`Failed to fetch accounts: ${error.message}`);
+        toast.error(`Failed to fetch accounts: ${error.message}`, { id: 'fetch-accounts-error' });
         setAccounts([]); // Set to empty array on error
       } else {
         setAccounts(data || []);
       }
     } catch (err) {
       console.error('Unexpected error fetching accounts:', err);
-      alert('An unexpected error occurred while fetching accounts.');
+      toast.error('An unexpected error occurred while fetching accounts.', { id: 'fetch-accounts-unexpected-error' });
       setAccounts([]);
     }
   };
@@ -115,13 +128,12 @@ const Settings = () => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file.');
+      toast.error('Please select an image file.', { id: 'invalid-file-type' });
       event.target.value = null; // Reset file input
       setUploadedImages(prev => prev.map(img => 
         img.id === slotId ? { ...img, image: null, file: null, dbImageUrl: null, dbImageName: null, isUploading: false } : img
       ));
       setIntroAdError(''); // Clear any previous error
-      toast.error('Invalid file type. Please select an image.');
       return;
     }
 
@@ -183,11 +195,11 @@ const Settings = () => {
             }
           : slot
       ));
-      alert(`Image for slot ${slotId} updated successfully!`);
+      toast.success(`Image for slot ${slotId} updated successfully!`, { id: `image-update-success-${slotId}` });
 
     } catch (error) {
       console.error(`Error processing image for slot ${slotId}:`, error);
-      setIntroAdError(`Failed to update image for slot ${slotId}: ${error.message}`);
+      toast.error(`Failed to update image for slot ${slotId}: ${error.message}`, { id: `image-update-error-${slotId}` });
       // Revert preview to old DB image if available, or null
       setUploadedImages(prev => prev.map(slot =>
         slot.id === slotId
@@ -213,7 +225,7 @@ const Settings = () => {
     const imageToRemove = uploadedImages.find(img => img.id === slotId);
 
     if (!imageToRemove || !imageToRemove.dbImageUrl) {
-      alert(`No image to remove for slot ${slotId}.`);
+      toast.error(`No image to remove for slot ${slotId}.`, { id: `no-image-to-remove-${slotId}` });
       return;
     }
 
@@ -256,14 +268,12 @@ const Settings = () => {
             }
           : slot
       ));
-      alert(`Image for slot ${slotId} removed successfully!`);
-      toast.success(`Image removed successfully!`);
+      toast.success(`Image for slot ${slotId} removed successfully!`, { id: `image-remove-success-${slotId}` });
 
     } catch (error) {
       console.error(`Error removing image for slot ${slotId}:`, error);
       setIntroAdError(`Failed to remove image for slot ${slotId}: ${error.message}`);
-      toast.error(`Failed to remove image: ${error.message}`);
-      // State is already showing the image, so no need to revert on error unless desired
+      toast.error(`Failed to remove image for slot ${slotId}: ${error.message}`, { id: `image-remove-error-${slotId}` });
     } finally {
       setUploadedImages(prev => prev.map(slot =>
         slot.id === slotId ? { ...slot, isUploading: false } : slot
@@ -276,36 +286,36 @@ const Settings = () => {
   const handleSubmit = async (e) => { // Made async
     e.preventDefault();
     if (accountForm.password !== accountForm.confirmPassword) {
-      alert("Passwords do not match!");
+      toast.error("Passwords do not match!", { id: 'password-mismatch-add' });
       return;
     }
 
     if (!accountForm.securityAnswer.trim()) {
-      alert("Security answer is required!");
+      toast.error("Security answer is required!", { id: 'security-answer-required' });
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(accountForm.email)) { // Changed to accountForm.email
-      alert("Please enter a valid email address.");
+      toast.error("Please enter a valid email address.", { id: 'invalid-email' });
       return;
     }
     
     // IMPORTANT: Storing plain text passwords is a security risk.
     // Consider using Supabase Auth for proper password hashing.
     try {
-      // Attempt a select to potentially refresh schema cache for 'security_answ'
+      // Attempt a select to potentially refresh schema cache for 'security_answer'
       const { error: selectError } = await supabase
         .from('account_table')
         .select('security_question, security_answer') // Also check security_question
         .limit(1);
 
       if (selectError && selectError.code !== 'PGRST116') { // PGRST116: no rows found, not an error for this test
-        console.warn('Pre-insert select check for security_answ failed or column not found by select:', selectError);
+        console.warn('Pre-insert select check for security_answer failed or column not found by select:', selectError);
         // We can still proceed to the insert to see if the original error persists or changes
       } else if (!selectError) {
-        console.log('Pre-insert select check for security_answ was successful.');
+        console.log('Pre-insert select check for security_answer was successful.');
       }
 
       const { data, error } = await supabase
@@ -322,9 +332,9 @@ const Settings = () => {
 
       if (error) {
         console.error("Error adding account:", error);
-        alert(`Failed to add account: ${error.message}`);
+        toast.error(`Failed to add account: ${error.message}`, { id: 'add-account-error' });
       } else {
-        alert("Account added successfully!");
+        toast.success("Account added successfully!", { id: 'add-account-success' });
         fetchAccounts(); // Refresh the accounts list
         setAccountForm({ // Reset form
           email: "", // Changed from username
@@ -338,7 +348,7 @@ const Settings = () => {
       }
     } catch (error) {
       console.error("Unexpected error adding account:", error);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.", { id: 'add-account-unexpected-error' });
     }
   };
 
@@ -354,7 +364,7 @@ const Settings = () => {
     if (selectedAccount.role === 'admin') {
       const adminAccounts = accounts.filter(acc => acc.role === 'admin');
       if (adminAccounts.length <= 1) {
-        alert('Cannot delete the last admin account.');
+        toast.error('Cannot delete the last admin account.', { id: 'last-admin-error' });
         setShowDeleteModal(false);
         setSelectedAccount(null);
         return;
@@ -369,23 +379,103 @@ const Settings = () => {
 
       if (error) {
         console.error('Error deleting account:', error);
-        alert(`Failed to delete account: ${error.message}`);
+        toast.error(`Failed to delete account: ${error.message}`, { id: 'delete-account-error' });
       } else {
-        alert('Account deleted successfully!');
+        toast.success('Account deleted successfully!', { id: 'delete-account-success' });
         fetchAccounts(); // Refresh the accounts list
       }
     } catch (err) {
       console.error('Unexpected error deleting account:', err);
-      alert('An unexpected error occurred while deleting the account.');
+      toast.error('An unexpected error occurred while deleting the account.', { id: 'delete-account-unexpected-error' });
     }
 
     setShowDeleteModal(false);
     setSelectedAccount(null);
   };
 
+  const resetForgotPasswordForm = () => {
+    setForgotPasswordForm({
+      email: "",
+      securityQuestion: "What was your first pet's name?",
+      securityAnswer: "",
+      newPassword: "",
+      confirmNewPassword: "",
+    });
+    setIsVerified(false);
+    setIsLoading(false);
+    setTargetAccount(null);
+    setShowForgotPasswordModal(false);
+  };
+
+  const handleVerify = async () => {
+    setIsLoading(true);
+    const { email, securityQuestion, securityAnswer } = forgotPasswordForm;
+
+    try {
+      const { data, error } = await supabase
+        .from('account_table')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (error || !data) {
+        toast.error('Account not found. Please check the email address.', { id: 'account-not-found' });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (data.security_question === securityQuestion && data.security_answer === securityAnswer) {
+        toast.success('Verification successful! You can now reset your password.', { id: 'verification-success' });
+        setIsVerified(true);
+        setTargetAccount(data);
+      } else {
+        toast.error('Security question or answer is incorrect.', { id: 'verification-failed' });
+      }
+    } catch (err) {
+      toast.error('An unexpected error occurred during verification.', { id: 'verification-error' });
+      console.error('Verification error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    const { newPassword, confirmNewPassword } = forgotPasswordForm;
+
+    if (newPassword !== confirmNewPassword) {
+      toast.error('New passwords do not match.', { id: 'password-mismatch' });
+      return;
+    }
+    if (!newPassword) {
+        toast.error('Password cannot be empty.', { id: 'empty-password' });
+        return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('account_table')
+        .update({ password: newPassword })
+        .eq('id', targetAccount.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('Password updated successfully!', { id: 'password-reset-success' });
+      resetForgotPasswordForm();
+      
+    } catch (err) {
+      toast.error('Failed to update password. Please try again.', { id: 'password-reset-error' });
+      console.error('Password reset error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <Toaster position="top-center" reverseOrder={false} />
       <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 p-4 pt-0">
         {/* Left Column - Account Management Form */}
         <div className="bg-white p-6 rounded-lg shadow-sm h-fit">
@@ -484,12 +574,19 @@ const Settings = () => {
                 required
               />
             </div>
-            <div className="col-span-2 mt-4">
+            <div className="col-span-2 mt-4 flex items-center gap-4">
               <button
                 type="submit"
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 Add Account
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordModal(true)}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Forgot your password?
               </button>
             </div>
           </form>
@@ -647,6 +744,115 @@ const Settings = () => {
                 Confirm
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Reset Password</h2>
+            
+            {!isVerified ? (
+              // Verification Step
+              <div>
+                <div className="mb-4">
+                  <label className="block mb-1 text-sm font-medium">Email:</label>
+                  <input
+                    type="email"
+                    className="w-full p-2 border rounded"
+                    value={forgotPasswordForm.email}
+                    onChange={(e) => setForgotPasswordForm(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="Enter your account email"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block mb-1 text-sm font-medium">Security Question:</label>
+                  <select
+                    className="w-full p-2 border rounded"
+                    value={forgotPasswordForm.securityQuestion}
+                    onChange={(e) => setForgotPasswordForm(prev => ({...prev, securityQuestion: e.target.value}))}
+                    disabled={isLoading}
+                  >
+                    <option value="What was your first pet's name?">What was your first pet's name?</option>
+                    <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                    <option value="What was the name of your elementary school?">What was the name of your elementary school?</option>
+                    <option value="What was your childhood nickname?">What was your childhood nickname?</option>
+                    <option value="In what city were you born?">In what city were you born?</option>
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block mb-1 text-sm font-medium">Security Answer:</label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded"
+                    value={forgotPasswordForm.securityAnswer}
+                    onChange={(e) => setForgotPasswordForm(prev => ({...prev, securityAnswer: e.target.value}))}
+                    placeholder="Enter your security answer"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={resetForgotPasswordForm}
+                    className="px-4 py-2 border rounded text-sm hover:bg-gray-100"
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleVerify}
+                    className="px-4 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Verifying...' : 'Verify'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Password Reset Step
+              <div>
+                <div className="mb-4">
+                  <label className="block mb-1 text-sm font-medium">New Password:</label>
+                  <input
+                    type="password"
+                    className="w-full p-2 border rounded"
+                    value={forgotPasswordForm.newPassword}
+                    onChange={(e) => setForgotPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    placeholder="Enter new password"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block mb-1 text-sm font-medium">Confirm New Password:</label>
+                  <input
+                    type="password"
+                    className="w-full p-2 border rounded"
+                    value={forgotPasswordForm.confirmNewPassword}
+                    onChange={(e) => setForgotPasswordForm(prev => ({ ...prev, confirmNewPassword: e.target.value }))}
+                    placeholder="Confirm new password"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex justify-end gap-3">
+                   <button
+                    onClick={resetForgotPasswordForm}
+                    className="px-4 py-2 border rounded text-sm hover:bg-gray-100"
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handlePasswordReset}
+                    className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Saving...' : 'Save New Password'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

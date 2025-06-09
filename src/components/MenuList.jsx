@@ -336,15 +336,22 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
               <div
                 key={item.id}
                 className={`p-4 border rounded-lg shadow-sm flex flex-col justify-between ${
-                  item.isAvailable ? "bg-white" : "bg-gray-100 opacity-70"
+                  item.isAvailable ? "bg-white" : "bg-gray-200"
                 }`}
               >
-                <img
-                  src={item.image || 'https://via.placeholder.com/150?text=No+Image'}
-                  alt={item.name}
-                  className="w-full h-32 object-cover rounded-md mb-3"
-                  onError={(e) => { e.target.onerror = null; e.target.src='https://via.placeholder.com/150?text=No+Image'; }}
-                />
+                <div className="relative">
+                  <img
+                    src={item.image || 'https://via.placeholder.com/150?text=No+Image'}
+                    alt={item.name}
+                    className={`w-full h-32 object-cover rounded-md mb-3 ${!item.isAvailable ? 'opacity-40' : ''}`}
+                    onError={(e) => { e.target.onerror = null; e.target.src='https://via.placeholder.com/150?text=No+Image'; }}
+                  />
+                  {!item.isAvailable && (
+                    <div className="absolute inset-0 flex items-center justify-center mb-3 bg-black bg-opacity-30 rounded-md">
+                      <span className="bg-red-600 text-white font-bold py-2 px-4 rounded">SOLD OUT</span>
+                    </div>
+                  )}
+                </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-700">{item.name}</h3>
                   <p className="text-sm text-gray-500 mb-1">{item.category}</p>
