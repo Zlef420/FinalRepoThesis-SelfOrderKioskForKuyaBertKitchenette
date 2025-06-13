@@ -4,7 +4,7 @@ import { Trash, ShoppingCart, X } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import toast from "react-hot-toast";
 
-// Sub-components
+{/* Sub-components */}
 const DeleteModal = ({ onClose, onConfirm, title, message }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center">
     <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />

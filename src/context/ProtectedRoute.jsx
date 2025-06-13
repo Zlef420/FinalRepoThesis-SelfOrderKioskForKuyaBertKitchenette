@@ -3,26 +3,26 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 const ProtectedRoute = ({ children, allowedRole }) => {
-  // Use the hook at the top level of the component
+  {/* Get auth context */}
   const { isAuthenticated, getRole, currentEmail } = useAuth();
   
-  // For debugging
+
   console.log("ProtectedRoute check:", { currentEmail, allowedRole });
 
-  // Handle authentication logic with appropriate guards
+  {/* Check if user is logged in */}
   if (!currentEmail) {
     console.log("No currentEmail, redirecting to /");
     return <Navigate to="/" replace />;
   }
 
-  // Check if the user is authenticated
+  {/* Verify authentication */}
   const isUserAuthenticated = isAuthenticated(currentEmail);
   if (!isUserAuthenticated) {
     console.log(`Not authenticated for ${currentEmail}, redirecting to /`);
     return <Navigate to="/" replace />;
   }
 
-  // Check role if required
+  {/* Check user role */}
   if (allowedRole) {
     const userRole = getRole(currentEmail);
     if (userRole !== allowedRole) {

@@ -37,13 +37,10 @@ const AdminDashboard = () => {
       case "menu":
         return <MenuList {...commonProps} />;
       case "transaction":
-        // Ensure TransactionList uses h-full and handles internal scroll
         return <TransactionList {...commonProps} />;
       case "payment":
-        // Ensure PaymentHistory uses h-full and handles internal scroll
         return <PaymentHistory {...commonProps} />;
       case "settings":
-        // Ensure Settings uses h-full and handles internal scroll
         return <Settings />;
       default:
         return <MenuList {...commonProps} />;

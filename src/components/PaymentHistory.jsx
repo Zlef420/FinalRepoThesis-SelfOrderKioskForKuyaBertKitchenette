@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { supabase } from '../supabaseClient'; // Ensure this path is correct
+import { supabase } from '../supabaseClient';
 
-// Helper function to get status badge styles
+{/* Helper function for status badge styles */}
 export const getStatusClasses = (status) => {
   switch (status.toLowerCase()) {
     case "completed":
@@ -10,7 +10,7 @@ export const getStatusClasses = (status) => {
       return "bg-blue-100 text-blue-800";
     case "pending":
       return "bg-yellow-100 text-yellow-800";
-    case "failed": // Example for another status
+    case "failed":
       return "bg-red-100 text-red-800";
     default:
       return "bg-gray-100 text-gray-800";
@@ -24,7 +24,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const printSectionRef = useRef(null);
 
-  // Fetch payments from Supabase
+  {/* Fetch payments from Supabase */}
   useEffect(() => {
     const fetchPayments = async () => {
       setLoading(true);
@@ -51,12 +51,12 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
     fetchPayments();
   }, []);
   
-  // Handle print functionality
+  {/* Handle print functionality */}
   const handlePrint = () => {
     if (selectedPayment) {
       const currentDate = new Date();
       
-      // Calculate subtotal and VAT (assuming 12% VAT included in amount)
+      {/* Calculate subtotal and VAT */}
       const subtotal = selectedPayment.amount / 1.12;
       const vatAmount = selectedPayment.amount - subtotal;
       
@@ -197,7 +197,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
     }
   };
 
-  // Dummy data (renamed, will be replaced by allPayments state)
+  {/* Dummy data - replaced by allPayments state */}
   const dummyPayments = [
     {
       orn: "420",
@@ -256,12 +256,12 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
     },
   ];
 
-  // Filtered payments based on searchTerm
+  {/* Filtered payments based on searchTerm */}
   const filteredPayments = searchTerm
     ? allPayments.filter(
         (payment) =>
           payment.order_number?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-          payment.pymnt_ref_id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || // Added search by payment_ref_id
+          payment.pymnt_ref_id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
           payment.pymnt_mthod?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           payment.pymnt_status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           payment.pymnt_date?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -269,7 +269,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
       )
     : allPayments;
 
-  // Reset selected payment if it's filtered out
+  {/* Reset selected payment if filtered out */}
   useEffect(() => {
     if (
       selectedPayment &&
@@ -331,12 +331,11 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                           method: payment.pymnt_mthod,
                           status: payment.pymnt_status,
                           date: payment.pymnt_date,
-                          time: payment.pymnt_time, // Store for potential use
-                          ref_number: payment.pymnt_ref_id, // For receipt
-                          // Construct details for receipt, as payment_table doesn't have itemized list
+                          time: payment.pymnt_time,
+                          ref_number: payment.pymnt_ref_id,
+                          /* Construct details for receipt */
                           details: [ 
                             { item: "Total Payment", amount: payment.pymnt_amount }
-                            // If you had access to trans_items_table here, you could itemize
                           ],
                         });
                       }}

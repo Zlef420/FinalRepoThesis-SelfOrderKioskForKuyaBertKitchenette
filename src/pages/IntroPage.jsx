@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { CircleChevronLeft, CircleChevronRight } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { supabase } from "../supabaseClient"; // Import Supabase client
+import { supabase } from "../supabaseClient";
 
 function IntroPage() {
   const [advertisementImages, setAdvertisementImages] = useState([]);
@@ -17,28 +17,28 @@ function IntroPage() {
       setIsLoadingAds(true);
       try {
         const { data, error } = await supabase
-          .from('intro_advertisements') // Corrected table name
-          .select('slot_id, image_url')   // Corrected column names
-          .not('image_url', 'is', null) // Filter out null or empty image_urls
+          .from('intro_advertisements')
+          .select('slot_id, image_url')
+          .not('image_url', 'is', null)
           .neq('image_url', '')
-          .order('slot_id', { ascending: true }); // Order by slot_id for consistent display
+          .order('slot_id', { ascending: true });
 
         if (error) {
           console.error("Error fetching intro advertisement images from Supabase:", error);
-          throw error; // Re-throw to be caught by the outer catch
+          throw error;
         }
         
-        // Ensure data is not null and filter out any ads that might still have null/empty image_url
+        {/* Ensure data is not null and filter out any ads that might still have null/empty image_url */}
         const validAds = data ? data.filter(ad => ad.image_url) : [];
 
         const formattedAds = validAds.map(ad => ({
-          id: `intro-ad-${ad.slot_id}`, // Use slot_id for a unique key
-          image: ad.image_url          // Use image_url for the image source
+          id: `intro-ad-${ad.slot_id}`,
+          image: ad.image_url
         }));
         setAdvertisementImages(formattedAds);
-      } catch (error) { // This catch will now handle errors from the query or if data is null/falsy
+      } catch (error) {
         console.error("Error in fetchAds logic or Supabase query processing:", error);
-        setAdvertisementImages([]); // Set to empty array on error
+        setAdvertisementImages([]);
       } finally {
         setIsLoadingAds(false);
       }

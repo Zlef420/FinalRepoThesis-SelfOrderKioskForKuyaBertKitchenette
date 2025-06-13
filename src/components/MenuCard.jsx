@@ -11,11 +11,11 @@ function MenuCard({ product, onAddToCart }) {
     event.stopPropagation(); 
     setIsScaling(true);
     const itemToAdd = {
-      id: product.product_id, // Map product_id to id
-      name: name,             // Already mapped from prdct_name
-      price: price,           // Already mapped from prdct_price
-      image: image,           // Already mapped from prdct_imgurl
-      description: description // Already mapped from prdct_dscrpt
+      id: product.product_id,
+      name: name,
+      price: price,
+      image: image,
+      description: description
     };
     onAddToCart(itemToAdd);
 

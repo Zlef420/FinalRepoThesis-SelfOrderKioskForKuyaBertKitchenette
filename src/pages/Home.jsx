@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { supabase } from "../supabaseClient"; // Import Supabase client
+import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Navigation from "../components/Navigation";
@@ -26,7 +26,7 @@ function Home() {
       try {
         const { data, error: dbError } = await supabase
           .from('product_details')
-          .select('*') // Select all columns, or specify: 'prod_id, prod_name, prod_price, prod_description, prod_image_url, prod_category, is_available'
+          .select('*')
           .order('prdct_name', { ascending: true });
 
         if (dbError) throw dbError;
@@ -133,13 +133,13 @@ function Home() {
             {!loading && !error && filteredItems.length > 0 ? (
               filteredItems.map((product) => (
                 <MenuCard
-                  key={product.product_id} // Use the actual primary key 'product_id'
-                  product={product} // Pass the whole product object
-                  onAddToCart={addToCart} // Pass the addToCart function directly
+                  key={product.product_id}
+                  product={product}
+                  onAddToCart={addToCart}
                 />
               ))
             ) : !loading && !error && (
-              // This condition handles the case where there are no items after loading and no error
+              /* No items matching search */
               <p className="col-span-full text-gray-500 text-center">
                 No items match your search or no products available.
               </p>

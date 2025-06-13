@@ -4,19 +4,19 @@ import { Loader2, Printer } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-// Separate styles for printing
+{/* Printable Receipt Component */}
 const PrintableReceipt = ({
   orderItems,
   diningOption,
   printRef,
   paymentMethod,
-  dbOrderNumber, // Added prop for database order number
+  dbOrderNumber,
 }) => {
   const calculateItemTotal = (item) => {
-    // Check if itemTotal is already calculated (from OrderReview)
+    {/* Check if itemTotal is already calculated */}
     if (item.itemTotal) return item.itemTotal;
     
-    // Otherwise calculate it
+    {/* Calculate the total if not already provided */}
     const addonsTotal = (item.addons || []).reduce(
       (sum, addon) => sum + (addon.price * (addon.quantity || 1)),
       0
@@ -28,18 +28,16 @@ const PrintableReceipt = ({
     return orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   };
 
-  // const generateOrderNumber = () => { // Keep for reference or remove
-  //   return `SI#${Math.floor(Math.random() * 10000000)}`;
-  // };
+
 
   const subtotal = calculateSubtotal();
-  // Use the passed dbOrderNumber if available, otherwise fallback (though ideally it should always be available)
+  {/* Use dbOrderNumber or generate a random number as fallback */}
   const orderNumber = dbOrderNumber ? String(dbOrderNumber) : `SI#${Math.floor(Math.random() * 10000000)}`;
   const currentDate = new Date();
 
-  // Render the appropriate receipt based on payment method
+  {/* Render the appropriate receipt based on payment method */}
   if (paymentMethod === "cash") {
-    // Cash payment - single receipt
+    {/* Cash payment - single receipt */}
     return (
       <div
         ref={printRef}
@@ -131,7 +129,7 @@ const PrintableReceipt = ({
       </div>
     );
   } else if (paymentMethod === "ewallet") {
-    // E-wallet payment - dual receipts (customer and cashier copies)
+    {/* E-wallet payment - dual receipts */}
     return (
       <div
         ref={printRef}
@@ -299,7 +297,7 @@ const PrintableReceipt = ({
       </div>
     );
   } else {
-    // Default case - return null if payment method is not recognized
+    {/* Default case - unrecognized payment method */}
     return null;
   }
 };
@@ -313,10 +311,10 @@ const OrderConfirmation = () => {
 
   const paymentMethod = location.state?.orderData?.paymentMethod || "cash";
   const paymentStatus = location.state?.paymentStatus;
-  // Get order items and order_number from location state
+  {/* Get order data from location state */}
   const orderData = location.state?.orderData;
   const orderItems = orderData?.items || JSON.parse(localStorage.getItem("cartItems") || "[]");
-  const dbOrderNumber = orderData?.order_number; // Get the order_number from database
+  const dbOrderNumber = orderData?.order_number;
   const diningOption = localStorage.getItem("diningOption") || "Dine In";
 
   const handlePrint = () => {
@@ -401,7 +399,7 @@ const OrderConfirmation = () => {
                   diningOption={diningOption}
                   printRef={printRef}
                   paymentMethod={paymentMethod}
-                  dbOrderNumber={dbOrderNumber} // Pass dbOrderNumber to PrintableReceipt
+                  dbOrderNumber={dbOrderNumber}
                 />
                 <button
                   onClick={handlePrint}

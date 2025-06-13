@@ -15,28 +15,28 @@ import {
   Loader2,
 } from "lucide-react";
 
-// ----- Printable Receipt Component (Compact Format) -----
+{/* Printable Receipt Component */}
 const CashierPrintableReceipt = ({
   transaction,
   cashAmount,
   changeAmount,
   printRef,
 }) => {
-  if (!transaction) return null; // Don't render if no transaction selected
+  if (!transaction) return null;
 
   const currentDate = new Date();
-  // Display "Paid" status on the printed receipt regardless of original status
+  {/* Display "Paid" status on the printed receipt regardless of original status */}
   const displayPaymentStatus = "PAID";
 
-  // Calculate VAT details if needed (assuming 12% VAT included in TAmount)
+  {/* Calculate VAT details (assuming 12% VAT included in TAmount) */}
   const subtotal = transaction.TAmount / 1.12;
   const vatAmount = transaction.TAmount - subtotal;
 
   return (
     <div
       ref={printRef}
-      id="printable-cashier-receipt-area" // Unique ID for print styling
-      className="absolute -left-full -top-full" // Keep off-screen visually
+      id="printable-cashier-receipt-area"
+      className="absolute -left-full -top-full"
     >
       {/* Print-specific styles */}
       <style type="text/css" media="print">
@@ -160,35 +160,35 @@ const CashierPrintableReceipt = ({
     </div>
   );
 };
-// ----- End Printable Receipt Component -----
+{/* End Printable Receipt Component */}
 
 const CashierScreen = () => {
-  // State for storing the transactions from Supabase
+  {/* State for storing transactions */}
   const [allTransactions, setAllTransactions] = useState([]);
-  // State for loading indicator
+  {/* Loading indicator */}
   const [isLoading, setIsLoading] = useState(true);
-  // State for tracking last update time for refresh functionality
+  {/* Last update time for refresh functionality */}
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
-  // State for transactions, search, and selection
+  {/* State for transactions, search, and selection */}
   const [transactions, setTransactions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [cashAmount, setCashAmount] = useState("");
   const printRef = useRef(null);
 
-  // State and methods for logout modal
+  {/* State and methods for logout modal */}
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { currentEmail, logout } = useAuth();
   const navigate = useNavigate();
 
-  // State for cancel order modal
+  {/* State for cancel order modal */}
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
 
-  // State will be initialized with proper computed values later
 
-  // Load transactions from Supabase
+
+  {/* Load transactions from Supabase */}
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {

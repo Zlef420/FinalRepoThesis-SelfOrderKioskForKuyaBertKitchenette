@@ -17,34 +17,34 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
 
-// OrderReview component: displays and manages the user's order before payment
+{/* OrderReview component */}
 const OrderReview = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Keep for potential future use, but preFetchedOrderNumber won't be used for setCurrentOrderNumber
-  // Get user information from AuthContext at the top level
+  const location = useLocation();
+  {/* Get user information */}
   const { currentEmail } = useAuth();
-  const user_id = currentEmail || "guest"; // Use guest if not logged in
+  const user_id = currentEmail || "guest";
   
-  // Get CartContext data - Adjust based on your actual context implementation
+  {/* Get CartContext data */}
   const {
     cartItems,
     deleteItem,
     addToCart,
-    removeItem, // Keep if needed
-    updateItemQuantity, // Ideal function for context updates
-    clearCart, // Ideal function for removing all
-    items, // Assuming `items` is the local state for cart items derived from CartContext/localStorage
-    setItems, // Make sure `items` and `setItems` are correctly defined and used as per your existing setup
+    removeItem,
+    updateItemQuantity,
+    clearCart,
+    items,
+    setItems
   } = useContext(CartContext);
 
-  // State for dining option
+  {/* State for dining option */}
   const [selectedOption, setSelectedOption] = useState(() => {
     return localStorage.getItem("diningOption") || "Dine In";
   });
 
-  // State for cart items - Initialize robustly
+  {/* State for cart items */}
   const [localItems, setLocalItems] = useState(() => {
-    const contextCartItems = Array.isArray(cartItems) ? cartItems : []; // cartItems from context
+    const contextCartItems = Array.isArray(cartItems) ? cartItems : [];
     let initialItems = [];
     if (contextCartItems.length > 0) {
       initialItems = contextCartItems;
@@ -69,18 +69,18 @@ const OrderReview = () => {
     });
   });
 
-  // State for selected payment method
+  {/* State for selected payment method */}
   const [selectedPayment, setSelectedPayment] = useState(null);
 
-  // State for modals
+  {/* State for modals */}
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
-  // Ensure currentOrderNumber state is declared
+  {/* Order number state */}
   const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
   
-  // useEffect to fetch and set the order number
+  {/* Fetch and set the order number */}
   useEffect(() => {
     const fetchOrderNumber = async () => {
       console.log("[ReviewOrder EFFECT] Triggered fetchOrderNumber. localItems.length:", localItems.length);
@@ -97,7 +97,7 @@ const OrderReview = () => {
         if (orderNumError) {
           console.error("[ReviewOrder EFFECT] Error from supabase.rpc:", orderNumError);
           toast.error("Could not fetch order number. DB Error.");
-          setCurrentOrderNumber(null); // Set to null or a specific error indicator
+          setCurrentOrderNumber(null);
         } else {
           console.log(`[ReviewOrder EFFECT] Setting currentOrderNumber to: ${orderNumData}`);
           setCurrentOrderNumber(orderNumData);
@@ -115,7 +115,7 @@ const OrderReview = () => {
 
   console.log("[ReviewOrder RENDER] currentOrderNumber state:", currentOrderNumber);
 
-  // Sync local `items` state changes back to localStorage
+  {/* Sync items to localStorage */}
   useEffect(() => {
     const validItems = localItems.filter(
       (item) => item && item.id && item.quantity > 0
@@ -123,12 +123,12 @@ const OrderReview = () => {
     localStorage.setItem("cartItems", JSON.stringify(validItems));
   }, [localItems]);
 
-  // Sync dining option with localStorage
+  {/* Sync dining option to localStorage */}
   useEffect(() => {
     localStorage.setItem("diningOption", selectedOption);
   }, [selectedOption]);
 
-  // *** FIXED: Minus button spam and quantity logic ***
+  {/* Update item quantity handler */}
   const updateQuantity = (e, id, increment) => {
     e.stopPropagation();
 
@@ -137,10 +137,10 @@ const OrderReview = () => {
 
     const currentQuantity = currentItem.quantity;
 
-    // --- FIX: Check BEFORE state update if decrementing from 1 ---
+    {/* Check before decrementing from 1 */}
     if (increment < 0 && currentQuantity === 1) {
-      confirmDeleteItem(e, id); // Show modal, DO NOT change quantity
-      return; // Stop processing this click
+      confirmDeleteItem(e, id);
+      return;
     }
 
     const newQuantity = Math.max(1, currentQuantity + increment);
@@ -152,7 +152,7 @@ const OrderReview = () => {
         )
       );
 
-      // Sync with context (Optional but recommended)
+      {/* Sync with context */}
       if (typeof updateItemQuantity === "function") {
         updateItemQuantity(id, newQuantity);
       } else if (typeof addToCart === "function") {
@@ -161,7 +161,7 @@ const OrderReview = () => {
     }
   };
 
-  // Toggle item details expansion
+  {/* Toggle item details expansion */}
   const toggleExpand = (id) => {
     setLocalItems(
       localItems.map((item) =>
@@ -170,7 +170,7 @@ const OrderReview = () => {
     );
   };
 
-  // Update special instructions for an item
+  {/* Update special instructions */}
   const updateDescription = (id, description) => {
     setLocalItems(
       localItems.map((item) =>
@@ -181,7 +181,7 @@ const OrderReview = () => {
     );
   };
 
-  // Save item changes (instructions, addons) and collapse details
+  {/* Save item changes and collapse details */}
   const saveChanges = (e, id) => {
     e.stopPropagation();
     setLocalItems((currentItems) =>
@@ -202,31 +202,31 @@ const OrderReview = () => {
     );
   };
 
-  // *** FIXED: Add-on Calculation Logic - Don't multiply add-ons by item quantity ***
+  {/* Calculate item total */}
   const calculateItemTotal = (item) => {
     const basePrice = Number(item.price) || 0;
     const quantity = Number(item.quantity) || 0;
 
     if (quantity === 0) return 0;
 
-    // Total cost = (Base Price * Item Quantity)
+
     const total = (basePrice * quantity);
     return total;
   };
 
-  // Calculate total cost of all items in the cart
+  {/* Calculate total cost */}
   const calculateTotal = () => {
     return localItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   };
 
-  // Show delete item confirmation modal
+
   const confirmDeleteItem = (e, id) => {
     if (e) e.stopPropagation();
     setItemToDelete(id);
     setShowDeleteItemModal(true);
   };
 
-  // Delete a single item from the cart (local state and context)
+
   const deleteItemLocal = () => {
     if (itemToDelete !== null) {
       const updatedItems = localItems.filter((item) => item.id !== itemToDelete);
@@ -243,13 +243,13 @@ const OrderReview = () => {
     }
   };
 
-  // Show delete all items confirmation modal
+
   const confirmDeleteAllItems = () => {
     if (localItems.length === 0) return;
     setShowDeleteAllModal(true);
   };
 
-  // Delete all items from the cart (local state and context)
+
   const deleteAllItems = () => {
     const itemIds = localItems.map((item) => item.id);
     setLocalItems([]);
@@ -265,9 +265,9 @@ const OrderReview = () => {
     setShowDeleteAllModal(false);
   };
 
-  // Style for payment buttons based on selection
+  {/* Style for payment buttons */}
   const paymentButtonStyle = (
-    isSelected // Original styling
+    isSelected
   ) =>
     `border-2 p-3 rounded flex flex-col items-center transition-colors ${
       isSelected
@@ -275,7 +275,7 @@ const OrderReview = () => {
         : "border-gray-300 hover:bg-gray-200"
     } ${localItems.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`;
 
-  // Handle navigation to payment page
+  {/* Handle navigation to payment page */}
   const handlePayment = async () => {
     if (!selectedPayment || localItems.length === 0) {
       return;
@@ -288,10 +288,10 @@ const OrderReview = () => {
     const order_number = currentOrderNumber;
 
     try {
-      // Generate ULID-like ref_number
+      {/* Generate ULID-like ref_number */}
       const generateUlidLike = () => {
         const timestampPart = new Date().getTime().toString(36).toUpperCase();
-        // Generate a longer random part for better uniqueness, e.g., 7-10 characters
+  
         const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase(); 
         return `${timestampPart}-${randomPart}`;
       };
@@ -299,16 +299,16 @@ const OrderReview = () => {
       
       const payment_ref_id = Date.now() + Math.floor(Math.random() * 1000);
 
-      // --- FIX: Use numeric value for pymnt_method to match DB schema ---
-      const paymentMethodNumeric = selectedPayment === "ewallet" ? 1 : 0; // 0 for Cash, 1 for E-Wallet
+      {/* Set payment method values */}
+      const paymentMethodNumeric = selectedPayment === "ewallet" ? 1 : 0;
       const paymentMethodString = selectedPayment === "ewallet" ? "E-Wallet" : "Cash";
 
-      // Determine payment status based on payment type
+      {/* Determine payment status */}
       const paymentStatus = selectedPayment === "ewallet" ? "Paid" : "Pending";
       
       const total_amount = calculateTotal();
 
-      // 1. Insert into trans_table
+      {/* Insert into trans_table */}
       const { data: transData, error: transError } = await supabase
         .from('trans_table')
         .insert([
@@ -320,7 +320,7 @@ const OrderReview = () => {
             trans_time: new Date().toTimeString().split(' ')[0],
             order_status: 'Pending',
             pymnt_status: paymentStatus,
-            pymnt_method: paymentMethodNumeric, // Using the numeric value
+            pymnt_method: paymentMethodNumeric,
             total_amntdue: total_amount,
             amount_paid: selectedPayment === "ewallet" ? total_amount : 0,
             user_id: user_id
@@ -330,7 +330,7 @@ const OrderReview = () => {
 
       if (transError) {
         console.error("Transaction error:", transError);
-        // Provide more specific feedback if possible
+        
         if (transError.message.includes("pymnt_method")) {
             toast.error("A database error occurred with the payment method. Please contact support.");
         } else {
@@ -344,7 +344,7 @@ const OrderReview = () => {
       }
       const trans_id = transData[0].trans_id;
 
-      // 2. Insert items into trans_items_table (no changes needed here based on request)
+      {/* Insert items into trans_items_table */}
       const itemsToInsert = localItems.map(item => {
         let order_notes = '';
         if (item.details) {
@@ -368,7 +368,7 @@ const OrderReview = () => {
         throw itemsError;
       }
 
-      // 3. Insert into payment_table only for e-wallet payments
+      {/* Insert into payment_table for e-wallet */}
       if (selectedPayment === "ewallet") {
         const { error: paymentError } = await supabase
           .from('payment_table')
@@ -377,7 +377,7 @@ const OrderReview = () => {
               fk_trans_id: trans_id,
               pymnt_ref_id: payment_ref_id,
               order_number: order_number,
-              pymnt_mthod: paymentMethodString, // Assuming payment_table `pymnt_mthod` is text
+              pymnt_mthod: paymentMethodString,
               pymnt_status: "Paid",
               pymnt_amount: total_amount,
               pymnt_change: 0,
@@ -391,7 +391,7 @@ const OrderReview = () => {
         }
       }
 
-      // Prepare final order data for navigation
+      {/* Prepare final order data */}
       const orderData = {
         trans_id: trans_id,
         ref_number: ref_number,
@@ -406,7 +406,7 @@ const OrderReview = () => {
         })),
         totalAmount: total_amount,
         diningOption: selectedOption,
-        paymentMethod: selectedPayment, // This is 'cash' or 'ewallet'
+        paymentMethod: selectedPayment,
       };
 
       if (typeof clearCart === "function") {
@@ -414,15 +414,11 @@ const OrderReview = () => {
       }
       toast.success("Order placed successfully!");
 
-      // Navigate to appropriate page
+      {/* Navigate to appropriate page */}
       if (selectedPayment === "cash") {
         navigate("/order-conf", { state: { orderData } }); 
       } else if (selectedPayment === "ewallet") {
-        // For e-wallet, pass the already determined 'Paid' status
-        // The EWalletPayment page might not be strictly needed if payment is confirmed here
-        // but if it is, ensure it handles this state correctly.
-        // The OrderConfirmation page will use orderData.paymentMethod to show receipt.
-        navigate("/ewallet-payment", { state: { orderData } }); // Or direct to order-conf if QR scan is simulated
+        navigate("/ewallet-payment", { state: { orderData } });
       }
 
     } catch (error) {
@@ -431,7 +427,7 @@ const OrderReview = () => {
     }
   };
 
-  // Modal component (Original structure)
+  {/* Modal component */}
   const ConfirmationModal = ({ show, title, message, onConfirm, onCancel }) => {
     if (!show) return null;
 
@@ -472,12 +468,12 @@ const OrderReview = () => {
     );
   };
 
-  // --- Original JSX Structure ---
+
   return (
-    // Fixed height outer div with no overflow
+
     <div className="min-h-screen flex flex-col bg-customBlack bg-cover bg-center overflow-hidden">
       <Header />
-      {/* Main Content Section with fixed height - adjusted to prevent footer overlap */}
+      {/* Main Content Section */}
       <main className="flex-1 container mx-auto px-4 py-2 max-w-[1400px] h-[calc(100vh-180px)] overflow-hidden">
         <div className="flex flex-col lg:flex-row justify-between gap-6 h-full overflow-hidden">
           {/* Order List Section (Original structure) */}
@@ -495,19 +491,16 @@ const OrderReview = () => {
             {/* Order Items List with fixed height - ensure content stays within scrollable area */}
             <div className="flex-1 overflow-y-auto pr-1 -mr-1 h-[calc(100vh-400px)] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-700">
               {localItems.length === 0 ? (
-                // Empty cart display without redundant return button
                 <div className="flex flex-col items-center justify-center h-40 text-white">
                   <p className="text-xl">Your cart is empty</p>
                 </div>
-              ) : (
-                // Original item mapping structure
+                              ) : (
                 <div className="space-y-4">
                   {localItems.map((item) => (
                     <div
                       key={item.id}
-                      // Original item container styling
                       className="bg-gray-100 rounded-lg shadow-md cursor-pointer hover:bg-gray-200 transition-colors relative"
-                      onClick={() => toggleExpand(item.id)} // Keep original toggle behavior
+                      onClick={() => toggleExpand(item.id)}
                     >
                       {/* Original expand/collapse button */}
                       <div className="mt-5 absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full p-1 text-white">
@@ -559,7 +552,7 @@ const OrderReview = () => {
                               <span className="mx-3">{item.quantity}</span>
                               <button
                                 onClick={(e) => updateQuantity(e, item.id, 1)}
-                                className="text-xl px-2 hover:bg-gray-400 rounded-full w-8" // Kept original '+', size etc.
+                                className="text-xl px-2 hover:bg-gray-400 rounded-full w-8"
                               >
                                 +
                               </button>
@@ -598,7 +591,7 @@ const OrderReview = () => {
                                 updateDescription(item.id, e.target.value)
                               }
                               placeholder="Add any special instructions..."
-                              className="w-full p-2 border rounded-md h-24" // Original styling
+                              className="w-full p-2 border rounded-md h-24"
                             />
                           </div>
 
@@ -606,7 +599,7 @@ const OrderReview = () => {
                           <div className="flex justify-end pt-2">
                             <button
                               onClick={(e) => saveChanges(e, item.id)}
-                              // Original styling, enable/disable logic added
+  
                               className={`px-4 py-2 rounded transition-colors ${
                                 item.isSaved
                                   ? "bg-gray-400 text-gray-700 cursor-not-allowed"
@@ -614,13 +607,12 @@ const OrderReview = () => {
                               }`}
                               disabled={item.isSaved}
                             >
-                              {item.isSaved ? "Saved" : "Save Changes"}{" "}
-                              {/* Adjusted label slightly */}
+                                                            {item.isSaved ? "Saved" : "Save Changes"}
                             </button>
                           </div>
                         </div>
                       )}
-                    </div> // End item container
+                                          </div>
                   ))}
                   {/* End item map */}
                 </div>
@@ -641,7 +633,7 @@ const OrderReview = () => {
                 <button
                   onClick={confirmDeleteAllItems}
                   className="py-2 px-2 text-sm text-red-500 hover:text-white
-                   flex items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-600 transition" // Original styling
+                   flex items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-600 transition"
                 >
                   <Trash2 className="size-4" />
                   <span className="hidden sm:inline">Remove all items</span>
@@ -715,7 +707,7 @@ const OrderReview = () => {
               <button
                 className={`w-full py-3 text-white rounded text-center font-bold ${
                   selectedPayment && localItems.length > 0
-                    ? "bg-red-500 hover:bg-red-600" // Original colors
+                    ? "bg-red-500 hover:bg-red-600"
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
                 disabled={!selectedPayment || localItems.length === 0}
@@ -729,14 +721,11 @@ const OrderReview = () => {
                   : "Select Payment Method"}
               </button>
             </div>
-          </div>{" "}
-          {/* End Payment Summary Section */}
-        </div>{" "}
-        {/* End Main Flex Container */}
-      </main>{" "}
-      {/* End Main Content Section */}
-      <Footer className="mt-4" />
-      {/* Modals (Original structure) */}
+                      </div>
+          </div>
+        </main>
+        <Footer className="mt-4" />
+        {/* Confirmation Modals */}
       <ConfirmationModal
         show={showDeleteItemModal}
         title="Remove Item"
@@ -751,7 +740,7 @@ const OrderReview = () => {
         onConfirm={deleteAllItems}
         onCancel={() => setShowDeleteAllModal(false)}
       />
-    </div> // End Root Div
+          </div>
   );
 };
 

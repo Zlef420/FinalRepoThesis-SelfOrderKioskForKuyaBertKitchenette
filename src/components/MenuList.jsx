@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from 'react-hot-toast';
-import { supabase } from "../supabaseClient"; // Import Supabase client
+import { supabase } from "../supabaseClient";
 
 const MenuList = ({ searchTerm, setSearchTerm }) => {
   const BUCKET_NAME = 'product-images';
@@ -13,21 +13,21 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
     name: "",
     price: "",
     category: "",
-    description: "", // Added description field
+    description: "",
     image: null,
     imagePreview: null,
     isAvailable: true,
   });
   const fileInputRef = useRef(null);
 
-  const [menuItems, setMenuItems] = useState([]); // Correctly initialized as empty, will be fetched from Supabase
+  const [menuItems, setMenuItems] = useState([]);
 
-  // Fetch menu items from Supabase
+  {/* Fetch menu items from Supabase */}
   const fetchMenuItems = async () => {
     try {
       const { data, error } = await supabase
         .from('product_details')
-        .select('product_id, prdct_name, prdct_price, prdct_categ, is_available, prdct_imgurl, prdct_dscrpt'); // Added prdct_dscrpt
+        .select('product_id, prdct_name, prdct_price, prdct_categ, is_available, prdct_imgurl, prdct_dscrpt');
 
       if (error) {
         console.error('Error fetching menu items:', error);
@@ -41,9 +41,9 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
         name: item.prdct_name,
         price: item.prdct_price,
         category: item.prdct_categ,
-        description: item.prdct_dscrpt || '', // Added description, default to empty string if null
-        isAvailable: item.is_available === true, // Ensure boolean, treating null/false from DB as false
-        image: item.prdct_imgurl, // This will be the Supabase storage URL
+        description: item.prdct_dscrpt || '',
+        isAvailable: item.is_available === true,
+        image: item.prdct_imgurl,
       }));
       setMenuItems(formattedData);
     } catch (err) {
@@ -57,7 +57,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
     fetchMenuItems();
   }, []);
 
-  // Effect for cleaning up blob URLs
+  {/* Effect for cleaning up blob URLs */}
   useEffect(() => {
     return () => {
       if (menuForm.imagePreview && menuForm.imagePreview.startsWith("blob:")) {
@@ -69,7 +69,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check if the file is an image
+      {/* Check if the file is an image */}
       if (!file.type.startsWith('image/')) {
         toast.error('Please select an image file (JPEG, PNG, GIF, etc.)');
         return;
@@ -96,7 +96,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
       name: item.name,
       price: item.price,
       category: item.category,
-      description: item.description || '', // Added description
+      description: item.description || '',
       image: null,
       imagePreview: item.image,
       isAvailable: item.isAvailable,
@@ -117,14 +117,13 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
     if (!selectedItem) return;
 
     try {
-      // 1. Delete image from Supabase Storage if it exists
+      {/* Delete image from Supabase Storage if it exists */}
       if (selectedItem.image) {
         try {
-            // Extract file name from URL. Assumes URL is like: .../bucket_name/file_name.jpg?token=...
-            // Or .../bucket_name/file_name.jpg (if no token for public URLs)
+            {/* Extract file name from URL */}
             const urlParts = selectedItem.image.split('/');
             let fileNameWithPotentialQuery = urlParts[urlParts.length - 1];
-            const fileName = fileNameWithPotentialQuery.split('?')[0]; // Remove query parameters if any
+            const fileName = fileNameWithPotentialQuery.split('?')[0];
             
             if (fileName) {
                 console.log(`Attempting to delete from storage: ${BUCKET_NAME}/${fileName}`);
@@ -132,9 +131,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
                 .from(BUCKET_NAME)
                 .remove([fileName]);
                 if (storageError) {
-                // Log storage error but don't necessarily block DB deletion if it's just a cleanup step
                 console.error('Error deleting image from storage:', storageError);
-                // alert(`Could not delete image from storage: ${storageError.message}. Proceeding with DB deletion.`);
                 }
             } else {
                 console.warn('Could not extract filename from image URL:', selectedItem.image);
@@ -144,7 +141,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
         }
       }
 
-      // 2. Delete item from the database
+      {/* Delete item from the database */}
       console.log('[Delete] Attempting to delete item from DB. ID:', selectedItem.id);
       const { error: dbError } = await supabase
         .from('product_details')

@@ -10,16 +10,16 @@ const EWalletPayment = () => {
 
   const handleConfirmPayment = () => {
     setIsProcessing(true);
-    // Get order data from location state
+    {/* Get order data from location state */}
     const orderData = location.state?.orderData;
     
-    // Simulate payment processing
+    {/* Simulate payment processing */}
     setTimeout(() => {
       navigate("/order-conf", {
         state: {
           paymentMethod: "ewallet",
           paymentStatus: "completed",
-          orderData: orderData, // Pass the order data to the confirmation page
+          orderData: orderData
         },
       });
     }, 2000);

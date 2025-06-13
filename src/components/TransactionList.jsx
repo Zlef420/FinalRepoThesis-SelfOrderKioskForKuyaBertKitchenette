@@ -1,22 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
-import { supabase } from "../supabaseClient"; // Import Supabase client
+import { supabase } from "../supabaseClient";
 
-// Helper function to get status badge styles (can be reused or kept separate)
+{/* Helper function to get status badge styles */}
 const getStatusClasses = (status) => {
-  // Handle potential null/empty strings gracefully
   const lowerStatus = status?.toLowerCase() || "";
   switch (lowerStatus) {
     case "completed":
       return "bg-green-100 text-green-800";
     case "pending":
       return "bg-yellow-100 text-yellow-800";
-    case "processing": // Example if needed
+    case "processing":
       return "bg-blue-100 text-blue-800";
-    case "cancelled": // Example
-    case "failed": // Example
+    case "cancelled":
+    case "failed":
       return "bg-red-100 text-red-800";
-    case "": // Handle empty status if needed
-      return "text-gray-400 italic"; // Example for empty status
+    case "":
+      return "text-gray-400 italic";
     default:
       return "bg-gray-100 text-gray-800";
   }
@@ -32,7 +31,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
   const [itemsError, setItemsError] = useState(null);
   const printSectionRef = useRef(null);
 
-  // Fetch transactions from trans_table
+  {/* Fetch transactions from trans_table */}
   useEffect(() => {
     const fetchTransactions = async () => {
       setLoading(true);
@@ -40,7 +39,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
       try {
         const { data, error } = await supabase
           .from('trans_table')
-          .select('*') // Select all columns for now, can be optimized later
+          .select('*')
           .order('trans_date', { ascending: false })
           .order('trans_time', { ascending: false });
 
@@ -49,7 +48,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
       } catch (err) {
         console.error("Error fetching transactions:", err);
         setError(err.message || "Failed to fetch transactions.");
-        setTransactions([]); // Clear transactions on error
+        setTransactions([]);
       }
       setLoading(false);
     };
@@ -57,7 +56,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
     fetchTransactions();
   }, []);
 
-  // Fetch transaction items when a transaction is selected
+  {/* Fetch transaction items when a transaction is selected */}
   useEffect(() => {
     if (selectedTransaction && selectedTransaction.trans_id) {
       const fetchTransactionItems = async () => {
@@ -66,7 +65,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
         try {
           const { data, error } = await supabase
             .from('trans_items_table')
-            .select('*') // Adjust columns as needed: e.g., 'prdct_name, unit_price, quantity, addons_details'
+            .select('*')
             .eq('fk_trans_id', selectedTransaction.trans_id);
 
           if (error) throw error;
@@ -79,18 +78,18 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
         setLoadingItems(false);
       };
       fetchTransactionItems();
-    } else {
-      setTransactionItems([]); // Clear items if no transaction is selected
-    }
+                } else {
+        setTransactionItems([]);
+      }
   }, [selectedTransaction]);
 
-  // Handle print functionality
+  {/* Handle print functionality */}
   const handlePrint = () => {
     if (selectedTransaction) {
-      // Get the payment method from the first item with a valid payment method
+      {/* Get the payment method */}
       const paymentMethod = selectedTransaction.pymnt_method === 1 ? 'Cash' : selectedTransaction.pymnt_method === 2 ? 'E-Wallet' : '-';
       
-      // Calculate subtotal and VAT (assuming 12% VAT included in TAmount)
+      {/* Calculate subtotal and VAT */}
       const subtotal = (selectedTransaction.total_amntdue || 0) / 1.12;
       const vatAmount = (selectedTransaction.total_amntdue || 0) - subtotal;
       
@@ -254,15 +253,15 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
   };
 
   const filteredTransactions = transactions.filter((transaction) => {
-    return (
-      (transaction.order_number?.toString().toLowerCase().includes(searchTerm.toLowerCase())) || // ORN is order_number // Case-insensitive
-      (transaction.pymnt_status?.toLowerCase().includes(searchTerm.toLowerCase())) || // Payment status
-      (transaction.trans_date?.includes(searchTerm)) || // Search by date - fixed field name
-      (transaction.total_amntdue?.toString().includes(searchTerm)) // Total Amount // Search by amount
+          return (
+        (transaction.order_number?.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (transaction.pymnt_status?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (transaction.trans_date?.includes(searchTerm)) ||
+        (transaction.total_amntdue?.toString().includes(searchTerm))
     );
   });
 
-  // Reset selected transaction if it's filtered out
+  {/* Reset selected transaction if filtered out */}
   useEffect(() => {
     if (
       selectedTransaction &&

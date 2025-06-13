@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
-import { supabase } from '../supabaseClient'; // Import Supabase client
+import { supabase } from '../supabaseClient';
 
 const LoginForm = ({ onClose }) => {
   const navigate = useNavigate();
@@ -10,9 +10,9 @@ const LoginForm = ({ onClose }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [focusedField, setFocusedField] = useState("");
-  const [loginRole, setLoginRole] = useState(null); // Track role post-login
+  const [loginRole, setLoginRole] = useState(null);
 
-  // Handle Escape key press to close the form
+  {/* Handle Escape key press */}
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -36,17 +36,15 @@ const LoginForm = ({ onClose }) => {
     }
 
     try {
-      // Query Supabase account_table
-      // IMPORTANT: This method of querying passwords directly is insecure.
-      // Consider using Supabase Auth for proper password handling.
+      {/* Query Supabase account_table */}
       const { data, error } = await supabase
         .from('account_table')
-        .select('email, password, role') // Fetch email, password, and role
-        .eq('email', email) // Filter by 'email' column using the form's email state
-        .eq('password', password) // Direct password comparison (INSECURE)
-        .single(); // Expecting a single user or null
+        .select('email, password, role')
+        .eq('email', email)
+        .eq('password', password)
+        .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116: Row not found (not an error for login logic)
+      if (error && error.code !== 'PGRST116') {
         console.error('Error logging in:', error);
         toast.error(`Login failed: ${error.message}`);
         return;
@@ -55,11 +53,11 @@ const LoginForm = ({ onClose }) => {
       if (data) {
         // User found and credentials match
         console.log("Supabase login successful, user data:", data);
-        const loggedInRole = login(data.role, data.email); // Use role and email from DB
+        const loggedInRole = login(data.role, data.email);
         toast.success("Login successful!");
-        setLoginRole(loggedInRole); // Trigger navigation via effect
+        setLoginRole(loggedInRole);
       } else {
-        // No user found with matching username and password, or other error handled above
+        {/* No user found with matching credentials */}
         console.log("Invalid credentials or user not found");
         toast.error("Invalid credentials");
       }
@@ -70,7 +68,7 @@ const LoginForm = ({ onClose }) => {
   };
 
   useEffect(() => {
-    // currentEmail is set by AuthContext's login function, which now receives username from DB
+    {/* Handle navigation based on role */}
     if (loginRole && currentEmail) {
       console.log("Effect triggered, currentEmail:", currentEmail);
       if (loginRole === "admin") {
@@ -84,7 +82,7 @@ const LoginForm = ({ onClose }) => {
         navigate("/");
       }
       onClose();
-      setLoginRole(null); // Reset to prevent re-trigger
+      setLoginRole(null);
     }
   }, [loginRole, currentEmail, email, navigate, onClose]);
 
@@ -93,7 +91,7 @@ const LoginForm = ({ onClose }) => {
       <div className="bg-white p-8 rounded-lg shadow-lg w-96">
         <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">Login</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Role selection buttons removed */}
+
           <div className="relative">
             <input
               type="email"

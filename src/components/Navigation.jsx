@@ -2,11 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 
 function Navigation({ onItemClick }) {
-  // State to track the selected menu item
-  const [selectedItem, setSelectedItem] = useState("All Menu"); // "All Menu" active by default
+  const [selectedItem, setSelectedItem] = useState("All Menu");
   const navRef = useRef(null);
 
-  // Menu items (keeping original names, no icons)
   const menuItems = [
     "All Menu",
     "Affordable Meals",
@@ -28,7 +26,6 @@ function Navigation({ onItemClick }) {
     "Vegetables",
   ];
 
-  // Handle item selection
   const handleItemClick = (item) => {
     setSelectedItem(item);
     if (onItemClick) onItemClick(item);
@@ -38,7 +35,7 @@ function Navigation({ onItemClick }) {
     <nav
       className="w-48 h-full bg-gray-800 text-white flex flex-col border-r border-gray-700"
       style={{
-        backgroundColor: "#1F2937", // Navy blue background
+        backgroundColor: "#1F2937",
       }}
     >
       {/* Close button - mobile only */}

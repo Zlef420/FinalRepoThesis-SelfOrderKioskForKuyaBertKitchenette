@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
-import { supabase } from "../supabaseClient"; // Supabase client
+import { supabase } from "../supabaseClient";
 import { toast } from 'react-hot-toast';
 
 
 const Settings = () => {
 
   const [accountForm, setAccountForm] = useState({
-    email: "", // Changed from username to email
-    role: "Cashier", // Default role to Cashier
+    email: "",
+    role: "Cashier",
     password: "",
     confirmPassword: "",
     securityQuestion: "What was your first pet's name?",
     securityAnswer: "",
   });
 
-  const [accounts, setAccounts] = useState([]); // Initialize as empty, will be fetched
+  const [accounts, setAccounts] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
 
-  // State for Forgot Password Modal
+  {/* State for Forgot Password Modal */}
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [forgotPasswordForm, setForgotPasswordForm] = useState({
     email: "",
@@ -31,27 +31,27 @@ const Settings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [targetAccount, setTargetAccount] = useState(null);
 
-  // State for Ad Deletion Modal
+  {/* State for Ad Deletion Modal */}
   const [showAdDeleteModal, setShowAdDeleteModal] = useState(false);
   const [adSlotToRemove, setAdSlotToRemove] = useState(null);
 
-  // State for Intro Advertisement Images
-  const [uploadedImages, setUploadedImages] = useState([]); // For the 3 intro ad slots
-  const [isProcessingIntroAd, setIsProcessingIntroAd] = useState(false); // General loading state for intro ads
+  {/* State for Intro Advertisement Images */}
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [isProcessingIntroAd, setIsProcessingIntroAd] = useState(false);
   const [introAdError, setIntroAdError] = useState('');
   const NUMBER_OF_AD_SLOTS = 3;
-  const INTRO_AD_BUCKET_NAME = 'intro-advertisement-images'; // Bucket for intro ads
+  const INTRO_AD_BUCKET_NAME = 'intro-advertisement-images';
 
-  // Fetch accounts from Supabase
+  {/* Fetch accounts from Supabase */}
   const fetchAccounts = async () => {
     try {
       const { data, error } = await supabase
         .from('account_table')
-        .select('id, email, role'); // Fetch necessary fields
+        .select('id, email, role');
       if (error) {
         console.error('Error fetching accounts:', error);
         toast.error(`Failed to fetch accounts: ${error.message}`, { id: 'fetch-accounts-error' });
-        setAccounts([]); // Set to empty array on error
+                  setAccounts([]);
       } else {
         setAccounts(data || []);
       }
