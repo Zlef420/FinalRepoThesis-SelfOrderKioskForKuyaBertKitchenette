@@ -9,19 +9,29 @@ function Navigation({ onItemClick }) {
   // Menu items (keeping original names, no icons)
   const menuItems = [
     "All Menu",
-    "Affordameals",
-    "Rice Meals",
-    "Sizzlers",
+    "Affordable Meals",
+    "Appetizers",
+    "Beef",
+    "Beverages",
+    "Chicken",
+    "Chicken Wings",
+    "Dessert",
+    "Milk Tea & Coffee",
+    "Noodles",
+    "Pasta & Sides",
+    "Pork",
     "Rice",
-    "Beverage",
+    "Rice Meals",
+    "Seafoods",
+    "Sizzlers",
     "Soup",
-    "Group Meals",
+    "Vegetables",
   ];
 
   // Handle item selection
   const handleItemClick = (item) => {
     setSelectedItem(item);
-    if (onItemClick) onItemClick();
+    if (onItemClick) onItemClick(item);
   };
 
   return (
@@ -33,7 +43,7 @@ function Navigation({ onItemClick }) {
     >
       {/* Close button - mobile only */}
       <div className="md:hidden flex justify-end p-2">
-        <button className="p-1 text-white" onClick={onItemClick}>
+        <button className="p-1 text-white" onClick={() => onItemClick && onItemClick()}>
           <X size={24} />
         </button>
       </div>

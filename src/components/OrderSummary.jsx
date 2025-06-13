@@ -186,7 +186,7 @@ function OrderSummary({
       )}
 
       <div
-        className={`fixed md:static top-0 right-0 z-40 w-3/4 sm:w-2/3 md:w-1/5 min-w-[250px] bg-gray-900 text-white px-2 sm:px-3 md:px-4 flex flex-col h-full transition-transform duration-300 transform ${
+        className={`fixed md:static top-0 right-0 z-40 w-3/4 sm:w-2/3 md:w-64 bg-gray-900 text-white px-2 sm:px-3 md:px-4 flex flex-col h-full transition-transform duration-300 transform ${
           effectiveCartOpen
             ? "translate-x-0"
             : "translate-x-full md:translate-x-0"

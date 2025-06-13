@@ -18,6 +18,7 @@ function Home() {
   const { cartItems, addToCart, deleteItem } = useContext(CartContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All Menu");
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -40,9 +41,25 @@ function Home() {
     fetchProducts();
   }, []);
 
-  const filteredItems = products.filter((product) =>
-    product.prdct_name && product.prdct_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleCategorySelect = (category) => {
+    if (category) {
+      setSelectedCategory(category);
+    }
+    setIsSidebarOpen(false);
+  };
+
+  const filteredItems = products
+    .filter(
+      (product) =>
+        selectedCategory === "All Menu" ||
+        (product.prdct_categ &&
+          product.prdct_categ.toLowerCase() === selectedCategory.toLowerCase())
+    )
+    .filter(
+      (product) =>
+        product.prdct_name &&
+        product.prdct_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const totalCartItems = cartItems.reduce(
     (total, item) => total + (item.quantity || 1),
@@ -92,7 +109,7 @@ function Home() {
                  : "-translate-x-full md:translate-x-0"
              }`}
         >
-          <Navigation onItemClick={() => setIsSidebarOpen(false)} />
+          <Navigation onItemClick={handleCategorySelect} />
         </div>
 
         <div className="flex-1 overflow-y-scroll pb-4 bg-gray-100">
@@ -107,7 +124,7 @@ function Home() {
           </div>
 
           <h2 className="text-2xl font-semibold text-gray-800 mt-4 mb-2 px-4">
-            Explore All Menu
+            {selectedCategory}
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4">
@@ -137,7 +154,6 @@ function Home() {
         >
           <OrderSummary
             cartItems={cartItems}
-            orderNumber={1} // Example order number
             onDeleteItem={deleteItem}
             onCloseCart={() => setIsCartOpen(false)}
             isCartOpen={isCartOpen}
