@@ -6,6 +6,8 @@ import {
   CreditCard,
   CheckSquare,
   X,
+  Printer,
+  Wallet,
 } from "lucide-react";
 
 const steps = [
@@ -28,15 +30,27 @@ const steps = [
     icon: <ShoppingCart className="w-6 h-6" />,
   },
   {
-    title: "Make Payment",
+    title: "Choose Payment Method",
     description:
-      "Choose your preferred payment method - credit card, debit card, or mobile payment. Follow the on-screen instructions to complete your purchase securely.",
+      "Select your preferred payment method. We accept both Cash and E-wallet payments.",
     icon: <CreditCard className="w-6 h-6" />,
   },
   {
-    title: "Get Your Order Number",
+    title: "Paying with Cash",
     description:
-      "Once payment is complete, you'll receive an order number. Keep an eye on the display screen to know when your order is ready for pickup.",
+      "If you choose cash, an order slip will be printed. Please take this slip to the cashier to complete your payment.",
+    icon: <Printer className="w-6 h-6" />,
+  },
+  {
+    title: "Paying with E-Wallet",
+    description:
+      "For e-wallet payments, two receipts will be printed after your transaction is approved. One is for you, and one must be given to the cashier.",
+    icon: <Wallet className="w-6 h-6" />,
+  },
+  {
+    title: "Collect Your Order",
+    description:
+      "After payment is confirmed, present the cashier's receipt copy to our staff. Listen for your order number to be called and enjoy your meal!",
     icon: <CheckSquare className="w-6 h-6" />,
   },
 ];

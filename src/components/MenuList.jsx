@@ -320,7 +320,7 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
     <>
       <div className="flex flex-col lg:flex-row gap-6 p-4 h-full">
         {/* Menu Items List Section */}
-        <div className="flex-grow lg:w-2/3 bg-white p-4 rounded-lg shadow overflow-y-auto">
+        <div className="flex-grow lg:w-2/3 bg-white p-4 rounded-lg shadow flex flex-col">
           <h2 className="text-2xl font-semibold mb-4 text-gray-800">Menu Items</h2>
           <div className="mb-4">
             <input
@@ -331,62 +331,64 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredMenuItems.map((item) => (
-              <div
-                key={item.id}
-                className={`p-4 border rounded-lg shadow-sm flex flex-col justify-between ${
-                  item.isAvailable ? "bg-white" : "bg-gray-200"
-                }`}
-              >
-                <div className="relative">
-                  <img
-                    src={item.image || 'https://via.placeholder.com/150?text=No+Image'}
-                    alt={item.name}
-                    className={`w-full h-32 object-cover rounded-md mb-3 ${!item.isAvailable ? 'opacity-40' : ''}`}
-                    onError={(e) => { e.target.onerror = null; e.target.src='https://via.placeholder.com/150?text=No+Image'; }}
-                  />
-                  {!item.isAvailable && (
-                    <div className="absolute inset-0 flex items-center justify-center mb-3 bg-black bg-opacity-30 rounded-md">
-                      <span className="bg-red-600 text-white font-bold py-2 px-4 rounded">SOLD OUT</span>
-                    </div>
-                  )}
+          <div className="flex-grow overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredMenuItems.map((item) => (
+                <div
+                  key={item.id}
+                  className={`p-4 border rounded-lg shadow-sm flex flex-col justify-between ${
+                    item.isAvailable ? "bg-white" : "bg-gray-200"
+                  }`}
+                >
+                  <div className="relative">
+                    <img
+                      src={item.image || 'https://via.placeholder.com/150?text=No+Image'}
+                      alt={item.name}
+                      className={`w-full h-32 object-cover rounded-md mb-3 ${!item.isAvailable ? 'opacity-40' : ''}`}
+                      onError={(e) => { e.target.onerror = null; e.target.src='https://via.placeholder.com/150?text=No+Image'; }}
+                    />
+                    {!item.isAvailable && (
+                      <div className="absolute inset-0 flex items-center justify-center mb-3 bg-black bg-opacity-30 rounded-md">
+                        <span className="bg-red-600 text-white font-bold py-2 px-4 rounded">SOLD OUT</span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-700">{item.name}</h3>
+                    <p className="text-sm text-gray-500 mb-1">{item.category}</p>
+                    <p className="text-xs text-gray-500 mb-2 h-10 overflow-y-auto">{item.description || 'No description available.'}</p>
+                    <p className="text-lg font-bold text-orange-600 mb-2">₱{parseFloat(item.price).toFixed(2)}</p>
+                    <p className={`text-xs font-medium ${item.isAvailable ? 'text-green-600' : 'text-red-600'}`}>
+                      {item.isAvailable ? "Available" : "Sold Out"}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                    <button
+                      className="flex-1 px-3 py-1.5 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                      onClick={() => handleEdit(item)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="flex-1 px-3 py-1.5 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
+                      onClick={() => handleDelete(item)}
+                    >
+                      Delete
+                    </button>
+                    <button
+                      className={`flex-1 px-3 py-1.5 text-white text-xs rounded transition-colors ${
+                        item.isAvailable
+                          ? "bg-yellow-500 hover:bg-yellow-600"
+                          : "bg-green-500 hover:bg-green-600"
+                      }`}
+                      onClick={() => handleAvailabilityToggle(item)}
+                    >
+                      {item.isAvailable ? "Set Sold Out" : "Set Available"}
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700">{item.name}</h3>
-                  <p className="text-sm text-gray-500 mb-1">{item.category}</p>
-                  <p className="text-xs text-gray-500 mb-2 h-10 overflow-y-auto">{item.description || 'No description available.'}</p>
-                  <p className="text-lg font-bold text-orange-600 mb-2">₱{parseFloat(item.price).toFixed(2)}</p>
-                  <p className={`text-xs font-medium ${item.isAvailable ? 'text-green-600' : 'text-red-600'}`}>
-                    {item.isAvailable ? "Available" : "Sold Out"}
-                  </p>
-                </div>
-                <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                  <button
-                    className="flex-1 px-3 py-1.5 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
-                    onClick={() => handleEdit(item)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="flex-1 px-3 py-1.5 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
-                    onClick={() => handleDelete(item)}
-                  >
-                    Delete
-                  </button>
-                  <button
-                    className={`flex-1 px-3 py-1.5 text-white text-xs rounded transition-colors ${
-                      item.isAvailable
-                        ? "bg-yellow-500 hover:bg-yellow-600"
-                        : "bg-green-500 hover:bg-green-600"
-                    }`}
-                    onClick={() => handleAvailabilityToggle(item)}
-                  >
-                    {item.isAvailable ? "Set Sold Out" : "Set Available"}
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 

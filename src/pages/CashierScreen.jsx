@@ -292,7 +292,7 @@ const CashierScreen = () => {
 
     if (selectedTransaction) {
       const updatedSelected = allTransactions.find(
-        (t) => t.ORN === selectedTransaction.ORN
+        (t) => t.trans_id === selectedTransaction.trans_id
       );
       setSelectedTransaction(updatedSelected || null);
     }
@@ -561,7 +561,7 @@ const CashierScreen = () => {
                               key={transaction.trans_id}
                               onClick={() => handleTransactionClick(transaction)}
                               className={`cursor-pointer hover:bg-gray-200 border-b border-gray-200 ${
-                                selectedTransaction?.ORN === transaction.ORN
+                                selectedTransaction?.trans_id === transaction.trans_id
                                   ? "bg-blue-100 font-medium"
                                   : "hover:bg-gray-100"
                               }`}
