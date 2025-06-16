@@ -15,6 +15,119 @@ import {
   Loader2,
 } from "lucide-react";
 
+const AdminConfirmationModal = ({ onConfirm, onCancel, orderORN, title, actionText }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (!email || !password) {
+      toast.error("Please enter admin email and password");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('account_table')
+        .select('role')
+        .eq('email', email)
+        .eq('password', password)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data && data.role.toLowerCase() === 'admin') {
+        toast.success("Admin confirmed.");
+        onConfirm();
+      } else {
+        toast.error("Invalid admin credentials or not an admin.");
+      }
+    } catch (err) {
+      console.error("Admin confirmation error:", err);
+      toast.error("An error occurred during confirmation.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-2">{title}</h2>
+        <p className="text-center text-gray-600 mb-6">
+          Please provide admin credentials to continue for order #{orderORN}.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="relative">
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onFocus={() => setFocusedField("email")}
+              onBlur={() => setFocusedField("")}
+              className="w-full px-4 py-3 border-2 text-black rounded-lg outline-none transition-all peer"
+              required
+            />
+            <label
+              htmlFor="email"
+              className={`absolute left-4 transition-all duration-200 pointer-events-none ${
+                focusedField === "email" || email
+                  ? "-top-2 text-xs bg-white px-2 text-customOrange"
+                  : "top-3 text-gray-500"
+              }`}
+            >
+              Admin Email
+            </label>
+          </div>
+          <div className="relative">
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onFocus={() => setFocusedField("password")}
+              onBlur={() => setFocusedField("")}
+              className="w-full px-4 py-3 text-black border-2 rounded-lg outline-none transition-all peer"
+              required
+            />
+            <label
+              htmlFor="password"
+              className={`absolute left-4 transition-all duration-200 pointer-events-none ${
+                focusedField === "password" || password
+                  ? "-top-2 text-xs bg-white px-2 text-customOrange"
+                  : "top-3 text-gray-500"
+              }`}
+            >
+              Password
+            </label>
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-customOrange text-white py-3 px-4 rounded-lg hover:bg-orange-600 transition-colors flex justify-center items-center disabled:bg-orange-300 disabled:cursor-not-allowed"
+          >
+            {isLoading ? <Loader2 className="animate-spin" /> : actionText}
+          </button>
+        </form>
+        <button
+          onClick={onCancel}
+          className="mt-6 w-full text-center text-gray-500 hover:text-gray-700"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+};
+
 {/* Printable Receipt Component */}
 const CashierPrintableReceipt = ({
   transaction,
@@ -186,7 +299,8 @@ const CashierScreen = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
 
-
+  const [showReactivateModal, setShowReactivateModal] = useState(false);
+  const [orderToReactivate, setOrderToReactivate] = useState(null);
 
   {/* Load transactions from Supabase */}
   const fetchTransactions = async () => {
@@ -299,8 +413,13 @@ const CashierScreen = () => {
   }, [allTransactions, searchQuery]);
 
   const handleTransactionClick = (transaction) => {
-    setSelectedTransaction(transaction);
-    setCashAmount(transaction.TAmount.toFixed(2));
+    if (transaction.OrderStatus?.toLowerCase() === 'cancelled') {
+      setOrderToReactivate(transaction);
+      setShowReactivateModal(true);
+    } else {
+      setSelectedTransaction(transaction);
+      setCashAmount(transaction.TAmount.toFixed(2));
+    }
   };
 
   const calculateChange = () => {
@@ -406,7 +525,7 @@ const CashierScreen = () => {
   const handleOrderStatusChange = async (orn, newStatus) => {
     // Find the transaction to update
     const transactionToUpdate = allTransactions.find((t) => t.ORN === orn);
-    if (!transactionToUpdate) return;
+    if (!transactionToUpdate || transactionToUpdate.OrderStatus?.toLowerCase() === 'cancelled') return;
 
     try {
       // Update the order status in Supabase
@@ -446,37 +565,32 @@ const CashierScreen = () => {
   const confirmCancelOrder = async () => {
     if (orderToCancel) {
       try {
-        // First delete the related items from trans_items_table
-        const { error: itemsError } = await supabase
-          .from("trans_items_table")
-          .delete()
-          .eq("fk_trans_id", orderToCancel.trans_id);
-
-        if (itemsError) {
-          console.error("Error deleting order items:", itemsError);
-          toast.error("Failed to cancel order items");
-          return;
-        }
-
-        // Then delete the transaction from trans_table
-        const { error: transError } = await supabase
+        // Update the order status to 'Cancelled' in Supabase
+        const { error } = await supabase
           .from("trans_table")
-          .delete()
+          .update({ order_status: "Cancelled", pymnt_status: "Cancelled" })
           .eq("trans_id", orderToCancel.trans_id);
 
-        if (transError) {
-          console.error("Error deleting transaction:", transError);
+        if (error) {
+          console.error("Error cancelling order:", error);
           toast.error("Failed to cancel order");
           return;
         }
 
         // Update local state
         setAllTransactions((prevTransactions) =>
-          prevTransactions.filter((t) => t.ORN !== orderToCancel.ORN)
+          prevTransactions.map((t) =>
+            t.ORN === orderToCancel.ORN
+              ? { ...t, OrderStatus: "Cancelled", PaymentStat: "Cancelled" }
+              : t
+          )
         );
 
         // If the canceled order was selected, clear the selection
-        if (selectedTransaction && selectedTransaction.ORN === orderToCancel.ORN) {
+        if (
+          selectedTransaction &&
+          selectedTransaction.ORN === orderToCancel.ORN
+        ) {
           setSelectedTransaction(null);
           setCashAmount("");
         }
@@ -497,6 +611,34 @@ const CashierScreen = () => {
   const closeCancelModal = () => {
     setShowCancelModal(false);
     setOrderToCancel(null);
+  };
+
+  const confirmReactivateOrder = async () => {
+    if (!orderToReactivate) return;
+
+    try {
+      const { error } = await supabase
+        .from("trans_table")
+        .update({ order_status: "Waiting", pymnt_status: "Pending" }) // Reactivating
+        .eq("trans_id", orderToReactivate.trans_id);
+
+      if (error) throw error;
+
+      setAllTransactions((prev) =>
+        prev.map((t) =>
+          t.trans_id === orderToReactivate.trans_id
+            ? { ...t, OrderStatus: "Waiting", PaymentStat: "Pending" }
+            : t
+        )
+      );
+      toast.success(`Order #${orderToReactivate.ORN} has been reactivated.`);
+    } catch (error) {
+      console.error("Error reactivating order:", error);
+      toast.error("Failed to reactivate order.");
+    } finally {
+      setShowReactivateModal(false);
+      setOrderToReactivate(null);
+    }
   };
 
   const change = calculateChange();
@@ -555,15 +697,19 @@ const CashierScreen = () => {
                     <tbody>
                       {transactions.length > 0 ? (
                         transactions.map((transaction) => {
-                          console.log(`Rendering transaction ORN: ${transaction.ORN}, OrderStatus: '${transaction.OrderStatus}' (Type: ${typeof transaction.OrderStatus})`);
+                          const isCancelled = transaction.OrderStatus?.toLowerCase() === 'cancelled';
                           return (
                             <tr
                               key={transaction.trans_id}
                               onClick={() => handleTransactionClick(transaction)}
-                              className={`cursor-pointer hover:bg-gray-200 border-b border-gray-200 ${
-                                selectedTransaction?.trans_id === transaction.trans_id
-                                  ? "bg-blue-100 font-medium"
-                                  : "hover:bg-gray-100"
+                              className={`border-b border-gray-200 ${
+                                isCancelled 
+                                  ? 'bg-red-50 text-gray-500 line-through cursor-pointer hover:bg-red-100'
+                                  : `cursor-pointer hover:bg-gray-200 ${
+                                      selectedTransaction?.trans_id === transaction.trans_id
+                                        ? "bg-blue-100 font-medium"
+                                        : "hover:bg-gray-100"
+                                    }`
                               }`}
                             >
                               <td className="p-2">{transaction.ORN}</td>
@@ -588,8 +734,11 @@ const CashierScreen = () => {
                                   onChange={(e) =>
                                     handleOrderStatusChange(transaction.ORN, e.target.value)
                                   }
+                                  disabled={isCancelled}
                                   className={`w-full p-1 rounded border ${
-                                    (transaction.OrderStatus?.toLowerCase() === "waiting" || transaction.OrderStatus?.toLowerCase() === "pending")
+                                    isCancelled
+                                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                      : (transaction.OrderStatus?.toLowerCase() === "waiting" || transaction.OrderStatus?.toLowerCase() === "pending")
                                       ? "text-yellow-600 border-yellow-300 bg-yellow-50"
                                       : transaction.OrderStatus?.toLowerCase() === "in progress"
                                       ? "text-blue-600 border-blue-300 bg-blue-50"
@@ -601,12 +750,14 @@ const CashierScreen = () => {
                                   <option value="Waiting">Waiting</option>
                                   <option value="In Progress">In Progress</option>
                                   <option value="Done">Done</option>
+                                  {isCancelled && <option value="Cancelled">Cancelled</option>}
                                 </select>
                               </td>
                               <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   onClick={() => handleCancelOrder(transaction.ORN)}
-                                  className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded"
+                                  disabled={isCancelled}
+                                  className={`p-1 rounded ${ isCancelled ? 'text-gray-400 cursor-not-allowed' : 'text-red-500 hover:text-red-700 hover:bg-red-100'}`}
                                   title="Cancel Order"
                                 >
                                   <X size={16} />
@@ -814,6 +965,19 @@ const CashierScreen = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showReactivateModal && (
+        <AdminConfirmationModal
+          orderORN={orderToReactivate?.ORN}
+          onConfirm={confirmReactivateOrder}
+          onCancel={() => {
+            setShowReactivateModal(false);
+            setOrderToReactivate(null);
+          }}
+          title="Reactivate Order"
+          actionText="Confirm & Reactivate"
+        />
       )}
     </div>
   );
