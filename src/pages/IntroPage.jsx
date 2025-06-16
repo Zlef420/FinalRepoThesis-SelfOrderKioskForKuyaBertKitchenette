@@ -86,11 +86,11 @@ function IntroPage() {
               </div>
             ) : advertisementImages.length > 0 ? (
               advertisementImages.map((item, index) => (
-                <div key={item.id} className="w-full h-full flex-shrink-0">
+                <div key={item.id} className="w-full h-full flex-shrink-0 flex items-center justify-center">
                   <img
                     src={item.image}
                     alt="Advertisement"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
               ))

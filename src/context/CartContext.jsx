@@ -34,10 +34,12 @@ export const CartProvider = ({ children }) => {
   const addToCart = (item) => {
     setCartItems((prevCart) => {
       const existingItem = prevCart.find((cartItem) => cartItem.id === item.id);
+      const itemQuantity = parseInt(item.quantity) || 1;
+      
       if (existingItem) {
         return prevCart.map((cartItem) =>
           cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            ? { ...cartItem, quantity: cartItem.quantity + itemQuantity }
             : cartItem
         );
       } else {
@@ -45,7 +47,7 @@ export const CartProvider = ({ children }) => {
           id: item.id,
           name: String(item.name || 'Unknown Item').trim(),
           price: parseFloat(item.price) || 0,
-          quantity: 1,
+          quantity: itemQuantity,
           image: item.image,
           description: item.description
         }];

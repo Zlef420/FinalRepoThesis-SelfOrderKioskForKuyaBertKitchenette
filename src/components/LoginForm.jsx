@@ -71,10 +71,11 @@ const LoginForm = ({ onClose }) => {
     {/* Handle navigation based on role */}
     if (loginRole && currentEmail) {
       console.log("Effect triggered, currentEmail:", currentEmail);
-      if (loginRole === "admin") {
+      const role = loginRole.toLowerCase();
+      if (role === "admin") {
         console.log("Navigating to /admin-page");
         navigate("/admin-page", { replace: true });
-      } else if (loginRole === "cashier") {
+      } else if (role === "cashier") {
         console.log("Navigating to /cashier-screen");
         navigate("/cashier-screen", { replace: true });
       } else {

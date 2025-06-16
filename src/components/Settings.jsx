@@ -7,7 +7,7 @@ const Settings = () => {
 
   const [accountForm, setAccountForm] = useState({
     email: "",
-    role: "Cashier",
+    role: "cashier",
     password: "",
     confirmPassword: "",
     securityQuestion: "What was your first pet's name?",
@@ -338,7 +338,7 @@ const Settings = () => {
         fetchAccounts(); // Refresh the accounts list
         setAccountForm({ // Reset form
           email: "", // Changed from username
-          role: "Cashier", // Reset to default role
+          role: "cashier", // Reset to default role
           password: "",
           confirmPassword: "",
           securityQuestion: "What was your first pet's name?",
@@ -506,7 +506,7 @@ const Settings = () => {
                   setAccountForm({ ...accountForm, role: e.target.value })
                 }
               >
-                <option value="Cashier">Cashier</option>
+                <option value="cashier">Cashier</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
