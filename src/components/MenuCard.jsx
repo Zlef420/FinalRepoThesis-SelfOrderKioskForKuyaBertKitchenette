@@ -130,27 +130,29 @@ function MenuCard({ product, onAddToCart }) {
   return (
     <>
       <div
-        className={`bg-yellow-50 rounded-lg shadow-md hover:shadow-lg p-4 text-center transition-all duration-200 cursor-pointer ${
+        className={`bg-yellow-50 rounded-lg shadow-md hover:shadow-lg p-4 text-center transition-all duration-200 cursor-pointer flex flex-col ${
           isScaling ? "scale-105" : "scale-100"
         }`}
         onClick={handleCardClick}
       >
-        <div className="relative">
-          <img
-            src={image || "https://via.placeholder.com/150"}
-            alt={name}
-            className={`w-full h-32 object-cover rounded-md mb-4 ${!isAvailable ? 'opacity-50' : ''}`}
-          />
-          {!isAvailable && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-md mb-4">
-              <span className="text-white font-bold text-lg bg-red-600 px-4 py-2 rounded">SOLD OUT</span>
-            </div>
-          )}
+        <div className="flex-grow">
+          <div className="relative">
+            <img
+              src={image || "https://via.placeholder.com/150"}
+              alt={name}
+              className={`w-full h-32 object-cover rounded-md mb-4 ${!isAvailable ? 'opacity-50' : ''}`}
+            />
+            {!isAvailable && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-md mb-4">
+                <span className="text-white font-bold text-lg bg-red-600 px-4 py-2 rounded">SOLD OUT</span>
+              </div>
+            )}
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
+          <p className="text-gray-600 mb-2">₱{typeof price === 'number' ? price.toFixed(2) : 'N/A'}</p>
         </div>
-        <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
-        <p className="text-gray-600 mb-2">₱{typeof price === 'number' ? price.toFixed(2) : 'N/A'}</p>
         {isAvailable ? (
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 mt-auto">
             <button
               className="bg-red-500 text-white px-2 py-2 rounded hover:bg-red-600 transition flex-1 text-sm"
               onClick={handleAddToCartClick}

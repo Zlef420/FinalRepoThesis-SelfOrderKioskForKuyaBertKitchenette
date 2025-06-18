@@ -13,7 +13,9 @@ import {
   Printer,
   X,
   Loader2,
+  Plus,
 } from "lucide-react";
+import AddOrderModal from "../components/AddOrderModal";
 
 const AdminConfirmationModal = ({ onConfirm, onCancel, orderORN, title, actionText }) => {
   const [email, setEmail] = useState("");
@@ -302,6 +304,9 @@ const CashierScreen = () => {
   const [showReactivateModal, setShowReactivateModal] = useState(false);
   const [orderToReactivate, setOrderToReactivate] = useState(null);
 
+  const [showAddOrderModal, setShowAddOrderModal] = useState(false);
+  const [checkedItems, setCheckedItems] = useState(new Set());
+
   {/* Load transactions from Supabase */}
   const fetchTransactions = async () => {
     setIsLoading(true);
@@ -345,12 +350,14 @@ const CashierScreen = () => {
 
           // Transform item data to match the expected format
           const formattedItems = itemsData.map((item) => ({
+            trans_item_id: item.trans_item_id,
             id: item.fk_prod_id,
             name: item.prdct_name,
             price: parseFloat(item.unit_price),
             quantity: item.quantity,
             total: parseFloat(item.item_subtotal),
             details: item.order_notes || "",
+            is_prepared: item.is_prepared,
           }));
 
           // Return the transaction with its items in the expected format
@@ -419,7 +426,20 @@ const CashierScreen = () => {
     } else {
       setSelectedTransaction(transaction);
       setCashAmount(transaction.TAmount.toFixed(2));
+      setCheckedItems(new Set()); // Reset local checkboxes on new selection
     }
+  };
+
+  const handleCheckboxToggle = (transItemId) => {
+    setCheckedItems(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(transItemId)) {
+            newSet.delete(transItemId);
+        } else {
+            newSet.add(transItemId);
+        }
+        return newSet;
+    });
   };
 
   const calculateChange = () => {
@@ -641,6 +661,97 @@ const CashierScreen = () => {
     }
   };
 
+  const handleTogglePreparedStatus = async (transItemId, currentState) => {
+    try {
+      const { error } = await supabase
+        .from('trans_items_table')
+        .update({ is_prepared: !currentState })
+        .eq('trans_item_id', transItemId);
+
+      if (error) throw error;
+
+      // Update local state to reflect the change immediately
+      const updatedTransactions = allTransactions.map(trans => {
+        if (trans.trans_id === selectedTransaction.trans_id) {
+          const updatedItems = trans.items.map(item => {
+            if (item.trans_item_id === transItemId) {
+              return { ...item, is_prepared: !currentState };
+            }
+            return item;
+          });
+          return { ...trans, items: updatedItems };
+        }
+        return trans;
+      });
+      setAllTransactions(updatedTransactions);
+      // We need to update the selectedTransaction as well for the modal to re-render correctly
+      const updatedSelected = updatedTransactions.find(t => t.trans_id === selectedTransaction.trans_id);
+      setSelectedTransaction(updatedSelected);
+
+      toast.success('Item status updated!');
+    } catch (error) {
+      console.error('Error updating item status:', error);
+      toast.error('Failed to update item status.');
+    }
+  };
+
+  const handleAddMoreOrder = async (newItems, newGrandTotal) => {
+    if (!selectedTransaction || newItems.length === 0) {
+      toast.error("No transaction selected or no new items to add.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // 1. Insert new items into trans_items_table
+      const itemsToInsert = newItems.map(item => ({
+        fk_trans_id: selectedTransaction.trans_id,
+        fk_prod_id: item.id,
+        prdct_name: item.name,
+        unit_price: item.price,
+        quantity: item.quantity,
+        item_subtotal: item.price * item.quantity,
+      }));
+
+      const { error: insertError } = await supabase
+        .from('trans_items_table')
+        .insert(itemsToInsert);
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      // 2. Update the total amount and payment status in trans_table
+      const updatePayload = { total_amntdue: newGrandTotal };
+      if (selectedTransaction.PaymentStat === 'Paid') {
+          updatePayload.pymnt_status = 'Pending';
+      }
+      
+      const { error: updateError } = await supabase
+        .from('trans_table')
+        .update(updatePayload)
+        .eq('trans_id', selectedTransaction.trans_id);
+
+      if (updateError) {
+        throw updateError;
+      }
+      
+      toast.success("Successfully added new items to the order!");
+      
+      // 3. Refresh data
+      setShowAddOrderModal(false);
+      await fetchTransactions(); // This will refetch all data and update the view
+      setCashAmount(""); // Clear cash amount
+      setCheckedItems(new Set()); // Reset checkboxes
+
+    } catch (error) {
+      console.error("Error adding more items to order:", error);
+      toast.error("Failed to add items. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const change = calculateChange();
   const canPrint = selectedTransaction && 
     (selectedTransaction.PaymentStat === "Paid" || 
@@ -648,6 +759,10 @@ const CashierScreen = () => {
      cashAmount && 
      !isNaN(Number(cashAmount)) && 
      Number(cashAmount) >= selectedTransaction.TAmount));
+
+  const canAddMoreOrder =
+    selectedTransaction &&
+    selectedTransaction.OrderStatus?.toLowerCase() !== "cancelled";
 
   return (
     <div className="h-screen flex flex-col relative overflow-hidden">
@@ -823,12 +938,29 @@ const CashierScreen = () => {
                           key={index}
                           className="border-b border-gray-200 last:border-b-0"
                         >
-                          <td className="p-2">{item.name}</td>
-                          <td className="p-2 text-right">
+                          <td className="p-2">
+                            <div className="flex items-center">
+                                <input 
+                                    type="checkbox" 
+                                    className="h-4 w-4 rounded border-gray-300 text-customOrange focus:ring-customOrange mr-3 cursor-pointer"
+                                    checked={checkedItems.has(item.trans_item_id)}
+                                    onChange={() => handleCheckboxToggle(item.trans_item_id)}
+                                    // Use a unique key for the checkbox, like the item's unique ID from the database
+                                    id={`item-${item.trans_item_id}`}
+                                />
+                                <label 
+                                  htmlFor={`item-${item.trans_item_id}`}
+                                  className={`cursor-pointer ${checkedItems.has(item.trans_item_id) ? 'line-through text-gray-500' : ''}`}
+                                >
+                                    {item.name}
+                                </label>
+                            </div>
+                          </td>
+                          <td className={`p-2 text-right ${checkedItems.has(item.trans_item_id) ? 'line-through text-gray-500' : ''}`}>
                             ₱{item.price.toFixed(2)}
                           </td>
-                          <td className="p-2 text-center">{item.quantity}</td>
-                          <td className="p-2 text-right font-medium">
+                          <td className={`p-2 text-center ${checkedItems.has(item.trans_item_id) ? 'line-through text-gray-500' : ''}`}>{item.quantity}</td>
+                          <td className={`p-2 text-right font-medium ${checkedItems.has(item.trans_item_id) ? 'line-through text-gray-500' : ''}`}>
                             ₱{item.total.toFixed(2)}
                           </td>
                         </tr>
@@ -893,17 +1025,30 @@ const CashierScreen = () => {
                     ₱{change.toFixed(2)}
                   </span>
                 </div>
-                <button
-                  onClick={handlePrint}
-                  disabled={!canPrint}
-                  className={`w-full p-3 rounded flex items-center justify-center text-white font-semibold mt-2 transition-colors duration-150 ${
-                    canPrint
-                      ? "bg-customOrange hover:bg-orange-600 cursor-pointer"
-                      : "bg-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  <Printer size={20} className="mr-2" /> Pay & Print Receipt
-                </button>
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={() => setShowAddOrderModal(true)}
+                    disabled={!canAddMoreOrder}
+                    className={`w-full p-3 rounded flex items-center justify-center text-white font-semibold transition-colors duration-150 ${
+                      canAddMoreOrder
+                        ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
+                        : "bg-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <Plus size={20} className="mr-2" /> Add More Order
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    disabled={!canPrint}
+                    className={`w-full p-3 rounded flex items-center justify-center text-white font-semibold transition-colors duration-150 ${
+                      canPrint
+                        ? "bg-customOrange hover:bg-orange-600 cursor-pointer"
+                        : "bg-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <Printer size={20} className="mr-2" /> Pay & Print
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -977,6 +1122,14 @@ const CashierScreen = () => {
           }}
           title="Reactivate Order"
           actionText="Confirm & Reactivate"
+        />
+      )}
+
+      {showAddOrderModal && selectedTransaction && (
+        <AddOrderModal
+          transaction={selectedTransaction}
+          onClose={() => setShowAddOrderModal(false)}
+          onConfirm={handleAddMoreOrder}
         />
       )}
     </div>
