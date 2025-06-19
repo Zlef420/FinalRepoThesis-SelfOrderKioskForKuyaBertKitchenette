@@ -1,0 +1,10 @@
+{
+  "data": {
+    "attributes": {
+      "url": "https://mupkamyontqqnvguejfi.supabase.co/functions/v1/paymongo-webhook",
+      "events": [
+        "payment.paid"
+      ]
+    }
+  }
+}

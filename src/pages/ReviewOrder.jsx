@@ -76,6 +76,7 @@ const OrderReview = () => {
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false); // State to handle payment processing
 
   {/* Order number state */}
   const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
@@ -277,154 +278,150 @@ const OrderReview = () => {
 
   {/* Handle navigation to payment page */}
   const handlePayment = async () => {
+    // Guard clause to prevent multiple submissions
+    if (isProcessing) return;
+
+    // Check for required selections
     if (!selectedPayment || localItems.length === 0) {
+      toast.error("Please select a payment method.");
       return;
     }
-
     if (currentOrderNumber === null || currentOrderNumber === undefined) {
       toast.error("Order number is not available. Please wait or try refreshing.");
       return;
     }
-    const order_number = currentOrderNumber;
+
+    setIsProcessing(true); // Disable the button
 
     try {
-      {/* Generate ULID-like ref_number */}
-      const generateUlidLike = () => {
-        const timestampPart = new Date().getTime().toString(36).toUpperCase();
-  
-        const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase(); 
-        return `${timestampPart}-${randomPart}`;
-      };
-      const ref_number = generateUlidLike();
-      
-      const payment_ref_id = Date.now() + Math.floor(Math.random() * 1000);
-
-      {/* Set payment method values */}
-      const paymentMethodNumeric = selectedPayment === "ewallet" ? 1 : 0;
+      const order_number = currentOrderNumber;
+      const total_amount = calculateTotal();
       const paymentMethodString = selectedPayment === "ewallet" ? "E-Wallet" : "Cash";
 
-      {/* Determine payment status */}
-      const paymentStatus = selectedPayment === "ewallet" ? "Paid" : "Pending";
-      
-      const total_amount = calculateTotal();
+      // Generate a unique reference number
+      const generateUlidLike = () => {
+        const timestamp = new Date().getTime().toString(36).toUpperCase();
+        const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+        return `${timestamp}-${random}`;
+      };
+      const ref_number = generateUlidLike();
 
-      {/* Insert into trans_table */}
+      // Create PayMongo source if e-wallet is selected
+      let paymentSource = null;
+      if (selectedPayment === "ewallet") {
+        const createPayMongoSource = async (amount) => {
+          const secretKey = import.meta.env.VITE_PAYMONGO_SECRET_KEY;
+          if (!secretKey) throw new Error("PayMongo secret key is not set.");
+          
+          const options = {
+            method: 'POST',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Basic ${btoa(secretKey)}` },
+            body: JSON.stringify({
+              data: {
+                attributes: {
+                  amount: amount * 100, // Amount in centavos
+                  redirect: {
+                    success: `${window.location.origin}/order-conf`,
+                    failed: `${window.location.origin}/payment-failed`,
+                  },
+                  type: 'gcash',
+                  currency: 'PHP',
+                },
+              },
+            }),
+          };
+          const response = await fetch('https://api.paymongo.com/v1/sources', options);
+          if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: 'Unknown PayMongo API error' }));
+            throw new Error(`PayMongo API Error: ${JSON.stringify(err)}`);
+          }
+          return response.json();
+        };
+        
+        try {
+          paymentSource = await createPayMongoSource(total_amount);
+        } catch (err) {
+          console.error("PayMongo payment source creation failed:", err);
+          toast.error("Could not connect to payment provider. Please try again later.");
+          // Exit the function but the finally block will still run
+          return; 
+        }
+      }
+
+      // Insert transaction into the database
       const { data: transData, error: transError } = await supabase
         .from('trans_table')
-        .insert([
-          {
-            ref_number: ref_number,
-            order_number: order_number,
-            order_type: selectedOption,
-            trans_date: new Date().toISOString(),
-            trans_time: new Date().toTimeString().split(' ')[0],
-            order_status: 'Pending',
-            pymnt_status: paymentStatus,
-            pymnt_method: paymentMethodNumeric,
-            total_amntdue: total_amount,
-            amount_paid: selectedPayment === "ewallet" ? total_amount : 0,
-            user_id: user_id
-          }
-        ])
-        .select();
+        .insert({
+          ref_number,
+          order_number,
+          order_type: selectedOption,
+          trans_date: new Date().toISOString().split('T')[0],
+          trans_time: new Date().toISOString().split('T')[1].substring(0, 8),
+          order_status: 'Pending',
+          pymnt_status: 'Pending',
+          pymnt_method: selectedPayment === "ewallet" ? 1 : 0,
+          total_amntdue: total_amount,
+          amount_paid: selectedPayment === "cash" ? 0 : total_amount,
+          user_id,
+        })
+        .select()
+        .single();
 
-      if (transError) {
-        console.error("Transaction error:", transError);
-        
-        if (transError.message.includes("pymnt_method")) {
-            toast.error("A database error occurred with the payment method. Please contact support.");
-        } else {
-            toast.error("Failed to save transaction.");
-        }
-        throw transError;
-      }
-      
-      if (!transData || transData.length === 0) {
-        throw new Error("No transaction data returned");
-      }
-      const trans_id = transData[0].trans_id;
+      if (transError) throw transError;
+      const trans_id = transData.trans_id;
 
-      {/* Insert items into trans_items_table */}
-      const itemsToInsert = localItems.map(item => {
-        let order_notes = '';
-        if (item.details) {
-          order_notes += `Instructions: ${item.details}\n`;
-        }
-        return {
-          fk_trans_id: trans_id,
-          fk_prod_id: String(item.id),
-          prdct_name: item.name,
-          quantity: item.quantity,
-          unit_price: item.price,
-          item_subtotal: calculateItemTotal(item),
-          order_notes: order_notes.trim()
-        };
+      // Insert order items
+      const itemsToInsert = localItems.map((item) => ({
+        fk_trans_id: trans_id,
+        fk_prod_id: String(item.id),
+        prdct_name: item.name,
+        quantity: item.quantity,
+        unit_price: item.price,
+        item_subtotal: calculateItemTotal(item),
+        order_notes: item.details ? `Instructions: ${item.details}`.trim() : '',
+      }));
+      const { error: itemsError } = await supabase.from('trans_items_table').insert(itemsToInsert);
+      if (itemsError) throw itemsError;
+
+      // Insert payment record
+      const { error: paymentError } = await supabase.from('payment_table').insert({
+        fk_trans_id: trans_id,
+        pymnt_ref_id: paymentSource ? paymentSource.data.id : `cash_${ref_number}`,
+        order_number,
+        pymnt_mthod: paymentMethodString,
+        pymnt_status: 'Pending',
+        pymnt_amount: total_amount,
+        pymnt_change: 0,
       });
-      const { error: itemsError } = await supabase
-        .from('trans_items_table')
-        .insert(itemsToInsert);
-      if (itemsError) {
-        console.error("Items error:", itemsError);
-        throw itemsError;
-      }
+      if (paymentError) throw paymentError;
 
-      {/* Insert into payment_table for e-wallet */}
-      if (selectedPayment === "ewallet") {
-        const { error: paymentError } = await supabase
-          .from('payment_table')
-          .insert([
-            {
-              fk_trans_id: trans_id,
-              pymnt_ref_id: payment_ref_id,
-              order_number: order_number,
-              pymnt_mthod: paymentMethodString,
-              pymnt_status: "Paid",
-              pymnt_amount: total_amount,
-              pymnt_change: 0,
-              pymnt_date: new Date().toISOString().split('T')[0],
-              pymnt_time: new Date().toTimeString().split(' ')[0]
-            }
-          ]);
-        if (paymentError) {
-          console.error("Payment error:", paymentError);
-          throw paymentError;
-        }
-      }
-
-      {/* Prepare final order data */}
+      // Prepare data for navigation
       const orderData = {
-        trans_id: trans_id,
-        ref_number: ref_number,
-        order_number: order_number,
-        items: localItems.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          details: item.details,
-          itemTotal: calculateItemTotal(item),
-        })),
+        trans_id,
+        ref_number,
+        order_number,
+        items: localItems,
         totalAmount: total_amount,
         diningOption: selectedOption,
         paymentMethod: selectedPayment,
       };
 
-      if (typeof clearCart === "function") {
-        clearCart();
-      }
       toast.success("Order placed successfully!");
+      if (typeof clearCart === "function") clearCart();
 
-      {/* Navigate to appropriate page */}
-      if (selectedPayment === "cash") {
-        navigate("/order-conf", { state: { orderData } }); 
-      } else if (selectedPayment === "ewallet") {
-        navigate("/ewallet-payment", { state: { orderData } });
+      // Navigate to the correct next screen
+      if (selectedPayment === 'ewallet') {
+        navigate('/ewallet-payment', { state: { orderData, paymentSource } });
+      } else {
+        navigate('/order-conf', { state: { orderData, paymentStatus: 'completed' } });
       }
 
     } catch (error) {
-      console.error("Error saving order:", error);
-      toast.error("Failed to place order. Please try again.");
-    }
+      console.error("Payment handling failed:", error);
+      toast.error(`An error occurred: ${error.message}. Please try again.`);
+    } finally {
+      setIsProcessing(false); // Re-enable button in both success and error cases
+    }  
   };
 
   {/* Modal component */}
@@ -706,15 +703,17 @@ const OrderReview = () => {
               {/* Proceed to Payment Button (Original structure) */}
               <button
                 className={`w-full py-3 text-white rounded text-center font-bold ${
-                  selectedPayment && localItems.length > 0
+                  selectedPayment && localItems.length > 0 && !isProcessing
                     ? "bg-red-500 hover:bg-red-600"
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
-                disabled={!selectedPayment || localItems.length === 0}
+                disabled={!selectedPayment || localItems.length === 0 || isProcessing}
                 onClick={handlePayment}
               >
                 {/* Original button text logic */}
-                {localItems.length === 0
+                {isProcessing
+                  ? "Processing..."
+                  : localItems.length === 0
                   ? "Cart is Empty"
                   : selectedPayment
                   ? "Proceed to Payment"
