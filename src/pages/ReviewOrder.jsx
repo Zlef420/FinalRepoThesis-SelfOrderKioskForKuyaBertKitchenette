@@ -298,16 +298,9 @@ const OrderReview = () => {
       const total_amount = calculateTotal();
       const paymentMethodString = selectedPayment === "ewallet" ? "E-Wallet" : "Cash";
 
-      // Generate a unique reference number
-      const generateUlidLike = () => {
-        const timestamp = new Date().getTime().toString(36).toUpperCase();
-        const random = Math.random().toString(36).substring(2, 10).toUpperCase();
-        return `${timestamp}-${random}`;
-      };
-      const ref_number = generateUlidLike();
-
-      // Create PayMongo source if e-wallet is selected
+      let ref_number = null;
       let paymentSource = null;
+
       if (selectedPayment === "ewallet") {
         const createPayMongoSource = async (amount) => {
           const secretKey = import.meta.env.VITE_PAYMONGO_SECRET_KEY;
@@ -340,10 +333,10 @@ const OrderReview = () => {
         
         try {
           paymentSource = await createPayMongoSource(total_amount);
+          ref_number = paymentSource.data.id; // Use PayMongo source ID as ref_number
         } catch (err) {
           console.error("PayMongo payment source creation failed:", err);
           toast.error("Could not connect to payment provider. Please try again later.");
-          // Exit the function but the finally block will still run
           return; 
         }
       }
@@ -352,7 +345,7 @@ const OrderReview = () => {
       const { data: transData, error: transError } = await supabase
         .from('trans_table')
         .insert({
-          ref_number,
+          ref_number, // This will be the PayMongo ID for e-wallet, or null for cash
           order_number,
           order_type: selectedOption,
           trans_date: new Date().toISOString().split('T')[0],
@@ -386,7 +379,7 @@ const OrderReview = () => {
       // Insert payment record
       const { error: paymentError } = await supabase.from('payment_table').insert({
         fk_trans_id: trans_id,
-        pymnt_ref_id: paymentSource ? paymentSource.data.id : `cash_${ref_number}`,
+        pymnt_ref_id: ref_number ? ref_number : `cash_${order_number}`,
         order_number,
         pymnt_mthod: paymentMethodString,
         pymnt_status: 'Pending',
