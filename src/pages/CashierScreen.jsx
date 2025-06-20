@@ -972,9 +972,9 @@ const CashierScreen = () => {
                     type="number"
                     value={cashAmount}
                     onChange={(e) => setCashAmount(e.target.value)}
-                    disabled={!selectedTransaction}
+                    disabled={!selectedTransaction || isPaid}
                     className={`border p-2 flex-grow rounded text-lg text-right ${
-                      !selectedTransaction
+                      !selectedTransaction || isPaid
                         ? "bg-gray-100 cursor-not-allowed"
                         : "focus:outline-none focus:ring-1 focus:ring-customOrange"
                     }`}
