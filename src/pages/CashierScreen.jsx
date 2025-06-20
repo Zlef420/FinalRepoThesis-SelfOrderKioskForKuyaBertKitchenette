@@ -726,16 +726,15 @@ const CashierScreen = () => {
   };
 
   const change = calculateChange();
-  const canPrint = selectedTransaction && 
-    (selectedTransaction.PaymentStat === "Paid" || 
-    (selectedTransaction.PaymentStat === "Pending" && 
-     cashAmount && 
-     !isNaN(Number(cashAmount)) && 
-     Number(cashAmount) >= selectedTransaction.TAmount));
 
-  const canAddMoreOrder =
+  // Determine if the buttons should be enabled
+  const isPaid = selectedTransaction?.PaymentStat?.toLowerCase() === 'paid';
+  const canAddMoreOrder = selectedTransaction && !isPaid;
+  const canPrint =
     selectedTransaction &&
-    selectedTransaction.OrderStatus?.toLowerCase() !== "cancelled";
+    !isPaid &&
+    cashAmount &&
+    Number(cashAmount) >= selectedTransaction.TAmount;
 
   return (
     <div className="h-screen flex flex-col relative overflow-hidden">
