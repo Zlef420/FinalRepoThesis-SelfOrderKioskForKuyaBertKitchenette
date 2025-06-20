@@ -14,13 +14,13 @@ const steps = [
   {
     title: "Select Your Items",
     description:
-      "Browse our digital menu and tap on items you'd like to order. You can customize your selections and choose quantities easily.",
+      "Click 'Tap To Order' button to browse our digital menu and tap on items you'd like to order. You can customize your selections and choose quantities easily.",
     icon: <ClipboardList className="w-6 h-6" />,
   },
   {
     title: "Customize Your Order",
     description:
-      "Add special instructions, modify ingredients, or choose size options. Make your order exactly how you like it!",
+      "Add special instructions or modify ingredients. Make your order exactly how you like it!",
     icon: <Settings className="w-6 h-6" />,
   },
   {
@@ -106,9 +106,9 @@ const HowItWorks = ({ isVisible, onClose }) => {
           {/* Image/Visual Section */}
           <div className="flex-1">
             <img
-              src={`/api/placeholder/500/400`}
+              src={`/images/photos/${currentStep + 1}${currentStep < 2 ? '.jpg' : '.png'}`}
               alt={`Step ${currentStep + 1}: ${steps[currentStep].title}`}
-              className="rounded-lg shadow-lg w-full"
+              className="rounded-lg shadow-lg w-full object-contain h-[400px]"
             />
           </div>
 
