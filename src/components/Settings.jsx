@@ -42,7 +42,6 @@ const Settings = () => {
   const NUMBER_OF_AD_SLOTS = 3;
   const INTRO_AD_BUCKET_NAME = 'intro-advertisement-images';
 
-  {/* Fetch accounts from Supabase */}
   const fetchAccounts = async () => {
     try {
       const { data, error } = await supabase
@@ -64,8 +63,8 @@ const Settings = () => {
 
   useEffect(() => {
     fetchAccounts();
-    fetchIntroAds(); // Fetch intro advertisement images on mount
-  }, []); // Fetch on component mount
+    fetchIntroAds();
+  }, []);
 
   const createUniqueFilename = (file) => {
     const timestamp = Date.now();
@@ -77,7 +76,7 @@ const Settings = () => {
   // Functions for Intro Advertisement Images
   const fetchIntroAds = async () => {
     setIntroAdError('');
-    setIsProcessingIntroAd(true); // General loading for fetching all ads
+    setIsProcessingIntroAd(true);
     try {
       const { data: dbAds, error } = await supabase
         .from('intro_advertisements')
@@ -129,11 +128,11 @@ const Settings = () => {
 
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file.', { id: 'invalid-file-type' });
-      event.target.value = null; // Reset file input
+      event.target.value = null;
       setUploadedImages(prev => prev.map(img => 
         img.id === slotId ? { ...img, image: null, file: null, dbImageUrl: null, dbImageName: null, isUploading: false } : img
       ));
-      setIntroAdError(''); // Clear any previous error
+      setIntroAdError('');
       return;
     }
 
@@ -145,53 +144,47 @@ const Settings = () => {
     const selectedSlot = uploadedImages.find(s => s.id === slotId);
 
     try {
-      // 1. If there's an existing image in DB for this slot, remove it from storage
       if (selectedSlot && selectedSlot.dbImageName) {
         const { error: removeError } = await supabase.storage
           .from(INTRO_AD_BUCKET_NAME)
           .remove([selectedSlot.dbImageName]);
         if (removeError) {
-          // Log warning but proceed, as we are replacing it.
           console.warn(`Could not remove old image ${selectedSlot.dbImageName} from storage:`, removeError.message);
         }
       }
 
-      // 2. Create a unique filename and upload the new file
       const uniqueFileName = createUniqueFilename(file);
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(INTRO_AD_BUCKET_NAME)
         .upload(uniqueFileName, file, {
           cacheControl: '3600',
-          upsert: false, // Ensure it's a new file, uniqueFileName should handle this
+          upsert: false,
         });
 
       if (uploadError) throw uploadError;
 
-      // 3. Get the public URL
       const { data: urlData } = supabase.storage
         .from(INTRO_AD_BUCKET_NAME)
         .getPublicUrl(uniqueFileName);
       const newImageUrl = urlData.publicUrl;
 
-      // 4. Upsert the record in intro_advertisements table
       const { error: dbError } = await supabase
         .from('intro_advertisements')
         .upsert(
           { slot_id: slotId, image_url: newImageUrl, image_name: uniqueFileName },
-          { onConflict: 'slot_id' } // If slot_id exists, update it; otherwise, insert.
+          { onConflict: 'slot_id' }
         );
 
       if (dbError) throw dbError;
 
-      // 5. Update state with new DB details
       setUploadedImages(prev => prev.map(slot =>
         slot.id === slotId
           ? {
               ...slot,
-              image: newImageUrl, // Update preview to permanent URL
+              image: newImageUrl,
               dbImageUrl: newImageUrl,
               dbImageName: uniqueFileName,
-              file: null, // Clear the local file object
+              file: null,
             }
           : slot
       ));
@@ -210,7 +203,7 @@ const Settings = () => {
       setUploadedImages(prev => prev.map(slot =>
         slot.id === slotId ? { ...slot, isUploading: false } : slot
       ));
-      event.target.value = null; // Reset file input in all cases
+      event.target.value = null;
     }
   };
 
@@ -230,25 +223,21 @@ const Settings = () => {
     }
 
     setUploadedImages(prev => prev.map(slot =>
-      slot.id === slotId ? { ...slot, isUploading: true } : slot // Use isUploading as a general processing flag here
+      slot.id === slotId ? { ...slot, isUploading: true } : slot
     ));
     setIntroAdError('');
 
     try {
-      // 1. Remove from Supabase Storage if dbImageName exists
       if (imageToRemove.dbImageName) {
         const { error: storageError } = await supabase.storage
           .from(INTRO_AD_BUCKET_NAME)
           .remove([imageToRemove.dbImageName]);
 
         if (storageError) {
-          // Log error but attempt to remove from DB anyway
           console.error(`Error removing image ${imageToRemove.dbImageName} from storage:`, storageError);
-          // Potentially alert user or set a specific error if removal is critical
         }
       }
 
-      // 2. Remove from intro_advertisements table
       const { error: dbError } = await supabase
         .from('intro_advertisements')
         .delete()
@@ -256,7 +245,6 @@ const Settings = () => {
 
       if (dbError) throw dbError;
 
-      // 3. Update state to clear the image for this slot
       setUploadedImages(prev => prev.map(slot =>
         slot.id === slotId
           ? {
@@ -283,7 +271,7 @@ const Settings = () => {
     }
   };
 
-  const handleSubmit = async (e) => { // Made async
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (accountForm.password !== accountForm.confirmPassword) {
       toast.error("Passwords do not match!", { id: 'password-mismatch-add' });
@@ -295,25 +283,22 @@ const Settings = () => {
       return;
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(accountForm.email)) { // Changed to accountForm.email
-      toast.error("Please enter a valid email address.", { id: 'invalid-email' });
+    // Email validation - only accept Gmail and Yahoo emails
+    const emailRegex = /^[^\s@]+@(gmail\.com|yahoo\.com)$/i;
+    if (!emailRegex.test(accountForm.email)) {
+      toast.error("Please enter a valid Gmail or Yahoo email address.", { id: 'invalid-email' });
       return;
     }
     
-    // IMPORTANT: Storing plain text passwords is a security risk.
-    // Consider using Supabase Auth for proper password hashing.
+
     try {
-      // Attempt a select to potentially refresh schema cache for 'security_answer'
       const { error: selectError } = await supabase
         .from('account_table')
-        .select('security_question, security_answer') // Also check security_question
+        .select('security_question, security_answer')
         .limit(1);
 
-      if (selectError && selectError.code !== 'PGRST116') { // PGRST116: no rows found, not an error for this test
+      if (selectError && selectError.code !== 'PGRST116') {
         console.warn('Pre-insert select check for security_answer failed or column not found by select:', selectError);
-        // We can still proceed to the insert to see if the original error persists or changes
       } else if (!selectError) {
         console.log('Pre-insert select check for security_answer was successful.');
       }
@@ -322,11 +307,11 @@ const Settings = () => {
         .from('account_table')
         .insert([
           {
-            email: accountForm.email, // Changed from username, ensure 'email' is the column name in Supabase
-            password: accountForm.password, // Plain text password
-            role: accountForm.role,
-            security_question: accountForm.securityQuestion, // Changed from security_quest
-            security_answer: accountForm.securityAnswer, 
+            email: accountForm.email,
+          password: accountForm.password,
+          role: accountForm.role,
+          security_question: accountForm.securityQuestion,
+          security_answer: accountForm.securityAnswer, 
           },
         ]);
 
@@ -336,15 +321,14 @@ const Settings = () => {
       } else {
         toast.success("Account added successfully!", { id: 'add-account-success' });
         fetchAccounts(); // Refresh the accounts list
-        setAccountForm({ // Reset form
-          email: "", // Changed from username
-          role: "cashier", // Reset to default role
+        setAccountForm({
+          email: "",
+          role: "cashier",
           password: "",
           confirmPassword: "",
           securityQuestion: "What was your first pet's name?",
           securityAnswer: "",
         });
-        // Optionally, you might want to refresh a list of accounts if displayed from DB
       }
     } catch (error) {
       console.error("Unexpected error adding account:", error);
