@@ -17,6 +17,23 @@ import {
 } from "lucide-react";
 import AddOrderModal from "../components/AddOrderModal";
 
+const generateRefNumber = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const suffix = Array(2)
+    .fill(null)
+    .map(() => chars[Math.floor(Math.random() * chars.length)])
+    .join("");
+
+  return `${year}${month}${day}-${hours}${minutes}-${suffix}`;
+};
+
 const AdminConfirmationModal = ({ onConfirm, onCancel, orderORN, title, actionText }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -131,21 +148,22 @@ const AdminConfirmationModal = ({ onConfirm, onCancel, orderORN, title, actionTe
 };
 
 {/* Printable Receipt Component */}
-const CashierPrintableReceipt = ({
-  transaction,
-  cashAmount,
-  changeAmount,
-  printRef,
-}) => {
+const CashierPrintableReceipt = ({ transaction, printRef, employeeEmail }) => {
   if (!transaction) return null;
 
-  const currentDate = new Date();
-  {/* Display "Paid" status on the printed receipt regardless of original status */}
-  const displayPaymentStatus = "PAID";
-
-  {/* Calculate VAT details (assuming 12% VAT included in TAmount) */}
-  const subtotal = transaction.TAmount / 1.12;
-  const vatAmount = transaction.TAmount - subtotal;
+  const formatDateTime = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return "N/A";
+    const dateTime = new Date(`${dateStr}T${timeStr}`);
+    if (isNaN(dateTime)) return "Invalid Date";
+    return dateTime.toLocaleString("en-US", {
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
 
   return (
     <div
@@ -153,12 +171,11 @@ const CashierPrintableReceipt = ({
       id="printable-cashier-receipt-area"
       className="absolute -left-full -top-full"
     >
-      {/* Print-specific styles */}
       <style type="text/css" media="print">
         {`
           @page {
-            size: 80mm 297mm;
-            margin: 0;
+            size: 80mm auto;
+            margin: 3mm;
           }
           @media print {
             body * {
@@ -172,104 +189,64 @@ const CashierPrintableReceipt = ({
               left: 0;
               top: 0;
               width: 100%;
-              font-family: 'Courier New', monospace;
-            }
-            .no-print {
-              display: none !important;
-            }
-            .addon-info, .instruction-info {
-              font-size: 8pt !important;
-              margin-left: 10px !important;
+              font-family: 'monospace', 'Courier New';
+              font-size: 9pt;
+              color: #000;
             }
           }
         `}
       </style>
 
-      {/* Receipt Content */}
-      <div id="printable-receipt" className="text-center bg-white p-1 w-full font-mono">
-        <div className="mb-4">
-          <h1 className="font-bold text-lg">Kuya Bert's Kitchenette</h1>
-          <p className="text-sm">Sergio Osmeña St, Atimonan, 4331 Quezon</p>
-          <p className="text-sm">facebook.com/KuyaBertKitchenette</p>
-          <p className="font-bold mt-2">SALES INVOICE</p>
+      <div id="printable-receipt" className="bg-white p-1 w-full">
+        <div className="text-center mb-1">
+          <img src="/images/photos/kuyabertlogo.jpg" alt="Logo" className="w-20 h-20 mx-auto" />
+          <p className="text-xs font-bold leading-none">|</p>
+          <p className="text-xs leading-tight">Zone 2 Osmena St. Atimonan, Quezon</p>
+          <p className="text-xs leading-tight">Contact No. 0907-321-6764</p>
+          <p className="text-xs leading-tight">Like us on FB: KuyaBertKitchenette</p>
         </div>
+        
+        <div className="border-t border-dashed border-black my-2"></div>
 
-        <div className="text-sm mb-2">
-          <p>Order Number: {transaction.ORN}</p>
+        <div className="text-xs">
+          <div className="flex justify-between"><span>Employee:</span><span>{employeeEmail || 'N/A'}</span></div>
+          <div className="flex justify-between"><span>Dining Option:</span><span>{transaction.order_type}</span></div>
+          <div className="flex justify-between"><span>Payment Method:</span><span>{transaction.pymnt_method}</span></div>
+          <div className="flex justify-between"><span>Order Number:</span><span>#{transaction.ORN}</span></div>
+          <p>{formatDateTime(transaction.trans_date, transaction.trans_time)}</p>
           <p>Reference Number: {transaction.RefNum}</p>
-          <p>Payment Method: CASH</p>
-          <p>Status: {displayPaymentStatus}</p>
-          <p>
-            Date: {currentDate.toLocaleDateString()} Time:{" "}
-            {currentDate.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
         </div>
 
-        <div className="border-t border-b border-black py-2 my-2">
-          {transaction.items.map((item, index) => (
-            <div key={index} className="mb-2">
-              <div className="flex justify-between">
-                <span>
-                  {item.quantity} {item.name}
-                </span>
-                <span>{item.total.toFixed(2)}</span>
-              </div>
-              {/* Add-ons section */}
-              {item.addons && item.addons.length > 0 && (
-                <div className="text-xs text-left ml-4 addon-info">
-                  <span className="font-semibold">Add-ons: </span>
-                  {item.addons.map((addon, idx) => (
-                    <span key={idx}>
-                      {addon.name}{addon.quantity > 1 && ` x${addon.quantity}`}
-                      {idx < item.addons.length - 1 ? ", " : ""}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {/* Special instructions section */}
-              {(item.details || item.instructions) && (
-                <div className="text-xs text-left ml-4 instruction-info">
-                  <span className="font-semibold">Instructions: </span>
-                  <span>{item.details || item.instructions}</span>
-                </div>
-              )}
+        <div className="border-t border-dashed border-black my-2"></div>
+        
+        {transaction.items.map((item, index) => (
+          <div key={index} className="text-xs mb-1">
+            <div className="flex justify-between">
+              <span>{item.name}</span>
+              <span>₱{item.price.toFixed(2)}</span>
             </div>
-          ))}
-        </div>
-        <div className="text-sm">
-          <div className="flex justify-between">
-            <span>{transaction.items.length} Item(s)</span>
-            <span>Subtotal {subtotal.toFixed(2)}</span>
+            <div className="flex justify-start">
+              <span>{item.quantity}x ₱{item.price.toFixed(2)}</span>
+            </div>
           </div>
+        ))}
+
+        <div className="border-t border-dashed border-black my-2"></div>
+
+        <div className="text-xs">
           <div className="flex justify-between font-bold">
-            <span>TOTAL DUE</span>
+            <span>Amount due</span>
             <span>₱{transaction.TAmount.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between">
-            <span>CASH</span>
-            <span>₱{Number(cashAmount).toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between font-bold">
-            <span>CHANGE</span>
-            <span>₱{changeAmount.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>VATable Sales</span>
-            <span>{subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>VAT Amount</span>
-            <span>{vatAmount.toFixed(2)}</span>
-          </div>
         </div>
 
-        <div className="text-center mt-4 text-sm">
-          <div className="border-t border-black pt-2">
-            THANK YOU, AND PLEASE COME AGAIN.
-          </div>
+        <div className="border-t border-dashed border-black my-2"></div>
+
+        <div className="text-center text-xs mt-2">
+          <p>Thank you so much for Dining with us!</p>
+          <p>See you again Ka-Berts ❤️</p>
+          <p className="mt-2">Customer Care Hotline</p>
+          <p>(TNT) 0907-321-6764</p>
         </div>
       </div>
     </div>
@@ -278,6 +255,7 @@ const CashierPrintableReceipt = ({
 {/* End Printable Receipt Component */}
 
 const CashierScreen = () => {
+  const { user } = useAuth();
   {/* State for storing transactions */}
   const [allTransactions, setAllTransactions] = useState([]);
   {/* Loading indicator */}
@@ -471,74 +449,69 @@ const CashierScreen = () => {
 
     const isPending = selectedTransaction.PaymentStat === "Pending";
 
-    // Print the receipt
-    window.print();
-
-    // If payment status was pending, update it to paid in Supabase
     if (isPending) {
+      const newRefNumber = generateRefNumber();
+
       try {
-        const { error } = await supabase
+        const { error: transError } = await supabase
           .from("trans_table")
-          .update({ pymnt_status: "Paid", amount_paid: selectedTransaction.TAmount })
+          .update({
+            pymnt_status: "Paid",
+            amount_paid: selectedTransaction.TAmount,
+            ref_number: newRefNumber,
+          })
           .eq("trans_id", selectedTransaction.trans_id);
 
-        if (error) {
-          console.error("Error updating payment status:", error);
-          toast.error("Failed to update payment status");
-          return;
-        }
+        if (transError) throw transError;
 
-        // Attempt to insert into payment_table
-        const payment_ref_id = Date.now(); // Simple unique ID for payment reference
         const currentDate = new Date();
         const paymentData = {
           fk_trans_id: Number(selectedTransaction.trans_id),
-          pymnt_ref_id: payment_ref_id,
-          order_number: Number(selectedTransaction.ORN), 
+          pymnt_ref_id: `${Date.now()}`,
+          order_number: Number(selectedTransaction.ORN),
           pymnt_mthod: "Cash",
           pymnt_status: "Paid",
           pymnt_amount: selectedTransaction.TAmount,
-          pymnt_change: change, // Assuming 'change' is available in this scope
-          pymnt_date: currentDate.toISOString().split('T')[0],
-          pymnt_time: currentDate.toTimeString().split(' ')[0],
+          pymnt_change: change,
+          pymnt_date: currentDate.toISOString().split("T")[0],
+          pymnt_time: currentDate.toTimeString().split(" ")[0],
         };
 
-        console.log("Attempting to insert into payment_table with data:", paymentData);
-      const { error: paymentError } = await supabase
+        const { error: paymentError } = await supabase
           .from("payment_table")
           .insert([paymentData]);
 
-        if (paymentError) {
-          console.error("Error inserting into payment_table:", paymentError);
-          toast.error("Failed to record payment details. Please check manually.");
-          // Note: The main transaction is already marked as Paid.
-          // Consider how to handle this inconsistency if payment_table insert fails.
-        } else {
-          toast.success("Payment completed and recorded successfully");
-        }
+        if (paymentError) throw paymentError;
 
-        // Update local state for trans_table
-        setAllTransactions((prevAllTransactions) =>
-          prevAllTransactions.map(
-            (t) =>
-              t.ORN === selectedTransaction.ORN
-                ? { ...t, PaymentStat: "Paid" }
-                : t
+        toast.success("Payment completed and recorded successfully");
+
+        const updatedTransactionForState = {
+          ...selectedTransaction,
+          PaymentStat: "Paid",
+          RefNum: newRefNumber,
+        };
+
+        setSelectedTransaction(updatedTransactionForState);
+        setAllTransactions((prev) =>
+          prev.map((t) =>
+            t.trans_id === selectedTransaction.trans_id
+              ? updatedTransactionForState
+              : t
           )
         );
-        setSelectedTransaction(null);
-        setCashAmount("");
+
+        setTimeout(() => {
+          window.print();
+          setSelectedTransaction(null);
+          setCashAmount("");
+        }, 300);
       } catch (error) {
-        console.error("Unexpected error updating payment:", error);
-        toast.error("An error occurred while updating payment");
+        console.error("Error processing payment:", error);
+        toast.error(`Payment processing failed: ${error.message}`);
       }
     } else {
-      if (selectedTransaction) { 
-        console.log(`handlePrint: Transaction ORN ${selectedTransaction.ORN} has PaymentStat '${selectedTransaction.PaymentStat}'. Not 'Pending'. Skipping database operations for payment_table.`);
-        toast.info("Transaction already processed. Printing receipt only.");
-      } else {
-        console.log("handlePrint: No selected transaction, or transaction is not pending. Skipping database operations.");
-      }
+      toast.info("Transaction already processed. Printing receipt only.");
+      window.print();
     }
   };
 
@@ -769,11 +742,10 @@ const CashierScreen = () => {
       <Header />
 
       <CashierPrintableReceipt
-        transaction={selectedTransaction}
-        cashAmount={cashAmount}
-        changeAmount={change}
-        printRef={printRef}
-      />
+  transaction={selectedTransaction}
+  printRef={printRef}
+  employeeEmail={user?.email}
+/>
 
       <div className="flex-1 flex flex-col p-4 gap-4 bg-gray-100 print:hidden overflow-hidden">
         <div className="flex gap-4 flex-1 overflow-hidden">
