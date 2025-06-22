@@ -8,8 +8,9 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-- Node.js and npm
-- A Supabase account
+- Node.js (https://nodejs.org/en/download)
+- A Supabase account https://supabase.com/
+- Visual Studio Code https://code.visualstudio.com/
 
 ### Installation
 
