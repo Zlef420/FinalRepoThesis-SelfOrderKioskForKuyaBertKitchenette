@@ -74,7 +74,7 @@ const HowItWorks = ({ isVisible, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-11/12 md:w-3/4 lg:w-2/3 p-6 relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-lg w-11/12 md:w-3/4 lg:w-2/3 p-6 relative max-h-[80vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -106,7 +106,9 @@ const HowItWorks = ({ isVisible, onClose }) => {
           {/* Image/Visual Section */}
           <div className="flex-1">
             <img
-              src={`/images/photos/${currentStep + 1}${currentStep < 2 ? '.jpg' : '.png'}`}
+              src={`/images/photos/${currentStep + 1}${
+                currentStep < 2 ? ".jpg" : ".png"
+              }`}
               alt={`Step ${currentStep + 1}: ${steps[currentStep].title}`}
               className="rounded-lg shadow-lg w-full object-contain h-[400px]"
             />
