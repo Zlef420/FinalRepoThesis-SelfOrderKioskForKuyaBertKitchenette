@@ -201,6 +201,17 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
 
   const handleMenuSubmit = async (e) => {
     e.preventDefault();
+
+    // Simple validation
+    if (!isEditing && !menuForm.image) {
+      toast.error('Please select an image for the new item.');
+      return;
+    }
+    if (!menuForm.name.trim() || !menuForm.category.trim() || !menuForm.price) {
+        toast.error('Please fill out all required fields.');
+        return;
+    }
+
     let imageUrlForDb = null;
 
     // 1. Handle Image Upload if a new image file is selected
@@ -433,9 +444,13 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
                   type="text"
                   className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                   value={menuForm.name}
-                  onChange={(e) =>
-                    setMenuForm((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only letters and spaces
+                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                        setMenuForm((prev) => ({ ...prev, name: value }))
+                    }
+                  }}
                   required
                 />
               </div>
@@ -468,12 +483,16 @@ const MenuList = ({ searchTerm, setSearchTerm }) => {
                   type="text"
                   className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                   value={menuForm.category}
-                  onChange={(e) =>
-                    setMenuForm((prev) => ({
-                      ...prev,
-                      category: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only letters and spaces
+                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                        setMenuForm((prev) => ({
+                          ...prev,
+                          category: value,
+                        }))
+                    }
+                  }}
                   required
                 />
               </div>
