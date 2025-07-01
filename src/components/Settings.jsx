@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
 import { toast } from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 const Settings = () => {
+  const { currentEmail, logout } = useAuth();
   const [accountForm, setAccountForm] = useState({
     email: "",
     role: "cashier",
@@ -482,6 +484,9 @@ const Settings = () => {
         toast.success("Account deleted successfully!", {
           id: "delete-account-success",
         });
+        if (selectedAccount.email === currentEmail) {
+          logout(currentEmail);
+        }
         fetchAccounts(); // Refresh the accounts list
       }
     } catch (err) {
