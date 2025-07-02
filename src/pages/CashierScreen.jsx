@@ -156,6 +156,7 @@ const CashierPrintableReceipt = ({ transaction, printRef, employeeEmail }) => {
     const dateTime = new Date(`${dateStr}T${timeStr}`);
     if (isNaN(dateTime)) return "Invalid Date";
     return dateTime.toLocaleString("en-US", {
+      timeZone: "Asia/Manila",
       month: "numeric",
       day: "numeric",
       year: "numeric",
@@ -211,9 +212,9 @@ const CashierPrintableReceipt = ({ transaction, printRef, employeeEmail }) => {
         <div className="text-xs">
           <div className="flex justify-between"><span>Employee:</span><span>{employeeEmail || 'N/A'}</span></div>
           <div className="flex justify-between"><span>Dining Option:</span><span>{transaction.order_type}</span></div>
-          <div className="flex justify-between"><span>Payment Method:</span><span>{transaction.pymnt_method}</span></div>
+          <div className="flex justify-between"><span>Payment Method:</span><span>Cash</span></div>
           <div className="flex justify-between"><span>Order Number:</span><span>#{transaction.ORN}</span></div>
-          <p>{formatDateTime(transaction.trans_date, transaction.trans_time)}</p>
+          <p>{formatDateTime(new Date().toISOString().split('T')[0], new Date().toTimeString().split(' ')[0])}</p>
           <p>Reference Number: {transaction.RefNum}</p>
         </div>
 
@@ -743,7 +744,7 @@ const CashierScreen = () => {
       <CashierPrintableReceipt
   transaction={selectedTransaction}
   printRef={printRef}
-  employeeEmail={user?.email}
+  employeeEmail={currentEmail || user?.email}
 />
 
       <div className="flex-1 flex flex-col p-4 gap-4 bg-gray-100 print:hidden overflow-hidden">
