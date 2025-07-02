@@ -31,29 +31,43 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
   const [itemsError, setItemsError] = useState(null);
   const printSectionRef = useRef(null);
 
+  const fetchTransactions = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('trans_table')
+        .select('*')
+        .order('trans_id', { ascending: false });
+
+      if (error) throw error;
+      setTransactions(data || []);
+    } catch (err) {
+      console.error("Error fetching transactions:", err);
+      setError(err.message || "Failed to fetch transactions.");
+      setTransactions([]);
+    }
+    setLoading(false);
+  };
+
   {/* Fetch transactions from trans_table */}
   useEffect(() => {
-    const fetchTransactions = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const { data, error } = await supabase
-          .from('trans_table')
-          .select('*')
-          .order('trans_date', { ascending: false })
-          .order('trans_time', { ascending: false });
-
-        if (error) throw error;
-        setTransactions(data || []);
-      } catch (err) {
-        console.error("Error fetching transactions:", err);
-        setError(err.message || "Failed to fetch transactions.");
-        setTransactions([]);
-      }
-      setLoading(false);
-    };
-
     fetchTransactions();
+
+    const channel = supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'trans_table' },
+        (payload) => {
+          fetchTransactions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   {/* Fetch transaction items when a transaction is selected */}
@@ -280,7 +294,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
         {/* Width: full on small, half on medium+. Added overflow-auto for small screens ONLY. */}
         {/* Added min-h-[200px] */}
         <div className="w-full md:w-1/2 flex flex-col min-h-[200px]">
-          <div className="sticky top-0 z-20 bg-white py-2">
+          <div className="sticky top-0 z-20 bg-white py-2 flex items-center gap-2">
             <input
               type="text"
               placeholder="Search transactions..."
@@ -288,6 +302,15 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            <button
+              onClick={() => fetchTransactions()}
+              className="p-2 bg-gray-100 rounded border border-gray-300 hover:bg-gray-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5M20 20v-5h-5" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 9a9 9 0 0114.13-6.36M20 15a9 9 0 01-14.13 6.36" />
+              </svg>
+            </button>
           </div>
           <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[calc(80vh-56px)]">
             <table className="w-full border-collapse text-sm min-w-[600px] md:min-w-full">
@@ -322,7 +345,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
                         {transaction.ref_number}
                       </td>
                       <td className="border p-2 whitespace-nowrap">
-                        {`${new Date(transaction.trans_date).toLocaleDateString()} ${transaction.trans_time}`}
+                        {new Date(`${transaction.trans_date}T${transaction.trans_time}`).toLocaleString('en-US', { timeZone: 'Asia/Manila' })}
                       </td>
                       <td className="border p-2 whitespace-nowrap text-right">
                         ₱{(transaction.total_amntdue || 0).toFixed(2)}
@@ -366,7 +389,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
                 <p><span className="font-semibold">Order Number:</span> {selectedTransaction.order_number}</p>
                 <p><span className="font-semibold">Reference No:<br /></span> {selectedTransaction.ref_number}</p>
                 <p><span className="font-semibold">Date:</span> {new Date(selectedTransaction.trans_date).toLocaleDateString()}</p>
-                <p><span className="font-semibold">Time:</span> {selectedTransaction.trans_time}</p>
+                <p><span className="font-semibold">Time:</span> {new Date(`${selectedTransaction.trans_date}T${selectedTransaction.trans_time}`).toLocaleTimeString('en-US', { timeZone: 'Asia/Manila' })}</p>
                 <p><span className="font-semibold">Payment Method:</span> {selectedTransaction.pymnt_method}</p>
                 <p>
                   <span className="font-semibold">Payment Status:</span>

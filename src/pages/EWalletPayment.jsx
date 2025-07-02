@@ -23,7 +23,6 @@ const EWalletPayment = () => {
       return;
     }
 
-    // The QR code value is the checkout URL provided by PayMongo
     const checkoutUrl = paymentSource.data.attributes.redirect.checkout_url;
     if (checkoutUrl) {
       setQrCodeString(checkoutUrl);
@@ -31,6 +30,56 @@ const EWalletPayment = () => {
       setError("Failed to retrieve QR code URL from PayMongo.");
       toast.error("Invalid payment source data received.");
     }
+
+    const insertInitialPayment = async () => {
+      try {
+        // Check if a payment record with this ref_id already exists
+        const { data: existingPayment, error: fetchError } = await supabase
+          .from("payment_table")
+          .select("pymnt_ref_id")
+          .eq("pymnt_ref_id", paymentSource.data.id)
+          .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is expected for a new payment
+          throw fetchError;
+        }
+
+        if (existingPayment) {
+          console.log("Payment record already exists for this reference ID. Skipping insertion.");
+          return; // Do not insert if it already exists
+        }
+
+        const { error: transError } = await supabase
+          .from("trans_table")
+          .update({ pymnt_method: "E-Wallet" })
+          .eq("trans_id", orderData.trans_id);
+
+        if (transError) throw transError;
+
+        const currentDate = new Date();
+        const paymentData = {
+          fk_trans_id: orderData.trans_id,
+          pymnt_ref_id: paymentSource.data.id,
+          order_number: orderData.order_number,
+          pymnt_mthod: "E-Wallet",
+          pymnt_status: "Pending",
+          pymnt_amount: orderData.totalAmount,
+          pymnt_date: currentDate.toISOString().split("T")[0],
+          pymnt_time: currentDate.toTimeString().split(" ")[0],
+        };
+
+        const { error: paymentError } = await supabase
+          .from("payment_table")
+          .insert([paymentData]);
+
+        if (paymentError) throw paymentError;
+      } catch (error) {
+        console.error("Error inserting initial payment:", error);
+        toast.error("Failed to initialize payment.");
+      }
+    };
+
+    insertInitialPayment();
   }, [orderData, paymentSource, navigate]);
 
   useEffect(() => {

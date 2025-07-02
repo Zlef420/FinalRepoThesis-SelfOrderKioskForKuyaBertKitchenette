@@ -36,13 +36,21 @@ DECLARE
     ph_time timestamptz := now() at time zone 'Asia/Manila';
 BEGIN
     -- First, update the payment_table and retrieve the transaction ID
-    UPDATE public.payment_table
-    SET 
-        pymnt_status = 'Paid',
-        pymnt_date = ph_time::date,
-        pymnt_time = ph_time::time(0)
+    -- Select the fk_trans_id from one of the matching rows
+    SELECT fk_trans_id
+    INTO v_trans_id
+    FROM public.payment_table
     WHERE pymnt_ref_id = p_payment_ref_id
-    RETURNING fk_trans_id INTO v_trans_id;
+    LIMIT 1; -- Ensure only one is selected
+
+    -- If a transaction ID was found, update that specific row
+    IF v_trans_id IS NOT NULL THEN
+        UPDATE public.payment_table
+        SET
+            pymnt_status = 'Paid',
+            pymnt_date = ph_time::date,
+            pymnt_time = ph_time::time(0)
+        WHERE fk_trans_id = v_trans_id AND pymnt_ref_id = p_payment_ref_id;
 
     -- Then, if a transaction ID was found, update the trans_table as well
     IF v_trans_id IS NOT NULL THEN

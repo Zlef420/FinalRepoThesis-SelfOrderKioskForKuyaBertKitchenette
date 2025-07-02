@@ -24,31 +24,45 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const printSectionRef = useRef(null);
 
+  const fetchPayments = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: supabaseError } = await supabase
+        .from('payment_table')
+        .select('pymnt_id, fk_trans_id, pymnt_ref_id, order_number, pymnt_mthod, pymnt_status, pymnt_amount, pymnt_date, pymnt_time')
+        .order('pymnt_id', { ascending: false });
+
+      if (supabaseError) {
+        throw supabaseError;
+      }
+      setAllPayments(data || []);
+    } catch (err) {
+      console.error("Error fetching payments:", err);
+      setError(err.message || 'Failed to fetch payments.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   {/* Fetch payments from Supabase */}
   useEffect(() => {
-    const fetchPayments = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const { data, error: supabaseError } = await supabase
-          .from('payment_table')
-          .select('pymnt_id, fk_trans_id, pymnt_ref_id, order_number, pymnt_mthod, pymnt_status, pymnt_amount, pymnt_date, pymnt_time')
-          .order('pymnt_date', { ascending: false })
-          .order('pymnt_time', { ascending: false });
-
-        if (supabaseError) {
-          throw supabaseError;
-        }
-        setAllPayments(data || []);
-      } catch (err) {
-        console.error("Error fetching payments:", err);
-        setError(err.message || 'Failed to fetch payments.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPayments();
+
+    const channel = supabase
+      .channel('custom-payment-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payment_table' },
+        (payload) => {
+          fetchPayments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
   
   {/* Handle print functionality */}
@@ -285,7 +299,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
       <div className="flex flex-col md:flex-row gap-4">
         {/* Left side - Payment list */}
         <div className="w-full md:w-1/2 flex flex-col min-h-[200px]">
-          <div className="sticky top-0 z-20 bg-white py-2">
+          <div className="sticky top-0 z-20 bg-white py-2 flex items-center gap-2">
             <input
               type="text"
               placeholder="Search payments..."
@@ -293,6 +307,15 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            <button
+              onClick={() => fetchPayments()}
+              className="p-2 bg-gray-100 rounded border border-gray-300 hover:bg-gray-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5M20 20v-5h-5" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 9a9 9 0 0114.13-6.36M20 15a9 9 0 01-14.13 6.36" />
+              </svg>
+            </button>
           </div>
           <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[calc(80vh-56px)]">
             <table className="w-full border-collapse text-sm min-w-[600px] md:min-w-full">
@@ -359,7 +382,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                         </span>
                       </td>
                       <td className="border p-2 whitespace-nowrap">
-                        {new Date(payment.pymnt_date).toLocaleDateString()} {/* Format date */}
+                        {new Date(`${payment.pymnt_date}T${payment.pymnt_time}`).toLocaleString('en-US', { timeZone: 'Asia/Manila' })}
                       </td>
                     </tr>
                   ))
@@ -405,6 +428,7 @@ const PaymentHistory = ({ searchTerm, setSearchTerm }) => {
                       {selectedPayment.status}
                     </span>
                   </p>
+                  <p className="col-span-2"><span className="font-semibold">Reference Number:</span> {selectedPayment.ref_number}</p>
                 </div>
               </div>
               <div className="max-h-[calc(100vh-280px)] overflow-y-auto">
