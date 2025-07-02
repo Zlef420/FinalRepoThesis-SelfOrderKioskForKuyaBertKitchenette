@@ -214,7 +214,7 @@ const CashierPrintableReceipt = ({ transaction, printRef, employeeEmail }) => {
           <div className="flex justify-between"><span>Dining Option:</span><span>{transaction.order_type}</span></div>
           <div className="flex justify-between"><span>Payment Method:</span><span>Cash</span></div>
           <div className="flex justify-between"><span>Order Number:</span><span>#{transaction.ORN}</span></div>
-          <p>{formatDateTime(new Date().toISOString().split('T')[0], new Date().toTimeString().split(' ')[0])}</p>
+          <p className="text-center">{formatDateTime(new Date().toISOString().split('T')[0], new Date().toTimeString().split(' ')[0])}</p>
           <p>Reference Number: {transaction.RefNum}</p>
         </div>
 

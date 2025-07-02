@@ -103,7 +103,7 @@ const PrintableReceipt = ({
           <div className="flex justify-between">
             <span>Order Number:</span><span className="font-bold">#{dbOrderNumber}</span>
           </div>
-          <p>{formattedDate} {formattedTime}</p>
+          <p className="text-center">{formattedDate} {formattedTime}</p>
           <p>Reference Number:</p>
           <p className="break-all font-semibold">{refNumber}</p>
         </div>
@@ -178,6 +178,16 @@ const OrderConfirmation = () => {
   const dbOrderNumber = orderData?.order_number;
   const refNumber = orderData?.ref_number;
   const diningOption = localStorage.getItem("diningOption") || "Dine In";
+
+  useEffect(() => {
+    if (orderState === 'processing') {
+      const printTimer = setTimeout(() => {
+        window.print();
+      }, 1000); // Delay printing slightly to ensure content is rendered
+
+      return () => clearTimeout(printTimer);
+    }
+  }, [orderState]);
 
   const handlePrint = () => {
     window.print();
@@ -264,13 +274,7 @@ const OrderConfirmation = () => {
                   dbOrderNumber={dbOrderNumber}
                   refNumber={refNumber}
                 />
-                <button
-                  onClick={handlePrint}
-                  className="mt-4 bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 flex items-center justify-center mx-auto no-print"
-                >
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print Receipt
-                </button>
+                {/* The print button is removed as requested */}
               </div>
             ) : (
               <div className="space-y-4 text-white text-center">
