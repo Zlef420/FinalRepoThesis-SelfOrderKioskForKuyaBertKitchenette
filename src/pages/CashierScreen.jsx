@@ -467,10 +467,7 @@ const CashierScreen = () => {
 
         const currentDate = new Date();
         const paymentData = {
-          fk_trans_id: Number(selectedTransaction.trans_id),
-          pymnt_ref_id: `${Date.now()}`,
-          order_number: Number(selectedTransaction.ORN),
-          pymnt_mthod: "Cash",
+          pymnt_ref_id: newRefNumber,
           pymnt_status: "Paid",
           pymnt_amount: selectedTransaction.TAmount,
           pymnt_change: change,
@@ -480,7 +477,8 @@ const CashierScreen = () => {
 
         const { error: paymentError } = await supabase
           .from("payment_table")
-          .insert([paymentData]);
+          .update(paymentData)
+          .eq("fk_trans_id", selectedTransaction.trans_id);
 
         if (paymentError) throw paymentError;
 
@@ -508,7 +506,8 @@ const CashierScreen = () => {
         }, 300);
       } catch (error) {
         console.error("Error processing payment:", error);
-        toast.error(`Payment processing failed: ${error.message}`);
+        const errorMessage = error.message || "An unknown error occurred.";
+        toast.error(`Payment processing failed: ${errorMessage}`);
       }
     } else {
       toast.info("Transaction already processed. Printing receipt only.");

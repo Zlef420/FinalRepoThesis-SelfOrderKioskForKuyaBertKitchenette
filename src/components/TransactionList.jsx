@@ -101,7 +101,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
   const handlePrint = () => {
     if (selectedTransaction) {
       {/* Get the payment method */}
-      const paymentMethod = selectedTransaction.pymnt_method === 1 ? 'Cash' : selectedTransaction.pymnt_method === 2 ? 'E-Wallet' : '-';
+      const paymentMethod = selectedTransaction.pymnt_method;
       
       {/* Calculate subtotal and VAT */}
       const subtotal = (selectedTransaction.total_amntdue || 0) / 1.12;
@@ -345,7 +345,7 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
                         {transaction.ref_number}
                       </td>
                       <td className="border p-2 whitespace-nowrap">
-                        {new Date(`${transaction.trans_date}T${transaction.trans_time}`).toLocaleString('en-US', { timeZone: 'Asia/Manila' })}
+                        {new Date(`${transaction.trans_date}T${transaction.trans_time}Z`).toLocaleString('en-US', { timeZone: 'Asia/Manila' })}
                       </td>
                       <td className="border p-2 whitespace-nowrap text-right">
                         ₱{(transaction.total_amntdue || 0).toFixed(2)}
@@ -388,8 +388,8 @@ const TransactionList = ({ searchTerm, setSearchTerm }) => {
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <p><span className="font-semibold">Order Number:</span> {selectedTransaction.order_number}</p>
                 <p><span className="font-semibold">Reference No:<br /></span> {selectedTransaction.ref_number}</p>
-                <p><span className="font-semibold">Date:</span> {new Date(selectedTransaction.trans_date).toLocaleDateString()}</p>
-                <p><span className="font-semibold">Time:</span> {new Date(`${selectedTransaction.trans_date}T${selectedTransaction.trans_time}`).toLocaleTimeString('en-US', { timeZone: 'Asia/Manila' })}</p>
+                <p><span className="font-semibold">Date:</span> {new Date(`${selectedTransaction.trans_date}T${selectedTransaction.trans_time}Z`).toLocaleDateString('en-US', { timeZone: 'Asia/Manila' })}</p>
+                <p><span className="font-semibold">Time:</span> {new Date(`${selectedTransaction.trans_date}T${selectedTransaction.trans_time}Z`).toLocaleTimeString('en-US', { timeZone: 'Asia/Manila' })}</p>
                 <p><span className="font-semibold">Payment Method:</span> {selectedTransaction.pymnt_method}</p>
                 <p>
                   <span className="font-semibold">Payment Status:</span>

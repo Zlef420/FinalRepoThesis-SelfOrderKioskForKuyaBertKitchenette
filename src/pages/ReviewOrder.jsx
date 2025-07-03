@@ -352,7 +352,7 @@ const OrderReview = () => {
           trans_time: new Date().toISOString().split('T')[1].substring(0, 8),
           order_status: 'Pending',
           pymnt_status: 'Pending',
-          pymnt_method: selectedPayment === "ewallet" ? 1 : 0,
+          pymnt_method: paymentMethodString,
           total_amntdue: total_amount,
           amount_paid: selectedPayment === "cash" ? 0 : total_amount,
           user_id,
