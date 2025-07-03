@@ -376,17 +376,19 @@ const OrderReview = () => {
       const { error: itemsError } = await supabase.from('trans_items_table').insert(itemsToInsert);
       if (itemsError) throw itemsError;
 
-      // Insert payment record
-      const { error: paymentError } = await supabase.from('payment_table').insert({
-        fk_trans_id: trans_id,
-        pymnt_ref_id: ref_number ? ref_number : `cash_${order_number}`,
-        order_number,
-        pymnt_mthod: paymentMethodString,
-        pymnt_status: 'Pending',
-        pymnt_amount: total_amount,
-        pymnt_change: 0,
-      });
-      if (paymentError) throw paymentError;
+      if (selectedPayment === "ewallet") {
+        // Insert payment record
+        const { error: paymentError } = await supabase.from('payment_table').insert({
+          fk_trans_id: trans_id,
+          pymnt_ref_id: ref_number ? ref_number : `cash_${order_number}`,
+          order_number,
+          pymnt_mthod: paymentMethodString,
+          pymnt_status: 'Pending',
+          pymnt_amount: total_amount,
+          pymnt_change: 0,
+        });
+        if (paymentError) throw paymentError;
+      }
 
       // Prepare data for navigation
       const orderData = {

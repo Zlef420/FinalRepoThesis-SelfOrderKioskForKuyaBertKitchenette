@@ -452,6 +452,7 @@ const CashierScreen = () => {
 
     if (isPending) {
       const newRefNumber = generateRefNumber();
+      const change = calculateChange();
 
       try {
         const { error: transError } = await supabase
@@ -467,7 +468,10 @@ const CashierScreen = () => {
 
         const currentDate = new Date();
         const paymentData = {
+          fk_trans_id: selectedTransaction.trans_id,
           pymnt_ref_id: newRefNumber,
+          order_number: Number(selectedTransaction.ORN),
+          pymnt_mthod: "Cash",
           pymnt_status: "Paid",
           pymnt_amount: selectedTransaction.TAmount,
           pymnt_change: change,
@@ -477,8 +481,7 @@ const CashierScreen = () => {
 
         const { error: paymentError } = await supabase
           .from("payment_table")
-          .update(paymentData)
-          .eq("fk_trans_id", selectedTransaction.trans_id);
+          .insert(paymentData);
 
         if (paymentError) throw paymentError;
 
