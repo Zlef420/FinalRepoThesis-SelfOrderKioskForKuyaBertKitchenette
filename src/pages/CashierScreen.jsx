@@ -34,7 +34,13 @@ const generateRefNumber = () => {
   return `${year}${month}${day}-${hours}${minutes}-${suffix}`;
 };
 
-const AdminConfirmationModal = ({ onConfirm, onCancel, orderORN, title, actionText }) => {
+const AdminConfirmationModal = ({
+  onConfirm,
+  onCancel,
+  orderORN,
+  title,
+  actionText,
+}) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -52,17 +58,17 @@ const AdminConfirmationModal = ({ onConfirm, onCancel, orderORN, title, actionTe
 
     try {
       const { data, error } = await supabase
-        .from('account_table')
-        .select('role')
-        .eq('email', email)
-        .eq('password', password)
+        .from("account_table")
+        .select("role")
+        .eq("email", email)
+        .eq("password", password)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error && error.code !== "PGRST116") {
         throw error;
       }
 
-      if (data && data.role.toLowerCase() === 'admin') {
+      if (data && data.role.toLowerCase() === "admin") {
         toast.success("Admin confirmed.");
         onConfirm();
       } else {
@@ -79,7 +85,9 @@ const AdminConfirmationModal = ({ onConfirm, onCancel, orderORN, title, actionTe
   return (
     <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-2">{title}</h2>
+        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-2">
+          {title}
+        </h2>
         <p className="text-center text-gray-600 mb-6">
           Please provide admin credentials to continue for order #{orderORN}.
         </p>
@@ -147,7 +155,9 @@ const AdminConfirmationModal = ({ onConfirm, onCancel, orderORN, title, actionTe
   );
 };
 
-{/* Printable Receipt Component */}
+{
+  /* Printable Receipt Component */
+}
 const CashierPrintableReceipt = ({ transaction, printRef, employeeEmail }) => {
   if (!transaction) return null;
 
@@ -200,26 +210,51 @@ const CashierPrintableReceipt = ({ transaction, printRef, employeeEmail }) => {
 
       <div id="printable-receipt" className="bg-white p-1 w-full">
         <div className="text-center mb-1">
-          <img src="/images/photos/kuyabertlogo.jpg" alt="Logo" className="w-20 h-20 mx-auto" />
+          <img
+            src="/images/photos/kuyabertlogo.jpg"
+            alt="Logo"
+            className="w-20 h-20 mx-auto"
+          />
           <p className="text-xs font-bold leading-none">|</p>
-          <p className="text-xs leading-tight">Zone 2 Osmena St. Atimonan, Quezon</p>
+          <p className="text-xs leading-tight">
+            Zone 2 Osmena St. Atimonan, Quezon
+          </p>
           <p className="text-xs leading-tight">Contact No. 0907-321-6764</p>
-          <p className="text-xs leading-tight">Like us on FB: KuyaBertKitchenette</p>
+          <p className="text-xs leading-tight">
+            Like us on FB: KuyaBertKitchenette
+          </p>
         </div>
-        
+
         <div className="border-t border-dashed border-black my-2"></div>
 
         <div className="text-xs">
-          <div className="flex justify-between"><span>Employee:</span><span>{employeeEmail || 'N/A'}</span></div>
-          <div className="flex justify-between"><span>Dining Option:</span><span>{transaction.order_type}</span></div>
-          <div className="flex justify-between"><span>Payment Method:</span><span>Cash</span></div>
-          <div className="flex justify-between"><span>Order Number:</span><span>#{transaction.ORN}</span></div>
-          <p className="text-center">{formatDateTime(new Date().toISOString().split('T')[0], new Date().toTimeString().split(' ')[0])}</p>
+          <div className="flex justify-between">
+            <span>Employee:</span>
+            <span>{employeeEmail || "N/A"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Dining Option:</span>
+            <span>{transaction.order_type}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Payment Method:</span>
+            <span>Cash</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Order Number:</span>
+            <span>#{transaction.ORN}</span>
+          </div>
+          <p className="text-center">
+            {formatDateTime(
+              new Date().toISOString().split("T")[0],
+              new Date().toTimeString().split(" ")[0]
+            )}
+          </p>
           <p>Reference Number: {transaction.RefNum}</p>
         </div>
 
         <div className="border-t border-dashed border-black my-2"></div>
-        
+
         {transaction.items.map((item, index) => (
           <div key={index} className="text-xs mb-1">
             <div className="flex justify-between">
@@ -227,7 +262,9 @@ const CashierPrintableReceipt = ({ transaction, printRef, employeeEmail }) => {
               <span>₱{item.price.toFixed(2)}</span>
             </div>
             <div className="flex justify-start">
-              <span>{item.quantity}x ₱{item.price.toFixed(2)}</span>
+              <span>
+                {item.quantity}x ₱{item.price.toFixed(2)}
+              </span>
             </div>
           </div>
         ))}
@@ -253,30 +290,44 @@ const CashierPrintableReceipt = ({ transaction, printRef, employeeEmail }) => {
     </div>
   );
 };
-{/* End Printable Receipt Component */}
+{
+  /* End Printable Receipt Component */
+}
 
 const CashierScreen = () => {
   const { user } = useAuth();
-  {/* State for storing transactions */}
+  {
+    /* State for storing transactions */
+  }
   const [allTransactions, setAllTransactions] = useState([]);
-  {/* Loading indicator */}
+  {
+    /* Loading indicator */
+  }
   const [isLoading, setIsLoading] = useState(true);
-  {/* Last update time for refresh functionality */}
+  {
+    /* Last update time for refresh functionality */
+  }
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
-  {/* State for transactions, search, and selection */}
+  {
+    /* State for transactions, search, and selection */
+  }
   const [transactions, setTransactions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [cashAmount, setCashAmount] = useState("");
   const printRef = useRef(null);
 
-  {/* State and methods for logout modal */}
+  {
+    /* State and methods for logout modal */
+  }
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { currentEmail, logout } = useAuth();
   const navigate = useNavigate();
 
-  {/* State for cancel order modal */}
+  {
+    /* State for cancel order modal */
+  }
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
 
@@ -286,7 +337,9 @@ const CashierScreen = () => {
   const [showAddOrderModal, setShowAddOrderModal] = useState(false);
   const [checkedItems, setCheckedItems] = useState(new Set());
 
-  {/* Load transactions from Supabase */}
+  {
+    /* Load transactions from Supabase */
+  }
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {
@@ -382,9 +435,13 @@ const CashierScreen = () => {
               (transaction.RefNum &&
                 transaction.RefNum.toLowerCase().includes(lowerCaseQuery)) ||
               (transaction.PaymentStat &&
-                transaction.PaymentStat.toLowerCase().includes(lowerCaseQuery)) ||
+                transaction.PaymentStat.toLowerCase().includes(
+                  lowerCaseQuery
+                )) ||
               (transaction.OrderStatus &&
-                transaction.OrderStatus.toLowerCase().includes(lowerCaseQuery)) ||
+                transaction.OrderStatus.toLowerCase().includes(
+                  lowerCaseQuery
+                )) ||
               (transaction.TAmount &&
                 transaction.TAmount.toFixed(2).includes(lowerCaseQuery))
           );
@@ -399,7 +456,7 @@ const CashierScreen = () => {
   }, [allTransactions, searchQuery]);
 
   const handleTransactionClick = (transaction) => {
-    if (transaction.OrderStatus?.toLowerCase() === 'cancelled') {
+    if (transaction.OrderStatus?.toLowerCase() === "cancelled") {
       setOrderToReactivate(transaction);
       setShowReactivateModal(true);
     } else {
@@ -410,14 +467,14 @@ const CashierScreen = () => {
   };
 
   const handleCheckboxToggle = (transItemId) => {
-    setCheckedItems(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(transItemId)) {
-            newSet.delete(transItemId);
-        } else {
-            newSet.add(transItemId);
-        }
-        return newSet;
+    setCheckedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(transItemId)) {
+        newSet.delete(transItemId);
+      } else {
+        newSet.add(transItemId);
+      }
+      return newSet;
     });
   };
 
@@ -518,17 +575,21 @@ const CashierScreen = () => {
     }
   };
 
-  const handleOrderStatusChange = async (orn, newStatus) => {
-    // Find the transaction to update
-    const transactionToUpdate = allTransactions.find((t) => t.ORN === orn);
-    if (!transactionToUpdate || transactionToUpdate.OrderStatus?.toLowerCase() === 'cancelled') return;
+  const handleOrderStatusChange = async (transId, newStatus) => {
+    const transactionToUpdate = allTransactions.find(
+      (t) => t.trans_id === transId
+    );
+    if (
+      !transactionToUpdate ||
+      transactionToUpdate.OrderStatus?.toLowerCase() === "cancelled"
+    )
+      return;
 
     try {
-      // Update the order status in Supabase
       const { error } = await supabase
         .from("trans_table")
         .update({ order_status: newStatus })
-        .eq("trans_id", transactionToUpdate.trans_id);
+        .eq("trans_id", transId);
 
       if (error) {
         console.error("Error updating order status:", error);
@@ -536,10 +597,9 @@ const CashierScreen = () => {
         return;
       }
 
-      // Update local state
       setAllTransactions((prevTransactions) =>
         prevTransactions.map((t) =>
-          t.ORN === orn ? { ...t, OrderStatus: newStatus } : t
+          t.trans_id === transId ? { ...t, OrderStatus: newStatus } : t
         )
       );
 
@@ -550,18 +610,15 @@ const CashierScreen = () => {
     }
   };
 
-  const handleCancelOrder = (orn) => {
-    // Set the order to cancel and show the modal
-    const orderToCancel = allTransactions.find((t) => t.ORN === orn);
+  const handleCancelOrder = (transId) => {
+    const orderToCancel = allTransactions.find((t) => t.trans_id === transId);
     setOrderToCancel(orderToCancel);
     setShowCancelModal(true);
   };
 
-  // Function to confirm the order cancellation
   const confirmCancelOrder = async () => {
     if (orderToCancel) {
       try {
-        // Update the order status to 'Cancelled' in Supabase
         const { error } = await supabase
           .from("trans_table")
           .update({ order_status: "Cancelled", pymnt_status: "Cancelled" })
@@ -573,19 +630,17 @@ const CashierScreen = () => {
           return;
         }
 
-        // Update local state
         setAllTransactions((prevTransactions) =>
           prevTransactions.map((t) =>
-            t.ORN === orderToCancel.ORN
+            t.trans_id === orderToCancel.trans_id
               ? { ...t, OrderStatus: "Cancelled", PaymentStat: "Cancelled" }
               : t
           )
         );
 
-        // If the canceled order was selected, clear the selection
         if (
           selectedTransaction &&
-          selectedTransaction.ORN === orderToCancel.ORN
+          selectedTransaction.trans_id === orderToCancel.trans_id
         ) {
           setSelectedTransaction(null);
           setCashAmount("");
@@ -598,12 +653,10 @@ const CashierScreen = () => {
       }
     }
 
-    // Close the modal and reset the orderToCancel
     setShowCancelModal(false);
     setOrderToCancel(null);
   };
 
-  // Function to close the cancel modal without canceling the order
   const closeCancelModal = () => {
     setShowCancelModal(false);
     setOrderToCancel(null);
@@ -640,16 +693,16 @@ const CashierScreen = () => {
   const handleTogglePreparedStatus = async (transItemId, currentState) => {
     try {
       const { error } = await supabase
-        .from('trans_items_table')
+        .from("trans_items_table")
         .update({ is_prepared: !currentState })
-        .eq('trans_item_id', transItemId);
+        .eq("trans_item_id", transItemId);
 
       if (error) throw error;
 
       // Update local state to reflect the change immediately
-      const updatedTransactions = allTransactions.map(trans => {
+      const updatedTransactions = allTransactions.map((trans) => {
         if (trans.trans_id === selectedTransaction.trans_id) {
-          const updatedItems = trans.items.map(item => {
+          const updatedItems = trans.items.map((item) => {
             if (item.trans_item_id === transItemId) {
               return { ...item, is_prepared: !currentState };
             }
@@ -661,13 +714,15 @@ const CashierScreen = () => {
       });
       setAllTransactions(updatedTransactions);
       // We need to update the selectedTransaction as well for the modal to re-render correctly
-      const updatedSelected = updatedTransactions.find(t => t.trans_id === selectedTransaction.trans_id);
+      const updatedSelected = updatedTransactions.find(
+        (t) => t.trans_id === selectedTransaction.trans_id
+      );
       setSelectedTransaction(updatedSelected);
 
-      toast.success('Item status updated!');
+      toast.success("Item status updated!");
     } catch (error) {
-      console.error('Error updating item status:', error);
-      toast.error('Failed to update item status.');
+      console.error("Error updating item status:", error);
+      toast.error("Failed to update item status.");
     }
   };
 
@@ -680,7 +735,7 @@ const CashierScreen = () => {
     setIsLoading(true);
     try {
       // 1. Insert new items into trans_items_table
-      const itemsToInsert = newItems.map(item => ({
+      const itemsToInsert = newItems.map((item) => ({
         fk_trans_id: selectedTransaction.trans_id,
         fk_prod_id: item.id,
         prdct_name: item.name,
@@ -690,7 +745,7 @@ const CashierScreen = () => {
       }));
 
       const { error: insertError } = await supabase
-        .from('trans_items_table')
+        .from("trans_items_table")
         .insert(itemsToInsert);
 
       if (insertError) {
@@ -699,27 +754,26 @@ const CashierScreen = () => {
 
       // 2. Update the total amount and payment status in trans_table
       const updatePayload = { total_amntdue: newGrandTotal };
-      if (selectedTransaction.PaymentStat === 'Paid') {
-          updatePayload.pymnt_status = 'Pending';
+      if (selectedTransaction.PaymentStat === "Paid") {
+        updatePayload.pymnt_status = "Pending";
       }
-      
+
       const { error: updateError } = await supabase
-        .from('trans_table')
+        .from("trans_table")
         .update(updatePayload)
-        .eq('trans_id', selectedTransaction.trans_id);
+        .eq("trans_id", selectedTransaction.trans_id);
 
       if (updateError) {
         throw updateError;
       }
-      
+
       toast.success("Successfully added new items to the order!");
-      
+
       // 3. Refresh data
       setShowAddOrderModal(false);
       await fetchTransactions(); // This will refetch all data and update the view
       setCashAmount(""); // Clear cash amount
       setCheckedItems(new Set()); // Reset checkboxes
-
     } catch (error) {
       console.error("Error adding more items to order:", error);
       toast.error("Failed to add items. Please try again.");
@@ -731,7 +785,7 @@ const CashierScreen = () => {
   const change = calculateChange();
 
   // Determine if the buttons should be enabled
-  const isPaid = selectedTransaction?.PaymentStat?.toLowerCase() === 'paid';
+  const isPaid = selectedTransaction?.PaymentStat?.toLowerCase() === "paid";
   const canAddMoreOrder = selectedTransaction && !isPaid;
   const canPrint =
     selectedTransaction &&
@@ -744,10 +798,10 @@ const CashierScreen = () => {
       <Header />
 
       <CashierPrintableReceipt
-  transaction={selectedTransaction}
-  printRef={printRef}
-  employeeEmail={currentEmail || user?.email}
-/>
+        transaction={selectedTransaction}
+        printRef={printRef}
+        employeeEmail={currentEmail || user?.email}
+      />
 
       <div className="flex-1 flex flex-col p-4 gap-4 bg-gray-100 print:hidden overflow-hidden">
         <div className="flex gap-4 flex-1 overflow-hidden">
@@ -756,7 +810,7 @@ const CashierScreen = () => {
               <div className="mb-4 relative shrink-0">
                 <input
                   type="text"
-                  placeholder="Search ORN, RefNum, Status, Amount"
+                  placeholder="Search Reference Number"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full p-2 pl-2 pr-10 border rounded bg-gray-100 focus:outline-none focus:ring-1 focus:ring-customOrange"
@@ -769,7 +823,9 @@ const CashierScreen = () => {
                 {isLoading ? (
                   <div className="flex justify-center items-center h-full">
                     <Loader2 className="h-8 w-8 animate-spin text-customOrange" />
-                    <span className="ml-2 text-gray-600">Loading transactions...</span>
+                    <span className="ml-2 text-gray-600">
+                      Loading transactions...
+                    </span>
                   </div>
                 ) : (
                   <table className="w-full text-sm">
@@ -777,25 +833,36 @@ const CashierScreen = () => {
                       <tr>
                         <th className="p-2 text-left font-semibold">ORN</th>
                         <th className="p-2 text-left font-semibold">Total</th>
-                        <th className="p-2 text-left font-semibold">RefNum</th>
+                        <th className="p-2 text-left font-semibold">
+                          Reference Number
+                        </th>
                         <th className="p-2 text-left font-semibold">Payment</th>
-                        <th className="p-2 text-left font-semibold">Order Status</th>
-                        <th className="p-2 text-center font-semibold">Actions</th>
+                        <th className="p-2 text-left font-semibold">
+                          Order Status
+                        </th>
+                        <th className="p-2 text-center font-semibold">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {transactions.length > 0 ? (
                         transactions.map((transaction) => {
-                          const isCancelled = transaction.OrderStatus?.toLowerCase() === 'cancelled';
+                          const isCancelled =
+                            transaction.OrderStatus?.toLowerCase() ===
+                            "cancelled";
                           return (
                             <tr
                               key={transaction.trans_id}
-                              onClick={() => handleTransactionClick(transaction)}
+                              onClick={() =>
+                                handleTransactionClick(transaction)
+                              }
                               className={`border-b border-gray-200 ${
-                                isCancelled 
-                                  ? 'bg-red-50 text-gray-500 line-through cursor-pointer hover:bg-red-100'
+                                isCancelled
+                                  ? "bg-red-50 text-gray-500 line-through cursor-pointer hover:bg-red-100"
                                   : `cursor-pointer hover:bg-gray-200 ${
-                                      selectedTransaction?.trans_id === transaction.trans_id
+                                      selectedTransaction?.trans_id ===
+                                      transaction.trans_id
                                         ? "bg-blue-100 font-medium"
                                         : "hover:bg-gray-100"
                                     }`
@@ -817,36 +884,60 @@ const CashierScreen = () => {
                               >
                                 {transaction.PaymentStat}
                               </td>
-                              <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                              <td
+                                className="p-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <select
                                   value={transaction.OrderStatus}
                                   onChange={(e) =>
-                                    handleOrderStatusChange(transaction.ORN, e.target.value)
+                                    handleOrderStatusChange(
+                                      transaction.trans_id,
+                                      e.target.value
+                                    )
                                   }
                                   disabled={isCancelled}
                                   className={`w-full p-1 rounded border ${
                                     isCancelled
                                       ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                                      : (transaction.OrderStatus?.toLowerCase() === "waiting" || transaction.OrderStatus?.toLowerCase() === "pending")
+                                      : transaction.OrderStatus?.toLowerCase() ===
+                                          "waiting" ||
+                                        transaction.OrderStatus?.toLowerCase() ===
+                                          "pending"
                                       ? "text-yellow-600 border-yellow-300 bg-yellow-50"
-                                      : transaction.OrderStatus?.toLowerCase() === "in progress"
+                                      : transaction.OrderStatus?.toLowerCase() ===
+                                        "in progress"
                                       ? "text-blue-600 border-blue-300 bg-blue-50"
-                                      : transaction.OrderStatus?.toLowerCase() === "done"
+                                      : transaction.OrderStatus?.toLowerCase() ===
+                                        "done"
                                       ? "text-green-600 border-green-300 bg-green-50"
                                       : "text-gray-700 border-gray-300 bg-gray-50"
                                   }`}
                                 >
                                   <option value="Waiting">Waiting</option>
-                                  <option value="In Progress">In Progress</option>
+                                  <option value="In Progress">
+                                    In Progress
+                                  </option>
                                   <option value="Done">Done</option>
-                                  {isCancelled && <option value="Cancelled">Cancelled</option>}
+                                  {isCancelled && (
+                                    <option value="Cancelled">Cancelled</option>
+                                  )}
                                 </select>
                               </td>
-                              <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+                              <td
+                                className="p-2 text-center"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <button
-                                  onClick={() => handleCancelOrder(transaction.ORN)}
+                                  onClick={() =>
+                                    handleCancelOrder(transaction.trans_id)
+                                  }
                                   disabled={isCancelled}
-                                  className={`p-1 rounded ${ isCancelled ? 'text-gray-400 cursor-not-allowed' : 'text-red-500 hover:text-red-700 hover:bg-red-100'}`}
+                                  className={`p-1 rounded ${
+                                    isCancelled
+                                      ? "text-gray-400 cursor-not-allowed"
+                                      : "text-red-500 hover:text-red-700 hover:bg-red-100"
+                                  }`}
                                   title="Cancel Order"
                                 >
                                   <X size={16} />
@@ -862,7 +953,9 @@ const CashierScreen = () => {
                             className="text-center text-gray-500 py-6"
                           >
                             No transactions found
-                            {searchQuery ? ' matching "' + searchQuery + '"' : ""}
+                            {searchQuery
+                              ? ' matching "' + searchQuery + '"'
+                              : ""}
                             .
                           </td>
                         </tr>
@@ -914,27 +1007,53 @@ const CashierScreen = () => {
                         >
                           <td className="p-2">
                             <div className="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    className="h-4 w-4 rounded border-gray-300 text-customOrange focus:ring-customOrange mr-3 cursor-pointer"
-                                    checked={checkedItems.has(item.trans_item_id)}
-                                    onChange={() => handleCheckboxToggle(item.trans_item_id)}
-                                    // Use a unique key for the checkbox, like the item's unique ID from the database
-                                    id={`item-${item.trans_item_id}`}
-                                />
-                                <label 
-                                  htmlFor={`item-${item.trans_item_id}`}
-                                  className={`cursor-pointer ${checkedItems.has(item.trans_item_id) ? 'line-through text-gray-500' : ''}`}
-                                >
-                                    {item.name}
-                                </label>
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-gray-300 text-customOrange focus:ring-customOrange mr-3 cursor-pointer"
+                                checked={checkedItems.has(item.trans_item_id)}
+                                onChange={() =>
+                                  handleCheckboxToggle(item.trans_item_id)
+                                }
+                                // Use a unique key for the checkbox, like the item's unique ID from the database
+                                id={`item-${item.trans_item_id}`}
+                              />
+                              <label
+                                htmlFor={`item-${item.trans_item_id}`}
+                                className={`cursor-pointer ${
+                                  checkedItems.has(item.trans_item_id)
+                                    ? "line-through text-gray-500"
+                                    : ""
+                                }`}
+                              >
+                                {item.name}
+                              </label>
                             </div>
                           </td>
-                          <td className={`p-2 text-right ${checkedItems.has(item.trans_item_id) ? 'line-through text-gray-500' : ''}`}>
+                          <td
+                            className={`p-2 text-right ${
+                              checkedItems.has(item.trans_item_id)
+                                ? "line-through text-gray-500"
+                                : ""
+                            }`}
+                          >
                             ₱{item.price.toFixed(2)}
                           </td>
-                          <td className={`p-2 text-center ${checkedItems.has(item.trans_item_id) ? 'line-through text-gray-500' : ''}`}>{item.quantity}</td>
-                          <td className={`p-2 text-right font-medium ${checkedItems.has(item.trans_item_id) ? 'line-through text-gray-500' : ''}`}>
+                          <td
+                            className={`p-2 text-center ${
+                              checkedItems.has(item.trans_item_id)
+                                ? "line-through text-gray-500"
+                                : ""
+                            }`}
+                          >
+                            {item.quantity}
+                          </td>
+                          <td
+                            className={`p-2 text-right font-medium ${
+                              checkedItems.has(item.trans_item_id)
+                                ? "line-through text-gray-500"
+                                : ""
+                            }`}
+                          >
                             ₱{item.total.toFixed(2)}
                           </td>
                         </tr>
@@ -1059,7 +1178,9 @@ const CashierScreen = () => {
       {showCancelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 print:hidden">
           <div className="bg-white rounded-lg p-6 w-80 shadow-xl">
-            <h3 className="text-lg font-medium mb-4">Confirm Order Cancellation</h3>
+            <h3 className="text-lg font-medium mb-4">
+              Confirm Order Cancellation
+            </h3>
             <p className="mb-6">
               Are you sure you want to cancel order #{orderToCancel?.ORN}?
               {orderToCancel && (
