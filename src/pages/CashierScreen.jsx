@@ -505,9 +505,9 @@ const CashierScreen = () => {
   const handlePrint = async () => {
     if (!selectedTransaction) return;
 
-    const isPending = selectedTransaction.PaymentStat === "Pending";
+    const isPayable = selectedTransaction.PaymentStat === "Unpaid" || selectedTransaction.PaymentStat === "Pending";
 
-    if (isPending) {
+    if (isPayable) {
       const newRefNumber = generateRefNumber();
       const change = calculateChange();
 
@@ -516,6 +516,7 @@ const CashierScreen = () => {
           .from("trans_table")
           .update({
             pymnt_status: "Paid",
+            order_status: "Completed",
             amount_paid: selectedTransaction.TAmount,
             ref_number: newRefNumber,
           })
@@ -547,6 +548,7 @@ const CashierScreen = () => {
         const updatedTransactionForState = {
           ...selectedTransaction,
           PaymentStat: "Paid",
+          OrderStatus: "Completed",
           RefNum: newRefNumber,
         };
 
@@ -668,7 +670,7 @@ const CashierScreen = () => {
     try {
       const { error } = await supabase
         .from("trans_table")
-        .update({ order_status: "Waiting", pymnt_status: "Pending" }) // Reactivating
+        .update({ order_status: "Waiting", pymnt_status: "Unpaid" }) // Reactivating
         .eq("trans_id", orderToReactivate.trans_id);
 
       if (error) throw error;
@@ -676,7 +678,7 @@ const CashierScreen = () => {
       setAllTransactions((prev) =>
         prev.map((t) =>
           t.trans_id === orderToReactivate.trans_id
-            ? { ...t, OrderStatus: "Waiting", PaymentStat: "Pending" }
+            ? { ...t, OrderStatus: "Waiting", PaymentStat: "Unpaid" }
             : t
         )
       );

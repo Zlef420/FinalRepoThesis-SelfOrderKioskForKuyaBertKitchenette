@@ -4,11 +4,13 @@ import Footer from "../components/Footer";
 import MenuList from "../components/MenuList";
 import TransactionList from "../components/TransactionList";
 import PaymentHistory from "../components/PaymentHistory";
+import SalesReport from "../components/SalesReport";
 import Settings from "../components/Settings";
 import {
   SquareMenu,
   Archive,
   BadgeDollarSign,
+  BarChart,
   Settings as SettingsIcon,
   LogOut,
 } from "lucide-react";
@@ -40,6 +42,8 @@ const AdminDashboard = () => {
         return <TransactionList {...commonProps} />;
       case "payment":
         return <PaymentHistory {...commonProps} />;
+      case "sales":
+        return <SalesReport {...commonProps} />;
       case "settings":
         return <Settings />;
       default:
@@ -51,6 +55,7 @@ const AdminDashboard = () => {
     { key: "menu", label: "Menu List", icon: SquareMenu },
     { key: "transaction", label: "Transaction Record", icon: Archive },
     { key: "payment", label: "Payment History", icon: BadgeDollarSign },
+    { key: "sales", label: "Sales Report", icon: BarChart },
     { key: "settings", label: "Settings", icon: SettingsIcon },
   ];
 
@@ -59,7 +64,7 @@ const AdminDashboard = () => {
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <div className="w-48 bg-gray-800 text-white flex flex-col shrink-0 shadow-lg">
-          <nav className="flex-1 space-y-3 p-2 overflow-y-auto mt-4">
+          <nav className="flex-1 space-y-2 p-2 overflow-y-auto mt-4">
             {navItems.map((item) => (
               <div
                 key={item.key}

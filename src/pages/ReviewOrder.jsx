@@ -351,7 +351,7 @@ const OrderReview = () => {
           trans_date: new Date().toISOString().split('T')[0],
           trans_time: new Date().toISOString().split('T')[1].substring(0, 8),
           order_status: 'Pending',
-          pymnt_status: 'Pending',
+          pymnt_status: selectedPayment === "cash" ? "Unpaid" : "Pending",
           pymnt_method: paymentMethodString,
           total_amntdue: total_amount,
           amount_paid: selectedPayment === "cash" ? 0 : total_amount,
