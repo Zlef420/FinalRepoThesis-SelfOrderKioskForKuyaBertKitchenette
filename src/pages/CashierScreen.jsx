@@ -516,7 +516,7 @@ const CashierScreen = () => {
           .from("trans_table")
           .update({
             pymnt_status: "Paid",
-            order_status: "Completed",
+            order_status: "Waiting",
             amount_paid: selectedTransaction.TAmount,
             ref_number: newRefNumber,
           })
@@ -548,7 +548,7 @@ const CashierScreen = () => {
         const updatedTransactionForState = {
           ...selectedTransaction,
           PaymentStat: "Paid",
-          OrderStatus: "Completed",
+          OrderStatus: "Waiting",
           RefNum: newRefNumber,
         };
 

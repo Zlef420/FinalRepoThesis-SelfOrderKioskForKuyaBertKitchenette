@@ -9,23 +9,28 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
-  X
+  X,
 } from "lucide-react";
 import { CartContext } from "../context/CartContext";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
-
-{/* OrderReview component */}
+{
+  /* OrderReview component */
+}
 const OrderReview = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  {/* Get user information */}
+  {
+    /* Get user information */
+  }
   const { currentEmail } = useAuth();
   const user_id = currentEmail || "guest";
-  
-  {/* Get CartContext data */}
+
+  {
+    /* Get CartContext data */
+  }
   const {
     cartItems,
     deleteItem,
@@ -34,89 +39,103 @@ const OrderReview = () => {
     updateItemQuantity,
     clearCart,
     items,
-    setItems
+    setItems,
   } = useContext(CartContext);
 
-  {/* State for dining option */}
+  {
+    /* State for dining option */
+  }
   const [selectedOption, setSelectedOption] = useState(() => {
     return localStorage.getItem("diningOption") || "Dine In";
   });
 
-  {/* State for cart items */}
-  const [localItems, setLocalItems] = useState(() => {
-    const contextCartItems = Array.isArray(cartItems) ? cartItems : [];
-    let initialItems = [];
-    if (contextCartItems.length > 0) {
-      initialItems = contextCartItems;
-    } else {
-      const savedItems = localStorage.getItem("cartItems");
-      try {
-        initialItems = savedItems ? JSON.parse(savedItems) : [];
-        if (!Array.isArray(initialItems)) initialItems = [];
-      } catch (e) {
-        console.error("Failed to parse cartItems from localStorage for OrderReview items state", e);
-        initialItems = [];
-      }
-    }
-    return initialItems.map((item) => {
-      const { addons, ...itemWithoutAddons } = item;
-      return {
-        ...itemWithoutAddons,
-      quantity: Math.max(1, Number(item.quantity) || 1),
-      isExpanded: item.isExpanded || false,
-      isSaved: item.isSaved !== undefined ? Boolean(item.isSaved) : true,
-      };
-    });
-  });
+  {
+    /* State for cart items */
+  }
+  const [localItems, setLocalItems] = useState([]);
 
-  {/* State for selected payment method */}
+  useEffect(() => {
+    const contextCartItems = Array.isArray(cartItems) ? cartItems : [];
+    const sourceOfTruth =
+      contextCartItems.length > 0
+        ? contextCartItems
+        : JSON.parse(localStorage.getItem("cartItems") || "[]");
+
+    setLocalItems((currentLocalItems) => {
+      const newLocalItems = sourceOfTruth.map((item) => {
+        const existing = currentLocalItems.find(
+          (local) => local.id === item.id
+        );
+        return {
+          ...item,
+          quantity: Math.max(1, Number(item.quantity) || 1),
+          isExpanded: existing?.isExpanded || false,
+          isSaved: existing?.isSaved !== undefined ? existing.isSaved : true,
+          details: existing?.details || item.details || "",
+        };
+      });
+
+      if (JSON.stringify(newLocalItems) !== JSON.stringify(currentLocalItems)) {
+        return newLocalItems;
+      }
+      return currentLocalItems;
+    });
+  }, [cartItems]);
+
+  {
+    /* State for selected payment method */
+  }
   const [selectedPayment, setSelectedPayment] = useState(null);
 
-  {/* State for modals */}
+  {
+    /* State for modals */
+  }
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false); // State to handle payment processing
 
-  {/* Order number state */}
+  {
+    /* Order number state */
+  }
   const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
-  
-  {/* Fetch and set the order number */}
+
+  {
+    /* Fetch and set the order number */
+  }
   useEffect(() => {
     const fetchOrderNumber = async () => {
-      console.log("[ReviewOrder EFFECT] Triggered fetchOrderNumber. localItems.length:", localItems.length);
-      if (localItems.length === 0) {
-        console.log("[ReviewOrder EFFECT] No items in cart, skipping order number fetch.");
-        setCurrentOrderNumber(null); 
-        return;
-      }
-
-      console.log("[ReviewOrder EFFECT] Calling supabase.rpc('get_next_daily_order_number')...");
       try {
-        const { data: orderNumData, error: orderNumError } = await supabase.rpc('get_next_daily_order_number');
-        
+        const { data: orderNumData, error: orderNumError } = await supabase.rpc(
+          "get_next_daily_order_number"
+        );
+
         if (orderNumError) {
-          console.error("[ReviewOrder EFFECT] Error from supabase.rpc:", orderNumError);
-          toast.error("Could not fetch order number. DB Error.");
-          setCurrentOrderNumber(null);
-        } else {
-          console.log(`[ReviewOrder EFFECT] Setting currentOrderNumber to: ${orderNumData}`);
-          setCurrentOrderNumber(orderNumData);
+          throw orderNumError;
         }
+        setCurrentOrderNumber(orderNumData);
       } catch (error) {
-        console.error("[ReviewOrder EFFECT] Exception during fetchOrderNumber:", error);
-        toast.error("App error fetching order number.");
+        console.error("Error fetching order number:", error);
+        toast.error("Failed to get an order number. Please try again.");
         setCurrentOrderNumber(null);
       }
     };
 
-    fetchOrderNumber();
-
+    if (localItems.length > 0) {
+      fetchOrderNumber();
+    } else {
+      setCurrentOrderNumber(null);
+    }
   }, [localItems.length]);
 
-  console.log("[ReviewOrder RENDER] currentOrderNumber state:", currentOrderNumber);
+  console.log(
+    "[ReviewOrder RENDER] currentOrderNumber state:",
+    currentOrderNumber
+  );
 
-  {/* Sync items to localStorage */}
+  {
+    /* Sync items to localStorage */
+  }
   useEffect(() => {
     const validItems = localItems.filter(
       (item) => item && item.id && item.quantity > 0
@@ -124,12 +143,16 @@ const OrderReview = () => {
     localStorage.setItem("cartItems", JSON.stringify(validItems));
   }, [localItems]);
 
-  {/* Sync dining option to localStorage */}
+  {
+    /* Sync dining option to localStorage */
+  }
   useEffect(() => {
     localStorage.setItem("diningOption", selectedOption);
   }, [selectedOption]);
 
-  {/* Update item quantity handler */}
+  {
+    /* Update item quantity handler */
+  }
   const updateQuantity = (e, id, increment) => {
     e.stopPropagation();
 
@@ -138,7 +161,9 @@ const OrderReview = () => {
 
     const currentQuantity = currentItem.quantity;
 
-    {/* Check before decrementing from 1 */}
+    {
+      /* Check before decrementing from 1 */
+    }
     if (increment < 0 && currentQuantity === 1) {
       confirmDeleteItem(e, id);
       return;
@@ -153,7 +178,9 @@ const OrderReview = () => {
         )
       );
 
-      {/* Sync with context */}
+      {
+        /* Sync with context */
+      }
       if (typeof updateItemQuantity === "function") {
         updateItemQuantity(id, newQuantity);
       } else if (typeof addToCart === "function") {
@@ -162,7 +189,9 @@ const OrderReview = () => {
     }
   };
 
-  {/* Toggle item details expansion */}
+  {
+    /* Toggle item details expansion */
+  }
   const toggleExpand = (id) => {
     setLocalItems(
       localItems.map((item) =>
@@ -171,7 +200,9 @@ const OrderReview = () => {
     );
   };
 
-  {/* Update special instructions */}
+  {
+    /* Update special instructions */
+  }
   const updateDescription = (id, description) => {
     setLocalItems(
       localItems.map((item) =>
@@ -182,7 +213,9 @@ const OrderReview = () => {
     );
   };
 
-  {/* Save item changes and collapse details */}
+  {
+    /* Save item changes and collapse details */
+  }
   const saveChanges = (e, id) => {
     e.stopPropagation();
     setLocalItems((currentItems) =>
@@ -203,23 +236,25 @@ const OrderReview = () => {
     );
   };
 
-  {/* Calculate item total */}
+  {
+    /* Calculate item total */
+  }
   const calculateItemTotal = (item) => {
     const basePrice = Number(item.price) || 0;
     const quantity = Number(item.quantity) || 0;
 
     if (quantity === 0) return 0;
 
-
-    const total = (basePrice * quantity);
+    const total = basePrice * quantity;
     return total;
   };
 
-  {/* Calculate total cost */}
+  {
+    /* Calculate total cost */
+  }
   const calculateTotal = () => {
     return localItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   };
-
 
   const confirmDeleteItem = (e, id) => {
     if (e) e.stopPropagation();
@@ -227,10 +262,11 @@ const OrderReview = () => {
     setShowDeleteItemModal(true);
   };
 
-
   const deleteItemLocal = () => {
     if (itemToDelete !== null) {
-      const updatedItems = localItems.filter((item) => item.id !== itemToDelete);
+      const updatedItems = localItems.filter(
+        (item) => item.id !== itemToDelete
+      );
       setLocalItems(updatedItems);
 
       if (typeof deleteItem === "function") {
@@ -244,12 +280,10 @@ const OrderReview = () => {
     }
   };
 
-
   const confirmDeleteAllItems = () => {
     if (localItems.length === 0) return;
     setShowDeleteAllModal(true);
   };
-
 
   const deleteAllItems = () => {
     const itemIds = localItems.map((item) => item.id);
@@ -266,17 +300,19 @@ const OrderReview = () => {
     setShowDeleteAllModal(false);
   };
 
-  {/* Style for payment buttons */}
-  const paymentButtonStyle = (
-    isSelected
-  ) =>
+  {
+    /* Style for payment buttons */
+  }
+  const paymentButtonStyle = (isSelected) =>
     `border-2 p-3 rounded flex flex-col items-center transition-colors ${
       isSelected
         ? "bg-blue-100 border-blue-500"
         : "border-gray-300 hover:bg-gray-200"
     } ${localItems.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`;
 
-  {/* Handle navigation to payment page */}
+  {
+    /* Handle navigation to payment page */
+  }
   const handlePayment = async () => {
     // Guard clause to prevent multiple submissions
     if (isProcessing) return;
@@ -287,7 +323,9 @@ const OrderReview = () => {
       return;
     }
     if (currentOrderNumber === null || currentOrderNumber === undefined) {
-      toast.error("Order number is not available. Please wait or try refreshing.");
+      toast.error(
+        "Order number is not available. Please wait or try refreshing."
+      );
       return;
     }
 
@@ -296,7 +334,8 @@ const OrderReview = () => {
     try {
       const order_number = currentOrderNumber;
       const total_amount = calculateTotal();
-      const paymentMethodString = selectedPayment === "ewallet" ? "E-Wallet" : "Cash";
+      const paymentMethodString =
+        selectedPayment === "ewallet" ? "E-Wallet" : "Cash";
 
       let ref_number = null;
       let paymentSource = null;
@@ -305,10 +344,14 @@ const OrderReview = () => {
         const createPayMongoSource = async (amount) => {
           const secretKey = import.meta.env.VITE_PAYMONGO_SECRET_KEY;
           if (!secretKey) throw new Error("PayMongo secret key is not set.");
-          
+
           const options = {
-            method: 'POST',
-            headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Basic ${btoa(secretKey)}` },
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Authorization: `Basic ${btoa(secretKey)}`,
+            },
             body: JSON.stringify({
               data: {
                 attributes: {
@@ -317,40 +360,47 @@ const OrderReview = () => {
                     success: `${window.location.origin}/order-conf`,
                     failed: `${window.location.origin}/payment-failed`,
                   },
-                  type: 'gcash',
-                  currency: 'PHP',
+                  type: "gcash",
+                  currency: "PHP",
                 },
               },
             }),
           };
-          const response = await fetch('https://api.paymongo.com/v1/sources', options);
+          const response = await fetch(
+            "https://api.paymongo.com/v1/sources",
+            options
+          );
           if (!response.ok) {
-            const err = await response.json().catch(() => ({ message: 'Unknown PayMongo API error' }));
+            const err = await response
+              .json()
+              .catch(() => ({ message: "Unknown PayMongo API error" }));
             throw new Error(`PayMongo API Error: ${JSON.stringify(err)}`);
           }
           return response.json();
         };
-        
+
         try {
           paymentSource = await createPayMongoSource(total_amount);
           ref_number = paymentSource.data.id; // Use PayMongo source ID as ref_number
         } catch (err) {
           console.error("PayMongo payment source creation failed:", err);
-          toast.error("Could not connect to payment provider. Please try again later.");
-          return; 
+          toast.error(
+            "Could not connect to payment provider. Please try again later."
+          );
+          return;
         }
       }
 
       // Insert transaction into the database
       const { data: transData, error: transError } = await supabase
-        .from('trans_table')
+        .from("trans_table")
         .insert({
           ref_number, // This will be the PayMongo ID for e-wallet, or null for cash
           order_number,
           order_type: selectedOption,
-          trans_date: new Date().toISOString().split('T')[0],
-          trans_time: new Date().toISOString().split('T')[1].substring(0, 8),
-          order_status: 'Pending',
+          trans_date: new Date().toISOString().split("T")[0],
+          trans_time: new Date().toISOString().split("T")[1].substring(0, 8),
+          order_status: "Pending",
           pymnt_status: selectedPayment === "cash" ? "Unpaid" : "Pending",
           pymnt_method: paymentMethodString,
           total_amntdue: total_amount,
@@ -371,22 +421,26 @@ const OrderReview = () => {
         quantity: item.quantity,
         unit_price: item.price,
         item_subtotal: calculateItemTotal(item),
-        order_notes: item.details ? `Instructions: ${item.details}`.trim() : '',
+        order_notes: item.details ? `Instructions: ${item.details}`.trim() : "",
       }));
-      const { error: itemsError } = await supabase.from('trans_items_table').insert(itemsToInsert);
+      const { error: itemsError } = await supabase
+        .from("trans_items_table")
+        .insert(itemsToInsert);
       if (itemsError) throw itemsError;
 
       if (selectedPayment === "ewallet") {
         // Insert payment record
-        const { error: paymentError } = await supabase.from('payment_table').insert({
-          fk_trans_id: trans_id,
-          pymnt_ref_id: ref_number ? ref_number : `cash_${order_number}`,
-          order_number,
-          pymnt_mthod: paymentMethodString,
-          pymnt_status: 'Pending',
-          pymnt_amount: total_amount,
-          pymnt_change: 0,
-        });
+        const { error: paymentError } = await supabase
+          .from("payment_table")
+          .insert({
+            fk_trans_id: trans_id,
+            pymnt_ref_id: ref_number ? ref_number : `cash_${order_number}`,
+            order_number,
+            pymnt_mthod: paymentMethodString,
+            pymnt_status: "Pending",
+            pymnt_amount: total_amount,
+            pymnt_change: 0,
+          });
         if (paymentError) throw paymentError;
       }
 
@@ -405,21 +459,24 @@ const OrderReview = () => {
       if (typeof clearCart === "function") clearCart();
 
       // Navigate to the correct next screen
-      if (selectedPayment === 'ewallet') {
-        navigate('/ewallet-payment', { state: { orderData, paymentSource } });
+      if (selectedPayment === "ewallet") {
+        navigate("/ewallet-payment", { state: { orderData, paymentSource } });
       } else {
-        navigate('/order-conf', { state: { orderData, paymentStatus: 'completed' } });
+        navigate("/order-conf", {
+          state: { orderData, paymentStatus: "completed" },
+        });
       }
-
     } catch (error) {
       console.error("Payment handling failed:", error);
       toast.error(`An error occurred: ${error.message}. Please try again.`);
     } finally {
       setIsProcessing(false); // Re-enable button in both success and error cases
-    }  
+    }
   };
 
-  {/* Modal component */}
+  {
+    /* Modal component */
+  }
   const ConfirmationModal = ({ show, title, message, onConfirm, onCancel }) => {
     if (!show) return null;
 
@@ -460,41 +517,43 @@ const OrderReview = () => {
     );
   };
 
-
   return (
-
-    <div className="min-h-screen flex flex-col bg-customBlack bg-cover bg-center overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-gray-900">
       <Header />
-      {/* Main Content Section */}
-      <main className="flex-1 container mx-auto px-4 py-2 max-w-[1400px] h-[calc(100vh-180px)] overflow-hidden">
-        <div className="flex flex-col lg:flex-row justify-between gap-6 h-full overflow-hidden">
-          {/* Order List Section (Original structure) */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-full">
-            {/* Order Header (Original structure) */}
-            <div className="mb-4 text-white">
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-white">Review your Order</h1>
+      {/* Main Content Section - Mobile Responsive with full background */}
+      <main className="flex-1 container mx-auto px-2 sm:px-4 py-2 max-w-[1400px] bg-gray-900">
+        <div className="flex flex-col lg:flex-row justify-between gap-4 lg:gap-6">
+          {/* Order List Section - Mobile Optimized */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Order Header - Mobile Responsive */}
+            <div className="mb-3 sm:mb-4 text-white">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                  Review your Order
+                </h1>
                 {/* Display currentOrderNumber */}
                 {currentOrderNumber !== null && (
-                  <span className="text-xl font-bold text-white">Order #{currentOrderNumber}</span>
+                  <span className="text-lg sm:text-xl font-bold text-white">
+                    Order #{currentOrderNumber}
+                  </span>
                 )}
               </div>
             </div>
-            {/* Order Items List with fixed height - ensure content stays within scrollable area */}
-            <div className="flex-1 overflow-y-auto pr-1 -mr-1 h-[calc(100vh-400px)] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-700">
+            {/* Order Items List - Mobile Scrollable */}
+            <div className="flex-1 overflow-y-auto pr-1 -mr-1 max-h-[60vh] sm:max-h-[calc(100vh-400px)] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-700">
               {localItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-white">
-                  <p className="text-xl">Your cart is empty</p>
+                  <p className="text-lg">Your cart is empty</p>
                 </div>
-                              ) : (
-                <div className="space-y-4">
+              ) : (
+                <div className="space-y-3 sm:space-y-4">
                   {localItems.map((item) => (
                     <div
                       key={item.id}
                       className="bg-gray-100 rounded-lg shadow-md cursor-pointer hover:bg-gray-200 transition-colors relative"
                       onClick={() => toggleExpand(item.id)}
                     >
-                      {/* Original expand/collapse button */}
+                      {/* Original expand/collapse button - Centered */}
                       <div className="mt-5 absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full p-1 text-white">
                         {item.isExpanded ? (
                           <ChevronUp className="size-4" />
@@ -503,22 +562,22 @@ const OrderReview = () => {
                         )}
                       </div>
 
-                      {/* Original item top section */}
-                      <div className="p-4">
+                      {/* Item content - Mobile optimized with centered chevron */}
+                      <div className="p-3 sm:p-4">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                          {/* Original item name/price display */}
-                          <div className="space-y-2 flex-1 min-w-0 mb-3 sm:mb-0">
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-                              <span className="font-semibold text-lg truncate">
+                          {/* Item name and price - Mobile layout */}
+                          <div className="space-y-1 flex-1 min-w-0 mb-3 sm:mb-0">
+                            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:gap-4">
+                              <span className="font-semibold text-base sm:text-lg break-words">
                                 {item.name}
                               </span>
-                              <span className="text-gray-600 whitespace-nowrap">
+                              <span className="text-gray-600 text-sm sm:text-base">
                                 ₱{item.price}
                               </span>
                             </div>
-                            {/* Original saved details display */}
+                            {/* Saved details display - Mobile optimized */}
                             {item.isSaved && (
-                              <div className="text-sm text-gray-600 space-y-1">
+                              <div className="text-xs sm:text-sm text-gray-600 space-y-1 mt-1">
                                 {item.details && (
                                   <div className="break-words">
                                     <span className="font-medium">
@@ -531,50 +590,52 @@ const OrderReview = () => {
                             )}
                           </div>
 
-                          {/* Original Quantity Control & Delete */}
-                          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-normal">
-                            {/* Original quantity buttons */}
-                            <div className="bg-gray-300 rounded-full flex items-center px-3 py-1">
+                          {/* Quantity Control & Delete - Mobile responsive */}
+                          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-between sm:justify-normal">
+                            {/* Quantity buttons - Mobile sized */}
+                            <div className="bg-gray-300 rounded-full flex items-center px-2 sm:px-3 py-1">
                               <button
                                 onClick={(e) => updateQuantity(e, item.id, -1)}
-                                className="text-lg px-1 hover:bg-gray-400 rounded-full w-6"
+                                className="text-base sm:text-lg px-1 hover:bg-gray-400 rounded-full w-5 sm:w-6"
                               >
                                 -
                               </button>
-                              <span className="mx-3">{item.quantity}</span>
+                              <span className="mx-2 sm:mx-3 text-sm sm:text-base">
+                                {item.quantity}
+                              </span>
                               <button
                                 onClick={(e) => updateQuantity(e, item.id, 1)}
-                                className="text-xl px-2 hover:bg-gray-400 rounded-full w-8"
+                                className="text-lg sm:text-xl px-1 sm:px-2 hover:bg-gray-400 rounded-full w-6 sm:w-8"
                               >
                                 +
                               </button>
                             </div>
-                            {/* Original delete button */}
+                            {/* Delete button - Mobile sized */}
                             <button
                               className="text-red-500 hover:text-red-700"
                               onClick={(e) => confirmDeleteItem(e, item.id)}
                             >
-                              <Trash2 className="size-5" />
+                              <Trash2 className="size-4 sm:size-5" />
                             </button>
                           </div>
                         </div>
-                        {/* Item Total Price display with breakdown */}
+                        {/* Item Total Price - Mobile aligned */}
                         <div className="flex justify-end items-center mt-2">
-                          <div className="text-gray-600">
-                              <div>Total: ₱{calculateItemTotal(item)}</div>
+                          <div className="text-gray-600 text-sm sm:text-base">
+                            <div>Total: ₱{calculateItemTotal(item)}</div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Item Customization Section - Contained within the scrollable area */}
+                      {/* Item Customization Section - Mobile optimized */}
                       {item.isExpanded && (
                         <div
-                          className="border-t border-gray-200 p-4 space-y-2 bg-white overflow-visible"
+                          className="border-t border-gray-200 p-3 sm:p-4 space-y-2 bg-white"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {/* Special Instructions Section (Original structure) */}
+                          {/* Special Instructions - Mobile responsive */}
                           <div>
-                            <h3 className="font-semibold mb-2">
+                            <h3 className="font-semibold mb-2 text-sm sm:text-base">
                               Special Instructions
                             </h3>
                             <textarea
@@ -583,49 +644,47 @@ const OrderReview = () => {
                                 updateDescription(item.id, e.target.value)
                               }
                               placeholder="Add any special instructions..."
-                              className="w-full p-2 border rounded-md h-24"
+                              className="w-full p-2 border rounded-md h-20 sm:h-24 text-sm"
                             />
                           </div>
 
-                          {/* Save Changes Button (Original structure) */}
+                          {/* Save Changes Button - Mobile sized */}
                           <div className="flex justify-end pt-2">
                             <button
                               onClick={(e) => saveChanges(e, item.id)}
-  
-                              className={`px-4 py-2 rounded transition-colors ${
+                              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded transition-colors text-sm ${
                                 item.isSaved
                                   ? "bg-gray-400 text-gray-700 cursor-not-allowed"
                                   : "bg-blue-600 text-white hover:bg-blue-700"
                               }`}
                               disabled={item.isSaved}
                             >
-                                                            {item.isSaved ? "Saved" : "Save Changes"}
+                              {item.isSaved ? "Saved" : "Save Changes"}
                             </button>
                           </div>
                         </div>
                       )}
-                                          </div>
+                    </div>
                   ))}
                   {/* End item map */}
                 </div>
               )}
             </div>{" "}
-            {/* End Order Items List scroll container */}
-            {/* Order Actions Section (Original structure) */}
-            <div className="mt-4 flex justify-between items-center pt-4 border-t border-gray-700">
-              {/* Original Return button */}
+            {/* Order Actions Section - Fixed button alignment */}
+            <div className="mt-3 sm:mt-4 flex justify-between items-center pt-3 sm:pt-4 border-t border-gray-700">
+              {/* Return button - Left aligned */}
               <button
                 onClick={() => navigate("/home")}
-                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded"
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm sm:px-6"
               >
                 Return
               </button>
-              {/* Original Remove All button */}
+              {/* Remove All button - Right aligned */}
               {localItems.length > 0 && (
                 <button
                   onClick={confirmDeleteAllItems}
-                  className="py-2 px-2 text-sm text-red-500 hover:text-white
-                   flex items-center justify-center gap-2 border border-red-500 rounded hover:bg-red-600 transition"
+                  className="py-2 px-3 text-sm text-red-500 hover:text-white
+                   flex items-center justify-center gap-1 border border-red-500 rounded hover:bg-red-600 transition"
                 >
                   <Trash2 className="size-4" />
                   <span className="hidden sm:inline">Remove all items</span>
@@ -634,92 +693,108 @@ const OrderReview = () => {
               )}
             </div>
           </div>{" "}
-          {/* End Order List Section */}
-          {/* Payment Summary Section (Original structure) */}
-          <div className="w-full lg:w-80 bg-white rounded-lg p-4 mb-4 lg:mb-0 flex flex-col justify-between">
+          {/* Payment Summary Section - Fixed background issue */}
+          <div className="w-full lg:w-80 bg-gray-100 rounded-lg p-3 sm:p-4 flex flex-col">
             <div>
-              <h2 className="text-2xl font-bold mb-5">Total Cost</h2>
-              {/* Cart Summary with improved formatting */}
-              <div className="overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 h-[calc(100vh-500px)]">
+              <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-5">
+                Total Cost
+              </h2>
+              {/* Cart Summary - Mobile scrollable */}
+              <div className="overflow-y-auto max-h-[40vh] sm:max-h-[calc(100vh-500px)] pr-2">
                 {localItems.length === 0 ? (
-                  <p className="text-gray-500 text-center py-2">
+                  <p className="text-gray-500 text-center py-2 text-sm">
                     No items in cart
                   </p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-2 sm:space-y-4">
                     {localItems.map((item) => (
-                      <div key={item.id} className="border-b pb-3 last:border-b-0">
-                        <div className="flex justify-between text-base">
-                          <div className="font-medium">{item.name}</div>
-                          <div>₱{item.price * item.quantity}</div>
+                      <div
+                        key={item.id}
+                        className="border-b pb-2 sm:pb-3 last:border-b-0"
+                      >
+                        <div className="flex justify-between text-sm sm:text-base">
+                          <div className="font-medium truncate pr-2">
+                            {item.name}
+                          </div>
+                          <div className="whitespace-nowrap">
+                            ₱{item.price * item.quantity}
+                          </div>
                         </div>
-                              </div>
-                            ))}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             </div>
             <div className="mt-auto">
-              {/* Total Amount (Original structure) */}
-              <div className="border-t border-b py-3 my-4">
-                <div className="flex justify-between font-bold">
+              {/* Total Amount - Mobile compact */}
+              <div className="border-t border-b py-2 sm:py-3 my-2 sm:my-4">
+                <div className="flex justify-between font-bold text-sm sm:text-base">
                   <span>Total Amount:</span>
                   <span>₱{calculateTotal()}</span>
                 </div>
               </div>
-              {/* Payment Options Section (Original structure) */}
-              <div className="mb-5">
-                <div className="flex justify-between mb-3">
+              {/* Payment Options - Mobile optimized */}
+              <div className="mb-3 sm:mb-5">
+                <div className="flex justify-between mb-2 sm:mb-3 text-sm sm:text-base">
                   <span>Dining choice</span>
                   <span>{selectedOption}</span>
                 </div>
 
-                <div className="font-bold mb-3">Select Payment Method:</div>
-                {/* Original payment buttons */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="font-bold mb-2 sm:mb-3 text-sm sm:text-base">
+                  Select Payment Method:
+                </div>
+                {/* Payment buttons - Mobile sized */}
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <button
                     onClick={() => setSelectedPayment("cash")}
-                    className={paymentButtonStyle(selectedPayment === "cash")}
+                    className={`${paymentButtonStyle(
+                      selectedPayment === "cash"
+                    )} p-2 sm:p-3`}
                     disabled={localItems.length === 0}
                   >
-                    <Wallet className="size-6 mb-2" />
-                    <span>Cash</span>
+                    <Wallet className="size-5 sm:size-6 mb-1 sm:mb-2" />
+                    <span className="text-xs sm:text-sm">Cash</span>
                   </button>
                   <button
                     onClick={() => setSelectedPayment("ewallet")}
-                    className={paymentButtonStyle(selectedPayment === "ewallet")}
+                    className={paymentButtonStyle(
+                      selectedPayment === "ewallet"
+                    )}
                     disabled={localItems.length === 0}
                   >
-                    <Smartphone className="size-6 mb-2" />
-                    <span>E-wallet</span>
+                    <Smartphone className="size-5 sm:size-6 mb-1 sm:mb-2" />
+                    <span className="text-xs sm:text-sm">E-wallet</span>
                   </button>
                 </div>
               </div>
-              {/* Proceed to Payment Button (Original structure) */}
+              {/* Proceed to Payment Button - Mobile optimized */}
               <button
-                className={`w-full py-3 text-white rounded text-center font-bold ${
+                className={`w-full py-2.5 sm:py-3 text-white rounded text-center font-bold text-sm sm:text-base ${
                   selectedPayment && localItems.length > 0 && !isProcessing
                     ? "bg-red-500 hover:bg-red-600"
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
-                disabled={!selectedPayment || localItems.length === 0 || isProcessing}
+                disabled={
+                  !selectedPayment || localItems.length === 0 || isProcessing
+                }
                 onClick={handlePayment}
               >
-                {/* Original button text logic */}
+                {/* Button text - Mobile optimized */}
                 {isProcessing
                   ? "Processing..."
                   : localItems.length === 0
                   ? "Cart is Empty"
                   : selectedPayment
                   ? "Proceed to Payment"
-                  : "Select Payment Method"}
+                  : "Select Payment"}
               </button>
             </div>
-                      </div>
           </div>
-        </main>
-        <Footer className="mt-4" />
-        {/* Confirmation Modals */}
+        </div>
+      </main>
+      <Footer className="mt-2 sm:mt-4 bg-gray-900" />
+      {/* Confirmation Modals - Mobile responsive */}
       <ConfirmationModal
         show={showDeleteItemModal}
         title="Remove Item"
@@ -734,7 +809,7 @@ const OrderReview = () => {
         onConfirm={deleteAllItems}
         onCancel={() => setShowDeleteAllModal(false)}
       />
-          </div>
+    </div>
   );
 };
 

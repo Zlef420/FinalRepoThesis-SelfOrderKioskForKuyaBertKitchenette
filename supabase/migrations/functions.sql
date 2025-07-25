@@ -8,7 +8,7 @@ BEGIN
     SELECT COUNT(*)
     INTO today_order_count
     FROM trans_table
-    WHERE trans_date = CURRENT_DATE;
+    WHERE trans_date = (now() AT TIME ZONE 'Asia/Manila')::date;
     
     -- If no orders today, return 1
     IF today_order_count = 0 THEN
@@ -20,7 +20,7 @@ BEGIN
     INTO max_daily_seq_num
     FROM trans_table
     WHERE 
-        trans_date = CURRENT_DATE
+        trans_date = (now() AT TIME ZONE 'Asia/Manila')::date
         AND order_number > 0
         AND order_number < 1000000;
 

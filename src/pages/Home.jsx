@@ -8,8 +8,6 @@ import MenuCard from "../components/MenuCard";
 import { CartContext } from "../context/CartContext";
 import { Menu, ShoppingCart } from "lucide-react";
 
-
-
 function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,15 +23,15 @@ function Home() {
       setLoading(true);
       try {
         const { data, error: dbError } = await supabase
-          .from('product_details')
-          .select('*')
-          .order('prdct_name', { ascending: true });
+          .from("product_details")
+          .select("*")
+          .order("prdct_name", { ascending: true });
 
         if (dbError) throw dbError;
         setProducts(data || []);
       } catch (err) {
         console.error("Error fetching products:", err);
-        setError(err.message || 'Failed to fetch products.');
+        setError(err.message || "Failed to fetch products.");
       }
       setLoading(false);
     };
@@ -127,26 +125,39 @@ function Home() {
             {selectedCategory}
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4">
-            {loading && <p className="col-span-full text-gray-500 text-center">Loading menu...</p>}
-            {error && <p className="col-span-full text-red-500 text-center">Error: {error}</p>}
-            {!loading && !error && filteredItems.length > 0 ? (
-              filteredItems.map((product) => (
-                <MenuCard
-                  key={product.product_id}
-                  product={product}
-                  onAddToCart={addToCart}
-                />
-              ))
-            ) : !loading && !error && (
-              /* No items matching search */
+          {/* Menu Grid - 2 columns on mobile, more on larger screens */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 px-2 sm:px-4">
+            {loading && (
               <p className="col-span-full text-gray-500 text-center">
-                No items match your search or no products available.
+                Loading menu...
               </p>
             )}
+            {error && (
+              <p className="col-span-full text-red-500 text-center">
+                Error: {error}
+              </p>
+            )}
+            {!loading && !error && filteredItems.length > 0
+              ? filteredItems.map((product) => (
+                  <MenuCard
+                    key={product.product_id}
+                    product={product}
+                    onAddToCart={addToCart}
+                  />
+                ))
+              : !loading &&
+                !error && (
+                  /* No items matching search */
+                  <p className="col-span-full text-gray-500 text-center">
+                    No items match your search or no products available.
+                  </p>
+                )}
           </div>
         </div>
 
+        
+
+        {/* Original cart sidebar - Keep for desktop and when opened */}
         <div
           className={`absolute md:relative md:block right-0 top-0 z-30 w-3/4 sm:w-2/3 md:w-auto md:flex-shrink-0 h-full transition-transform duration-300 transform ${
             isCartOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
