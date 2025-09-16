@@ -9,7 +9,7 @@ function IntroPage() {
   const [advertisementImages, setAdvertisementImages] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
-  const [resetTimer, setResetTimer] = useState(0); 
+  const [resetTimer, setResetTimer] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,27 +17,35 @@ function IntroPage() {
       setIsLoadingAds(true);
       try {
         const { data, error } = await supabase
-          .from('intro_advertisements')
-          .select('slot_id, image_url')
-          .not('image_url', 'is', null)
-          .neq('image_url', '')
-          .order('slot_id', { ascending: true });
+          .from("intro_advertisements")
+          .select("slot_id, image_url")
+          .not("image_url", "is", null)
+          .neq("image_url", "")
+          .order("slot_id", { ascending: true });
 
         if (error) {
-          console.error("Error fetching intro advertisement images from Supabase:", error);
+          console.error(
+            "Error fetching intro advertisement images from Supabase:",
+            error
+          );
           throw error;
         }
-        
-        {/* Ensure data is not null and filter out any ads that might still have null/empty image_url */}
-        const validAds = data ? data.filter(ad => ad.image_url) : [];
 
-        const formattedAds = validAds.map(ad => ({
+        {
+          /* Ensure data is not null and filter out any ads that might still have null/empty image_url */
+        }
+        const validAds = data ? data.filter((ad) => ad.image_url) : [];
+
+        const formattedAds = validAds.map((ad) => ({
           id: `intro-ad-${ad.slot_id}`,
-          image: ad.image_url
+          image: ad.image_url,
         }));
         setAdvertisementImages(formattedAds);
       } catch (error) {
-        console.error("Error in fetchAds logic or Supabase query processing:", error);
+        console.error(
+          "Error in fetchAds logic or Supabase query processing:",
+          error
+        );
         setAdvertisementImages([]);
       } finally {
         setIsLoadingAds(false);
@@ -70,7 +78,7 @@ function IntroPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[url('../../public/images/photos/bgblack.jpg')] bg-cover bg-center text-white">
+    <div className="flex flex-col min-h-screen bg-[url('/images/photos/bgblack.jpg')] bg-cover bg-center text-white">
       <Header />
       <div className="flex-1 flex items-center justify-center relative">
         <div className="relative w-[85%] h-[75vh] mx-auto overflow-hidden rounded-lg -mt-3.5">
@@ -86,7 +94,10 @@ function IntroPage() {
               </div>
             ) : advertisementImages.length > 0 ? (
               advertisementImages.map((item, index) => (
-                <div key={item.id} className="w-full h-full flex-shrink-0 flex items-center justify-center">
+                <div
+                  key={item.id}
+                  className="w-full h-full flex-shrink-0 flex items-center justify-center"
+                >
                   <img
                     src={item.image}
                     alt="Advertisement"
@@ -96,7 +107,11 @@ function IntroPage() {
               ))
             ) : (
               <div className="w-full h-full flex-shrink-0 flex items-center justify-center bg-gray-700">
-                <img src="/images/photos/KBcover.png" alt="Kuya Bert Kiosk" className="w-full h-full object-contain"/>
+                <img
+                  src="/images/photos/KBcover.png"
+                  alt="Kuya Bert Kiosk"
+                  className="w-full h-full object-contain"
+                />
               </div>
             )}
           </div>
